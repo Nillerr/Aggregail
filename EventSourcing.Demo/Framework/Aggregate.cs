@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using EventStore.ClientAPI;
+using JetBrains.Annotations;
 
 namespace EventSourcing.Demo.Framework
 {
@@ -22,7 +23,7 @@ namespace EventSourcing.Demo.Framework
 
         private long _versionNumber = ExpectedVersion.NoStream;
 
-        protected Aggregate(Guid id, TCreateEvent @event)
+        protected Aggregate(Guid id, [PublicAPI("Serves as a reference")] TCreateEvent @event)
             : base(id)
         {
         }
