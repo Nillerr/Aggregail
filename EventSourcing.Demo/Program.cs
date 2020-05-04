@@ -30,19 +30,19 @@ namespace EventSourcing.Demo
             await CreateCaseAsync(store, id);
             await ModifyCaseAsync(store, id);
 
-            var @case = await store.CaseAsync(id);
+            var @case = await Case.FromAsync(store, id);
             Console.WriteLine(JsonConvert.SerializeObject(@case, Formatting.Indented));
         }
 
-        private static async Task CreateCaseAsync(IEventStore appender, Guid id)
+        private static async Task CreateCaseAsync(IEventStore store, Guid id)
         {
             var @case = Case.Create(id, "The Subject", "The Description");
-            await @case.CommitAsync(appender, Case.Configuration);
+            await @case.CommitAsync(store);
         }
 
         private static async Task ModifyCaseAsync(IEventStore store, Guid id)
         {
-            var @case = await store.CaseAsync(id);
+            var @case = await Case.FromAsync(store, id);
             if (@case == null)
             {
                 throw new InvalidOperationException();
@@ -53,7 +53,7 @@ namespace EventSourcing.Demo
             @case.AssignToDistributor();
             @case.Import("Imported Subject 2", "Imported Description 2", "TS012345", CaseStatus.WaitingForDistributor);
 
-            await store.CommitAsync(@case);
+            await @case.CommitAsync(store);
         }
     }
 }

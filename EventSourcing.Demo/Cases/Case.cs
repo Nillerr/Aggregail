@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using EventSourcing.Demo.Cases.Events;
 using EventSourcing.Demo.Framework;
 
@@ -9,7 +10,7 @@ namespace EventSourcing.Demo.Cases
         IApply<CaseAssignedToDistributor>,
         IApply<CaseAssignedToService>
     {
-        public static readonly AggregateConfiguration<Case, CaseCreated> Configuration =
+        private static readonly AggregateConfiguration<Case, CaseCreated> Configuration =
             new AggregateConfiguration<Case, CaseCreated>("Case", (id, @event) => new Case(id, @event))
                 .Applies(CaseImported.EventType)
                 .Applies(CaseAssignedToDistributor.EventType)
@@ -40,6 +41,16 @@ namespace EventSourcing.Demo.Cases
             var @case = new Case(id, @event);
             @case.Append(id, CaseCreated.EventType, @event);
             return @case;
+        }
+
+        public static Task<Case?> FromAsync(IEventStoreReader reader, Guid id)
+        {
+            return reader.AggregateAsync(id, Configuration);
+        }
+
+        public Task CommitAsync(IEventStoreAppender appender)
+        {
+            return CommitAsync(appender, Configuration);
         }
 
         public void Import(string subject, string description, string caseNumber, CaseStatus status)
