@@ -55,8 +55,7 @@ namespace EventSourcing.Demo.Framework
                     }
                     else
                     {
-                        throw new InvalidOperationException($"Unexpected recorded event type: {recordedEvent.EventType}"
-                        );
+                        throw new InvalidOperationException($"Unexpected recorded event type: {recordedEvent.EventType}");
                     }
                 }
 

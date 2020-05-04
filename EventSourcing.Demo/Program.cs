@@ -12,10 +12,11 @@ namespace EventSourcing.Demo
     {
         public static async Task Main(string[] args)
         {
-            using var connection = EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113");
+            // using var connection = EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113");
 
-            await connection.ConnectAsync();
-            await TestCase(connection);
+            // await connection.ConnectAsync();
+            // await TestCase(connection);
+            await TestCase(null);
         }
 
         private static async Task TestCase(IEventStoreConnection connection)
@@ -23,7 +24,8 @@ namespace EventSourcing.Demo
             var encoder = new JsonEncoder();
             var decoder = new JsonDecoder();
             
-            var store = new Framework.EventStore(connection, encoder, decoder);
+            // var store = new Framework.EventStore(connection, encoder, decoder);
+            var store = new InMemoryEventStore(encoder, decoder);
 
             var id = Guid.NewGuid();
 
