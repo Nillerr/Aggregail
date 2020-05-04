@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using EventSourcing.Demo.Cases;
+using EventSourcing.Demo.Framework;
 using EventSourcing.Demo.Framework.Serialiazation;
 using EventStore.ClientAPI;
 using Newtonsoft.Json;
@@ -19,32 +20,34 @@ namespace EventSourcing.Demo
 
         private static async Task TestCase(IEventStoreConnection connection)
         {
-            var encoder = new JsonEncoder();
             var decoder = new JsonDecoder();
+            var reader = new EventStoreReader(connection, decoder);
+            
+            var encoder = new JsonEncoder();
+            var appender = new EventStoreAppender(connection, encoder);
 
             var id = Guid.NewGuid();
 
-            await CreateCaseAsync(connection, id, encoder);
-            await ModifyCaseAsync(connection, id, encoder, decoder);
+            await CreateCaseAsync(appender, id);
+            await ModifyCaseAsync(reader, appender, id);
 
-            var @case = await connection.CaseAsync(id, decoder);
+            var @case = await reader.CaseAsync(id);
             Console.WriteLine(JsonConvert.SerializeObject(@case, Formatting.Indented));
         }
 
-        private static async Task CreateCaseAsync(IEventStoreConnection connection, Guid id, IJsonEncoder encoder)
+        private static async Task CreateCaseAsync(IEventStoreAppender appender, Guid id)
         {
             var @case = Case.Create(id, "The Subject", "The Description");
-            await @case.CommitAsync(connection, Case.Configuration, encoder);
+            await @case.CommitAsync(appender, Case.Configuration);
         }
 
         private static async Task ModifyCaseAsync(
-            IEventStoreConnection connection,
-            Guid id,
-            IJsonEncoder encoder,
-            IJsonDecoder decoder
+            IEventStoreReader reader,
+            IEventStoreAppender appender,
+            Guid id
         )
         {
-            var @case = await connection.CaseAsync(id, decoder);
+            var @case = await reader.CaseAsync(id);
             if (@case == null)
             {
                 throw new InvalidOperationException();
@@ -53,7 +56,7 @@ namespace EventSourcing.Demo
             @case.Import("Imported Subject", "Imported Description", "TS012345", CaseStatus.WaitingForDistributor);
             @case.AssignToService();
 
-            await connection.CommitAsync(@case, encoder);
+            await appender.CommitAsync(@case);
         }
     }
 }

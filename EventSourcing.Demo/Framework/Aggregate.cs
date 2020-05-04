@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using EventSourcing.Demo.Framework.Serialiazation;
 using EventStore.ClientAPI;
 
 namespace EventSourcing.Demo.Framework
@@ -16,7 +14,7 @@ namespace EventSourcing.Demo.Framework
 
         public Guid Id { get; }
     }
-    
+
     public abstract class Aggregate<TAggregate, TCreateEvent> : Aggregate
         where TAggregate : Aggregate<TAggregate, TCreateEvent>
     {
@@ -47,9 +45,8 @@ namespace EventSourcing.Demo.Framework
         }
 
         public async Task CommitAsync(
-            IEventStoreConnection connection,
-            AggregateConfiguration<TAggregate, TCreateEvent> configuration,
-            IJsonEncoder encoder
+            IEventStoreAppender appender,
+            AggregateConfiguration<TAggregate, TCreateEvent> configuration
         )
         {
             if (_pendingEvents.Count == 0)
@@ -57,12 +54,7 @@ namespace EventSourcing.Demo.Framework
                 throw new InvalidOperationException();
             }
 
-            var events = _pendingEvents.Select(pendingEvent =>
-                new EventData(pendingEvent.Id, pendingEvent.Type, true, pendingEvent.EncodedData(encoder), null)
-            );
-
-            var stream = configuration.Name.Stream(Id);
-            await connection.AppendToStreamAsync(stream, _versionNumber, events);
+            await appender.AppendToStreamAsync(Id, configuration, _versionNumber, _pendingEvents);
         }
     }
 }

@@ -1,12 +1,12 @@
-using System;
-
 namespace EventSourcing.Demo.Framework
 {
-    public interface IRecordedEvent
+    public readonly struct RecordedEvent
     {
-        Guid EventId { get; }
-        long EventNumber { get; }
-        string EventType { get; }
-        byte[] Data { get; }
+        public RecordedEvent(long eventNumber)
+        {
+            EventNumber = eventNumber;
+        }
+
+        public long EventNumber { get; }
     }
 }
