@@ -2,7 +2,7 @@ namespace EventSourcing.Demo.Framework
 {
     public static class AggregateConfigurationExtensions
     {
-        public static AggregateConfiguration<TAggregate, TCreatedEvent> Apply<T, TAggregate, TCreatedEvent>(
+        public static AggregateConfiguration<TAggregate, TCreatedEvent> Applies<T, TAggregate, TCreatedEvent>(
             this AggregateConfiguration<TAggregate, TCreatedEvent> configuration,
             EventType<T> type
         )

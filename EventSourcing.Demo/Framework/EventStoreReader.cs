@@ -42,9 +42,11 @@ namespace EventSourcing.Demo.Framework
 
             const int sliceSize = 100;
             
-            StreamEventsSlice slice = await _connection.ReadStreamEventsForwardAsync(stream, 1, sliceSize, false);
-            while (!slice.IsEndOfStream)
+            StreamEventsSlice slice; 
+            do
             {
+                slice = await _connection.ReadStreamEventsForwardAsync(stream, 1, sliceSize, false);
+                
                 foreach (var resolvedEvent in slice.Events)
                 {
                     var recordedEvent = resolvedEvent.Event;
@@ -58,9 +60,7 @@ namespace EventSourcing.Demo.Framework
                         throw new InvalidOperationException($"Unexpected recorded event type: {recordedEvent.EventType}");
                     }
                 }
-
-                slice = await _connection.ReadStreamEventsForwardAsync(stream, slice.NextEventNumber, sliceSize, false);
-            }
+            } while (!slice.IsEndOfStream);
 
             return aggregate;
         }

@@ -1,17 +1,20 @@
 using System;
 using System.Collections.Immutable;
+using EventSourcing.Demo.Framework.Serialiazation;
 
 namespace EventSourcing.Demo.Framework
 {
     public sealed class AggregateConfiguration<TAggregate, TCreatedEvent>
         where TAggregate : Aggregate<TAggregate, TCreatedEvent>
     {
+        public delegate void EventApplicator(TAggregate aggregate, IJsonDecoder decoder, byte[] data);
+        
         public AggregateName<TAggregate> Name { get; }
         
         public Func<Guid, TCreatedEvent, TAggregate> Constructor { get; }
 
-        public ImmutableDictionary<string, EventApplicator<TAggregate>> Applicators { get; private set; } =
-            ImmutableDictionary.Create<string, EventApplicator<TAggregate>>();
+        public ImmutableDictionary<string, EventApplicator> Applicators { get; private set; } =
+            ImmutableDictionary.Create<string, EventApplicator>();
 
         public AggregateConfiguration(AggregateName<TAggregate> name, Func<Guid, TCreatedEvent, TAggregate> constructor)
         {

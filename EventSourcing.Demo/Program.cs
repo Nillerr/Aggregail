@@ -50,6 +50,8 @@ namespace EventSourcing.Demo
 
             @case.Import("Imported Subject", "Imported Description", "TS012345", CaseStatus.WaitingForDistributor);
             @case.AssignToService();
+            @case.AssignToDistributor();
+            @case.Import("Imported Subject 2", "Imported Description 2", "TS012345", CaseStatus.WaitingForDistributor);
 
             await store.CommitAsync(@case);
         }

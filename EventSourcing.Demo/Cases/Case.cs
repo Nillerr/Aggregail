@@ -11,9 +11,9 @@ namespace EventSourcing.Demo.Cases
     {
         public static readonly AggregateConfiguration<Case, CaseCreated> Configuration =
             new AggregateConfiguration<Case, CaseCreated>("Case", (id, @event) => new Case(id, @event))
-                .Apply(CaseImported.EventType)
-                .Apply(CaseAssignedToDistributor.EventType)
-                .Apply(CaseAssignedToService.EventType);
+                .Applies(CaseImported.EventType)
+                .Applies(CaseAssignedToDistributor.EventType)
+                .Applies(CaseAssignedToService.EventType);
 
         public string Subject { get; private set; }
         public string Description { get; private set; }
