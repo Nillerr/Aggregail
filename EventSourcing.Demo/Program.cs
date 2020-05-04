@@ -20,34 +20,29 @@ namespace EventSourcing.Demo
 
         private static async Task TestCase(IEventStoreConnection connection)
         {
-            var decoder = new JsonDecoder();
-            var reader = new EventStoreReader(connection, decoder);
-            
             var encoder = new JsonEncoder();
-            var appender = new EventStoreAppender(connection, encoder);
+            var decoder = new JsonDecoder();
+            
+            var store = new Framework.EventStore(connection, encoder, decoder);
 
             var id = Guid.NewGuid();
 
-            await CreateCaseAsync(appender, id);
-            await ModifyCaseAsync(reader, appender, id);
+            await CreateCaseAsync(store, id);
+            await ModifyCaseAsync(store, id);
 
-            var @case = await reader.CaseAsync(id);
+            var @case = await store.CaseAsync(id);
             Console.WriteLine(JsonConvert.SerializeObject(@case, Formatting.Indented));
         }
 
-        private static async Task CreateCaseAsync(IEventStoreAppender appender, Guid id)
+        private static async Task CreateCaseAsync(IEventStore appender, Guid id)
         {
             var @case = Case.Create(id, "The Subject", "The Description");
             await @case.CommitAsync(appender, Case.Configuration);
         }
 
-        private static async Task ModifyCaseAsync(
-            IEventStoreReader reader,
-            IEventStoreAppender appender,
-            Guid id
-        )
+        private static async Task ModifyCaseAsync(IEventStore store, Guid id)
         {
-            var @case = await reader.CaseAsync(id);
+            var @case = await store.CaseAsync(id);
             if (@case == null)
             {
                 throw new InvalidOperationException();
@@ -56,7 +51,7 @@ namespace EventSourcing.Demo
             @case.Import("Imported Subject", "Imported Description", "TS012345", CaseStatus.WaitingForDistributor);
             @case.AssignToService();
 
-            await appender.CommitAsync(@case);
+            await store.CommitAsync(@case);
         }
     }
 }

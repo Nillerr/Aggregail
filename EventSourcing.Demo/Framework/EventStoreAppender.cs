@@ -23,7 +23,7 @@ namespace EventSourcing.Demo.Framework
             AggregateConfiguration<TAggregate, TCreateEvent> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
-        ) 
+        )
             where TAggregate : Aggregate<TAggregate, TCreateEvent>
         {
             var events = pendingEvents.Select(pendingEvent =>
