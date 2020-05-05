@@ -1,8 +1,8 @@
 namespace EventSourcing.Demo.Framework
 {
-    public readonly struct RecordedEvent
+    public readonly struct RecordableEvent
     {
-        public RecordedEvent(long eventNumber)
+        public RecordableEvent(long eventNumber)
         {
             EventNumber = eventNumber;
         }

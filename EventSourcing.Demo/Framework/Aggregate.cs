@@ -34,10 +34,10 @@ namespace EventSourcing.Demo.Framework
             _pendingEvents.Add(pendingEvent);
         }
 
-        public void Record(RecordedEvent recordedEvent)
+        public void Record(RecordableEvent recordableEvent)
         {
             var nextVersionNumber = _versionNumber + 1;
-            if (recordedEvent.EventNumber != nextVersionNumber)
+            if (recordableEvent.EventNumber != nextVersionNumber)
             {
                 throw new InvalidOperationException();
             }

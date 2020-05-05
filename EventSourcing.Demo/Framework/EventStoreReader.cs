@@ -36,7 +36,7 @@ namespace EventSourcing.Demo.Framework
             var createdEvent = _decoder.Decode<TCreatedEvent>(createdRecordedEvent.Data);
 
             var aggregate = configuration.Constructor(id, createdEvent);
-            aggregate.Record(new RecordedEvent(createdRecordedEvent.EventNumber));
+            aggregate.Record(new RecordableEvent(createdRecordedEvent.EventNumber));
 
             var applicators = configuration.Applicators;
 
@@ -53,7 +53,7 @@ namespace EventSourcing.Demo.Framework
                     if (applicators.TryGetValue(recordedEvent.EventType, out var applicator))
                     {
                         applicator(aggregate, _decoder, recordedEvent.Data);
-                        aggregate.Record(new RecordedEvent(recordedEvent.EventNumber));
+                        aggregate.Record(new RecordableEvent(recordedEvent.EventNumber));
                     }
                     else
                     {

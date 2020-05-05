@@ -110,14 +110,14 @@ namespace EventSourcing.Demo.Framework
                 var createEvent = _decoder.Decode<TCreatedEvent>(createStoredEvent.Data);
 
                 var aggregate = configuration.Constructor(id, createEvent);
-                aggregate.Record(new RecordedEvent(createStoredEvent.EventNumber));
+                aggregate.Record(new RecordableEvent(createStoredEvent.EventNumber));
                 
                 foreach (var storedEvent in eventStream.Skip(1))
                 {
                     if (configuration.Applicators.TryGetValue(storedEvent.EventType, out var applicator))
                     {
                         applicator(aggregate, _decoder, storedEvent.Data);
-                        aggregate.Record(new RecordedEvent(storedEvent.EventNumber));
+                        aggregate.Record(new RecordableEvent(storedEvent.EventNumber));
                     }
                     else
                     {
