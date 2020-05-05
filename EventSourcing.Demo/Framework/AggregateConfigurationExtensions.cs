@@ -6,9 +6,9 @@ namespace EventSourcing.Demo.Framework
             this AggregateConfiguration<TAggregate, TCreatedEvent> configuration,
             EventType<T> type
         )
-            where TAggregate : Aggregate<TAggregate, TCreatedEvent>, IApply<T>
+            where TAggregate : Aggregate<TAggregate, TCreatedEvent>, IApplies<T>
         {
-            return configuration.Apply(type, (aggregate, @event) => aggregate.Apply(@event));
+            return configuration.Applies(type, (aggregate, @event) => aggregate.Apply(@event));
         }
     }
 }

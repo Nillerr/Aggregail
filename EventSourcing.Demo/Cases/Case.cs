@@ -6,9 +6,9 @@ using EventSourcing.Demo.Framework;
 namespace EventSourcing.Demo.Cases
 {
     public sealed class Case : Aggregate<Case, CaseCreated>,
-        IApply<CaseImported>,
-        IApply<CaseAssignedToDistributor>,
-        IApply<CaseAssignedToService>
+        IApplies<CaseImported>,
+        IApplies<CaseAssignedToDistributor>,
+        IApplies<CaseAssignedToService>
     {
         private static readonly AggregateConfiguration<Case, CaseCreated> Configuration =
             new AggregateConfiguration<Case, CaseCreated>("Case", (id, @event) => new Case(id, @event))

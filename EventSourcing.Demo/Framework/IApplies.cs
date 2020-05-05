@@ -1,6 +1,6 @@
 namespace EventSourcing.Demo.Framework
 {
-    public interface IApply<in TEvent>
+    public interface IApplies<in TEvent>
     {
         void Apply(TEvent @event);
     }

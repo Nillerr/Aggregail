@@ -22,7 +22,7 @@ namespace EventSourcing.Demo.Framework
             Constructor = constructor;
         }
 
-        public AggregateConfiguration<TAggregate, TCreatedEvent> Apply<T>(EventType<T> type, Action<TAggregate, T> applicator)
+        public AggregateConfiguration<TAggregate, TCreatedEvent> Applies<T>(EventType<T> type, Action<TAggregate, T> applicator)
         {
             Applicators = Applicators.Add(type.Value, (aggregate, decoder, data) =>
             {
