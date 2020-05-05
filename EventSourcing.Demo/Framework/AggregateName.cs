@@ -3,7 +3,7 @@ using System;
 namespace EventSourcing.Demo.Framework
 {
     public readonly struct AggregateName<TAggregate>
-        where TAggregate : Aggregate
+        where TAggregate : Aggregate<TAggregate>
     {
         public AggregateName(string value)
         {
