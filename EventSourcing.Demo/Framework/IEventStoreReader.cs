@@ -5,10 +5,10 @@ namespace EventSourcing.Demo.Framework
 {
     public interface IEventStoreReader
     {
-        Task<TAggregate?> AggregateAsync<TAggregate, TCreatedEvent>(
+        Task<TAggregate?> AggregateAsync<TAggregate>(
             Guid id,
-            AggregateConfiguration<TAggregate, TCreatedEvent> configuration
+            AggregateConfiguration<TAggregate> configuration
         )
-            where TAggregate : Aggregate<TAggregate, TCreatedEvent>;
+            where TAggregate : Aggregate<TAggregate>;
     }
 }

@@ -17,20 +17,20 @@ namespace EventSourcing.Demo.Framework
             _appender = new EventStoreAppender(connection, encoder);
         }
 
-        public Task AppendToStreamAsync<TAggregate, TCreateEvent>(
+        public Task AppendToStreamAsync<TAggregate>(
             Guid id,
-            AggregateConfiguration<TAggregate, TCreateEvent> configuration,
+            AggregateConfiguration<TAggregate> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
-        ) where TAggregate : Aggregate<TAggregate, TCreateEvent>
+        ) where TAggregate : Aggregate<TAggregate>
         {
             return _appender.AppendToStreamAsync(id, configuration, expectedVersion, pendingEvents);
         }
 
-        public Task<TAggregate?> AggregateAsync<TAggregate, TCreatedEvent>(
+        public Task<TAggregate?> AggregateAsync<TAggregate>(
             Guid id,
-            AggregateConfiguration<TAggregate, TCreatedEvent> configuration
-        ) where TAggregate : Aggregate<TAggregate, TCreatedEvent>
+            AggregateConfiguration<TAggregate> configuration
+        ) where TAggregate : Aggregate<TAggregate>
         {
             return _reader.AggregateAsync(id, configuration);
         }

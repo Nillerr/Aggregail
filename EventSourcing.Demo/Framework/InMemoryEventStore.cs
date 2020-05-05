@@ -37,12 +37,12 @@ namespace EventSourcing.Demo.Framework
             _decoder = decoder;
         }
 
-        public Task AppendToStreamAsync<TAggregate, TCreateEvent>(
+        public Task AppendToStreamAsync<TAggregate>(
             Guid id,
-            AggregateConfiguration<TAggregate, TCreateEvent> configuration,
+            AggregateConfiguration<TAggregate> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
-        ) where TAggregate : Aggregate<TAggregate, TCreateEvent>
+        ) where TAggregate : Aggregate<TAggregate>
         {
             var stream = configuration.Name.Stream(id);
 
@@ -97,19 +97,22 @@ namespace EventSourcing.Demo.Framework
         private StoredEvent ToStoredEvent(IPendingEvent pendingEvent, long eventVersion) =>
             new StoredEvent(pendingEvent.Id, pendingEvent.Type, eventVersion, pendingEvent.EncodedData(_encoder));
 
-        public Task<TAggregate?> AggregateAsync<TAggregate, TCreatedEvent>(
+        public Task<TAggregate?> AggregateAsync<TAggregate>(
             Guid id,
-            AggregateConfiguration<TAggregate, TCreatedEvent> configuration
-        ) where TAggregate : Aggregate<TAggregate, TCreatedEvent>
+            AggregateConfiguration<TAggregate> configuration
+        ) where TAggregate : Aggregate<TAggregate>
         {
             var stream = configuration.Name.Stream(id);
 
             if (_streams.TryGetValue(stream, out var eventStream) && eventStream.Count > 0)
             {
                 var createStoredEvent = eventStream.First();
-                var createEvent = _decoder.Decode<TCreatedEvent>(createStoredEvent.Data);
+                if (!configuration.Constructors.TryGetValue(createStoredEvent.EventType, out var constructor))
+                {
+                    throw new InvalidOperationException($"Unrecognized construction event type: {createStoredEvent.EventType}");
+                }
 
-                var aggregate = configuration.Constructor(id, createEvent);
+                var aggregate = constructor(id, _decoder, createStoredEvent.Data);
                 aggregate.Record(new RecordableEvent(createStoredEvent.EventNumber));
                 
                 foreach (var storedEvent in eventStream.Skip(1))

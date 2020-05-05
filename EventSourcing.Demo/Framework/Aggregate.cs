@@ -16,14 +16,14 @@ namespace EventSourcing.Demo.Framework
         public Guid Id { get; }
     }
 
-    public abstract class Aggregate<TAggregate, TCreateEvent> : Aggregate
-        where TAggregate : Aggregate<TAggregate, TCreateEvent>
+    public abstract class Aggregate<TAggregate> : Aggregate
+        where TAggregate : Aggregate<TAggregate>
     {
         private readonly List<IPendingEvent> _pendingEvents = new List<IPendingEvent>();
 
         private long _versionNumber = ExpectedVersion.NoStream;
 
-        protected Aggregate(Guid id, [PublicAPI("Serves as a reference")] TCreateEvent @event)
+        protected Aggregate(Guid id)
             : base(id)
         {
         }
@@ -47,7 +47,7 @@ namespace EventSourcing.Demo.Framework
 
         protected async Task CommitAsync(
             IEventStoreAppender appender,
-            AggregateConfiguration<TAggregate, TCreateEvent> configuration
+            AggregateConfiguration<TAggregate> configuration
         )
         {
             if (_pendingEvents.Count == 0)

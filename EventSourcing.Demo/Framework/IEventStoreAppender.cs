@@ -6,12 +6,12 @@ namespace EventSourcing.Demo.Framework
 {
     public interface IEventStoreAppender
     {
-        Task AppendToStreamAsync<TAggregate, TCreateEvent>(
+        Task AppendToStreamAsync<TAggregate>(
             Guid id,
-            AggregateConfiguration<TAggregate, TCreateEvent> configuration,
+            AggregateConfiguration<TAggregate> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
         )
-            where TAggregate : Aggregate<TAggregate, TCreateEvent>;
+            where TAggregate : Aggregate<TAggregate>;
     }
 }

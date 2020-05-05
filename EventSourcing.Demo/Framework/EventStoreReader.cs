@@ -16,11 +16,11 @@ namespace EventSourcing.Demo.Framework
             _decoder = decoder;
         }
 
-        public async Task<TAggregate?> AggregateAsync<TAggregate, TCreatedEvent>(
+        public async Task<TAggregate?> AggregateAsync<TAggregate>(
             Guid id,
-            AggregateConfiguration<TAggregate, TCreatedEvent> configuration
+            AggregateConfiguration<TAggregate> configuration
         )
-            where TAggregate : Aggregate<TAggregate, TCreatedEvent>
+            where TAggregate : Aggregate<TAggregate>
         {
             var stream = configuration.Name.Stream(id);
 
@@ -33,9 +33,12 @@ namespace EventSourcing.Demo.Framework
             var createdResolvedEvent = createdResult.Event.Value;
             var createdRecordedEvent = createdResolvedEvent.Event;
 
-            var createdEvent = _decoder.Decode<TCreatedEvent>(createdRecordedEvent.Data);
+            if (!configuration.Constructors.TryGetValue(createdRecordedEvent.EventType, out var constructor))
+            {
+                throw new InvalidOperationException($"Unrecognized construction event type: {createdRecordedEvent.EventType}");
+            }
 
-            var aggregate = configuration.Constructor(id, createdEvent);
+            var aggregate = constructor(id, _decoder, createdRecordedEvent.Data);
             aggregate.Record(new RecordableEvent(createdRecordedEvent.EventNumber));
 
             var applicators = configuration.Applicators;
