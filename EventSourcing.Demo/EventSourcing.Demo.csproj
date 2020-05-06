@@ -9,6 +9,9 @@
     <ItemGroup>
       <PackageReference Include="EventStore.Client" Version="5.0.8" />
       <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
+      <PackageReference Include="MongoDB.Bson" Version="2.10.4" />
+      <PackageReference Include="NodaTime" Version="2.4.8" />
+      <PackageReference Include="NodaTime.Serialization.JsonNet" Version="2.3.0" />
     </ItemGroup>
 
 </Project>

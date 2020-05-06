@@ -13,7 +13,6 @@ namespace EventSourcing.Demo.Cases
         private static readonly AggregateConfiguration<CaseId, Case> Configuration =
             new AggregateConfiguration<CaseId, Case>("Case")
                 .Constructs(CaseCreated.EventType, (id, @event) => new Case(id, @event))
-                .Constructs(CaseImported.EventType, (id, @event) => new Case(id, @event))
                 .Applies(CaseImported.EventType)
                 .Applies(CaseAssignedToDistributor.EventType)
                 .Applies(CaseAssignedToService.EventType);
@@ -24,6 +23,8 @@ namespace EventSourcing.Demo.Cases
         public string? CaseNumber { get; private set; }
 
         public CaseStatus Status { get; private set; }
+        
+        public CaseType Type { get; private set; }
 
         private Case(CaseId id, CaseCreated @event)
             : base(id)
@@ -34,34 +35,16 @@ namespace EventSourcing.Demo.Cases
             CaseNumber = null;
 
             Status = CaseStatus.InProgress;
+
+            Type = @event.Type;
         }
 
-        private Case(CaseId id, CaseImported @event)
-            : base(id)
+        public static Case Create(CaseId id, string subject, string description, CaseType type)
         {
-            Subject = @event.Subject;
-            Description = @event.Description;
-
-            CaseNumber = @event.CaseNumber;
-
-            Status = @event.Status;
-        }
-
-        public static Case Create(CaseId id, string subject, string description)
-        {
-            var @event = new CaseCreated(subject, description);
+            var @event = new CaseCreated(subject, description, type);
 
             var @case = new Case(id, @event);
             @case.Append(id.Value, CaseCreated.EventType, @event);
-            return @case;
-        }
-
-        public static Case Imported(CaseId id, string subject, string description, string caseNumber, CaseStatus status)
-        {
-            var @event = new CaseImported(subject, description, caseNumber, status);
-
-            var @case = new Case(id, @event);
-            @case.Append(id.Value, CaseImported.EventType, @event);
             return @case;
         }
 
