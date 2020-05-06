@@ -1,9 +1,7 @@
-using System;
-
 namespace EventSourcing.Demo.Framework
 {
-    public readonly struct AggregateName<TAggregate>
-        where TAggregate : Aggregate<TAggregate>
+    public readonly struct AggregateName<TIdentity, TAggregate>
+        where TAggregate : Aggregate<TIdentity, TAggregate>
     {
         public AggregateName(string value)
         {
@@ -11,9 +9,10 @@ namespace EventSourcing.Demo.Framework
         }
 
         public string Value { get; }
-        
-        public static implicit operator AggregateName<TAggregate>(string value) => new AggregateName<TAggregate>(value);
 
-        public string Stream(Guid id) => $"{Value}-{id:N}";
+        public static implicit operator AggregateName<TIdentity, TAggregate>(string value) =>
+            new AggregateName<TIdentity, TAggregate>(value);
+
+        public string Stream(TIdentity id) => $"{Value}-{id}";
     }
 }

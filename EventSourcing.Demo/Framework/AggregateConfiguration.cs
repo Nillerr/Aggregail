@@ -4,33 +4,33 @@ using EventSourcing.Demo.Framework.Serialiazation;
 
 namespace EventSourcing.Demo.Framework
 {
-    public sealed class AggregateConfiguration<TAggregate>
-        where TAggregate : Aggregate<TAggregate>
+    public sealed class AggregateConfiguration<TIdentity, TAggregate>
+        where TAggregate : Aggregate<TIdentity, TAggregate>
     {
         public delegate void EventApplicator(TAggregate aggregate, IJsonDecoder decoder, byte[] data);
 
-        public AggregateName<TAggregate> Name { get; }
+        public AggregateName<TIdentity, TAggregate> Name { get; }
 
-        public Dictionary<string, Func<Guid, IJsonDecoder, byte[], TAggregate>> Constructors { get; } =
-            new Dictionary<string, Func<Guid, IJsonDecoder, byte[], TAggregate>>();
+        public Dictionary<string, Func<TIdentity, IJsonDecoder, byte[], TAggregate>> Constructors { get; } =
+            new Dictionary<string, Func<TIdentity, IJsonDecoder, byte[], TAggregate>>();
 
         public Dictionary<string, EventApplicator> Applicators { get; } = new Dictionary<string, EventApplicator>();
 
-        public AggregateConfiguration(AggregateName<TAggregate> name)
+        public AggregateConfiguration(AggregateName<TIdentity, TAggregate> name)
         {
             Name = name;
         }
 
-        public AggregateConfiguration<TAggregate> Constructs<T>(
+        public AggregateConfiguration<TIdentity, TAggregate> Constructs<T>(
             EventType<T> type,
-            Func<Guid, T, TAggregate> constructor
+            Func<TIdentity, T, TAggregate> constructor
         )
         {
             Constructors.Add(type.Value, (id, decoder, data) => constructor(id, decoder.Decode<T>(data)));
             return this;
         }
 
-        public AggregateConfiguration<TAggregate> Applies<T>(EventType<T> type, Action<TAggregate, T> applicator)
+        public AggregateConfiguration<TIdentity, TAggregate> Applies<T>(EventType<T> type, Action<TAggregate, T> applicator)
         {
             Applicators.Add(type.Value, (aggregate, decoder, data) => applicator(aggregate, decoder.Decode<T>(data)));
             return this;

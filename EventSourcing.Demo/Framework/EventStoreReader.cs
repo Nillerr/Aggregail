@@ -16,11 +16,11 @@ namespace EventSourcing.Demo.Framework
             _decoder = decoder;
         }
 
-        public async Task<TAggregate?> AggregateAsync<TAggregate>(
-            Guid id,
-            AggregateConfiguration<TAggregate> configuration
+        public async Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration
         )
-            where TAggregate : Aggregate<TAggregate>
+            where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var stream = configuration.Name.Stream(id);
 

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,13 +17,13 @@ namespace EventSourcing.Demo.Framework
             _encoder = encoder;
         }
 
-        public async Task AppendToStreamAsync<TAggregate>(
-            Guid id,
-            AggregateConfiguration<TAggregate> configuration,
+        public async Task AppendToStreamAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
         )
-            where TAggregate : Aggregate<TAggregate>
+            where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var events = pendingEvents.Select(pendingEvent =>
                 new EventData(pendingEvent.Id, pendingEvent.Type, true, pendingEvent.EncodedData(_encoder), null)

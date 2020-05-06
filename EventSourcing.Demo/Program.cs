@@ -25,7 +25,7 @@ namespace EventSourcing.Demo
 
         private static async Task TestCase(IEventStore store)
         {
-            var id = Guid.NewGuid();
+            var id = new CaseId(Guid.NewGuid());
 
             await CreateCaseAsync(store, id);
             await ModifyCaseAsync(store, id);
@@ -34,13 +34,13 @@ namespace EventSourcing.Demo
             Console.WriteLine(JsonConvert.SerializeObject(@case, Formatting.Indented));
         }
 
-        private static async Task CreateCaseAsync(IEventStore store, Guid id)
+        private static async Task CreateCaseAsync(IEventStore store, CaseId id)
         {
             var @case = Case.Create(id, "The Subject", "The Description");
             await @case.CommitAsync(store);
         }
 
-        private static async Task ModifyCaseAsync(IEventStore store, Guid id)
+        private static async Task ModifyCaseAsync(IEventStore store, CaseId id)
         {
             var @case = await Case.FromAsync(store, id);
             if (@case == null)

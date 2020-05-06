@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using EventSourcing.Demo.Framework.Serialiazation;
@@ -17,20 +16,22 @@ namespace EventSourcing.Demo.Framework
             _appender = new EventStoreAppender(connection, encoder);
         }
 
-        public Task AppendToStreamAsync<TAggregate>(
-            Guid id,
-            AggregateConfiguration<TAggregate> configuration,
+        public Task AppendToStreamAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
-        ) where TAggregate : Aggregate<TAggregate>
+        )
+            where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             return _appender.AppendToStreamAsync(id, configuration, expectedVersion, pendingEvents);
         }
 
-        public Task<TAggregate?> AggregateAsync<TAggregate>(
-            Guid id,
-            AggregateConfiguration<TAggregate> configuration
-        ) where TAggregate : Aggregate<TAggregate>
+        public Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration
+        )
+            where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             return _reader.AggregateAsync(id, configuration);
         }

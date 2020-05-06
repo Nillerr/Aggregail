@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -6,12 +5,12 @@ namespace EventSourcing.Demo.Framework
 {
     public interface IEventStoreAppender
     {
-        Task AppendToStreamAsync<TAggregate>(
-            Guid id,
-            AggregateConfiguration<TAggregate> configuration,
+        Task AppendToStreamAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
         )
-            where TAggregate : Aggregate<TAggregate>;
+            where TAggregate : Aggregate<TIdentity, TAggregate>;
     }
 }

@@ -37,12 +37,12 @@ namespace EventSourcing.Demo.Framework
             _decoder = decoder;
         }
 
-        public Task AppendToStreamAsync<TAggregate>(
-            Guid id,
-            AggregateConfiguration<TAggregate> configuration,
+        public Task AppendToStreamAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
-        ) where TAggregate : Aggregate<TAggregate>
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var stream = configuration.Name.Stream(id);
 
@@ -97,10 +97,10 @@ namespace EventSourcing.Demo.Framework
         private StoredEvent ToStoredEvent(IPendingEvent pendingEvent, long eventVersion) =>
             new StoredEvent(pendingEvent.Id, pendingEvent.Type, eventVersion, pendingEvent.EncodedData(_encoder));
 
-        public Task<TAggregate?> AggregateAsync<TAggregate>(
-            Guid id,
-            AggregateConfiguration<TAggregate> configuration
-        ) where TAggregate : Aggregate<TAggregate>
+        public Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var stream = configuration.Name.Stream(id);
 

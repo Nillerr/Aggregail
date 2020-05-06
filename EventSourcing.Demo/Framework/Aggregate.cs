@@ -5,19 +5,19 @@ using EventStore.ClientAPI;
 
 namespace EventSourcing.Demo.Framework
 {
-    public abstract class Aggregate<TAggregate>
-        where TAggregate : Aggregate<TAggregate>
+    public abstract class Aggregate<TIdentity, TAggregate>
+        where TAggregate : Aggregate<TIdentity, TAggregate>
     {
         private readonly List<IPendingEvent> _pendingEvents = new List<IPendingEvent>();
 
         private long _versionNumber = ExpectedVersion.NoStream;
 
-        protected Aggregate(Guid id)
+        protected Aggregate(TIdentity id)
         {
             Id = id;
         }
 
-        public Guid Id { get; }
+        public TIdentity Id { get; }
 
         protected void Append<T>(Guid id, EventType<T> type, T data)
         {
@@ -38,7 +38,7 @@ namespace EventSourcing.Demo.Framework
 
         protected async Task CommitAsync(
             IEventStoreAppender appender,
-            AggregateConfiguration<TAggregate> configuration
+            AggregateConfiguration<TIdentity, TAggregate> configuration
         )
         {
             if (_pendingEvents.Count == 0)

@@ -5,13 +5,13 @@ using EventSourcing.Demo.Framework;
 
 namespace EventSourcing.Demo.Cases
 {
-    public sealed class Case : Aggregate<Case>,
+    public sealed class Case : Aggregate<CaseId, Case>,
         IApplies<CaseImported>,
         IApplies<CaseAssignedToDistributor>,
         IApplies<CaseAssignedToService>
     {
-        private static readonly AggregateConfiguration<Case> Configuration =
-            new AggregateConfiguration<Case>("Case")
+        private static readonly AggregateConfiguration<CaseId, Case> Configuration =
+            new AggregateConfiguration<CaseId, Case>("Case")
                 .Constructs(CaseCreated.EventType, (id, @event) => new Case(id, @event))
                 .Constructs(CaseImported.EventType, (id, @event) => new Case(id, @event))
                 .Applies(CaseImported.EventType)
@@ -25,7 +25,7 @@ namespace EventSourcing.Demo.Cases
 
         public CaseStatus Status { get; private set; }
 
-        private Case(Guid id, CaseCreated @event)
+        private Case(CaseId id, CaseCreated @event)
             : base(id)
         {
             Subject = @event.Subject;
@@ -36,7 +36,7 @@ namespace EventSourcing.Demo.Cases
             Status = CaseStatus.InProgress;
         }
 
-        private Case(Guid id, CaseImported @event)
+        private Case(CaseId id, CaseImported @event)
             : base(id)
         {
             Subject = @event.Subject;
@@ -47,25 +47,25 @@ namespace EventSourcing.Demo.Cases
             Status = @event.Status;
         }
 
-        public static Case Create(Guid id, string subject, string description)
+        public static Case Create(CaseId id, string subject, string description)
         {
             var @event = new CaseCreated(subject, description);
 
             var @case = new Case(id, @event);
-            @case.Append(id, CaseCreated.EventType, @event);
+            @case.Append(id.Value, CaseCreated.EventType, @event);
             return @case;
         }
 
-        public static Case Imported(Guid id, string subject, string description, string caseNumber, CaseStatus status)
+        public static Case Imported(CaseId id, string subject, string description, string caseNumber, CaseStatus status)
         {
             var @event = new CaseImported(subject, description, caseNumber, status);
 
             var @case = new Case(id, @event);
-            @case.Append(id, CaseImported.EventType, @event);
+            @case.Append(id.Value, CaseImported.EventType, @event);
             return @case;
         }
 
-        public static Task<Case?> FromAsync(IEventStoreReader reader, Guid id)
+        public static Task<Case?> FromAsync(IEventStoreReader reader, CaseId id)
         {
             return reader.AggregateAsync(id, Configuration);
         }
