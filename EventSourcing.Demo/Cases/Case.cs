@@ -11,33 +11,11 @@ namespace EventSourcing.Demo.Cases
         IApplies<CaseAssignedToService>
     {
         private static readonly AggregateConfiguration<CaseId, Case> Configuration =
-            new AggregateConfiguration<CaseId, Case>("Case")
+            new AggregateConfiguration<CaseId, Case>("case")
                 .Constructs(CaseCreated.EventType, (id, @event) => new Case(id, @event))
                 .Applies(CaseImported.EventType)
                 .Applies(CaseAssignedToDistributor.EventType)
                 .Applies(CaseAssignedToService.EventType);
-
-        public string Subject { get; private set; }
-        public string Description { get; private set; }
-
-        public string? CaseNumber { get; private set; }
-
-        public CaseStatus Status { get; private set; }
-        
-        public CaseType Type { get; private set; }
-
-        private Case(CaseId id, CaseCreated @event)
-            : base(id)
-        {
-            Subject = @event.Subject;
-            Description = @event.Description;
-
-            CaseNumber = null;
-
-            Status = CaseStatus.InProgress;
-
-            Type = @event.Type;
-        }
 
         public static Case Create(CaseId id, string subject, string description, CaseType type)
         {
@@ -52,6 +30,28 @@ namespace EventSourcing.Demo.Cases
         {
             return reader.AggregateAsync(id, Configuration);
         }
+
+        private Case(CaseId id, CaseCreated @event)
+            : base(id)
+        {
+            Subject = @event.Subject;
+            Description = @event.Description;
+
+            CaseNumber = null;
+
+            Status = CaseStatus.InProgress;
+
+            Type = @event.Type;
+        }
+
+        public string Subject { get; private set; }
+        public string Description { get; private set; }
+
+        public string? CaseNumber { get; private set; }
+
+        public CaseStatus Status { get; private set; }
+        
+        public CaseType Type { get; private set; }
 
         public Task CommitAsync(IEventStoreAppender appender)
         {

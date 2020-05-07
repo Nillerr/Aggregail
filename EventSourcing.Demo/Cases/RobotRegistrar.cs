@@ -13,7 +13,7 @@ namespace EventSourcing.Demo.Cases
 
         public abstract TResult Apply<TResult>(
             [InstantHandle] Func<User, TResult> user,
-            [InstantHandle] Func<Import, TResult> import
+            [InstantHandle] Func<Import, TResult> inStock
         );
 
         [BsonDiscriminator("user")]
@@ -26,7 +26,7 @@ namespace EventSourcing.Demo.Cases
 
             public UserId Id { get; }
 
-            public override TResult Apply<TResult>(Func<User, TResult> user, Func<Import, TResult> import) =>
+            public override TResult Apply<TResult>(Func<User, TResult> user, Func<Import, TResult> inStock) =>
                 user(this);
         }
 
@@ -39,8 +39,8 @@ namespace EventSourcing.Demo.Cases
             {
             }
 
-            public override TResult Apply<TResult>(Func<User, TResult> user, Func<Import, TResult> import) =>
-                import(this);
+            public override TResult Apply<TResult>(Func<User, TResult> user, Func<Import, TResult> inStock) =>
+                inStock(this);
         }
     }
 }

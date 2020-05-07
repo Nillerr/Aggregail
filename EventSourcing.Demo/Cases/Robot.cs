@@ -1,17 +1,59 @@
 using System;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading.Tasks;
 using EventSourcing.Demo.Framework;
 
 namespace EventSourcing.Demo.Cases
 {
-    public sealed class Robot : Aggregate<RobotId, Robot>
+    public sealed class Robot : Aggregate<RobotId, Robot>,
+        IApplies<RobotRegisteredByUser>,
+        IApplies<RobotModifiedByUser>,
+        IApplies<RobotImported>
     {
+        private static readonly AggregateConfiguration<RobotId, Robot> Configuration =
+            new AggregateConfiguration<RobotId, Robot>("robot")
+                .Constructs(RobotImported.EventType, (id, e) => new Robot(id, e))
+                .Applies(RobotRegisteredByUser.EventType)
+                .Applies(RobotModifiedByUser.EventType)
+                .Applies(RobotImported.EventType);
+
+        public static Robot Imported(
+            RobotId id,
+            SerialNumber serialNumber,
+            Application? application,
+            SoftwareVersionId? softwareVersionId,
+            EndUserId? registeredToId,
+            DistributorId? distributedById
+        )
+        {
+            var e = new RobotImported(serialNumber, application, softwareVersionId, registeredToId, distributedById);
+            
+            var robot = new Robot(id, e);
+            robot.Append(id.Value, RobotImported.EventType, e);
+            return robot;
+        }
+
+        public static Task<Robot?> FromAsync(IEventStoreReader reader, RobotId id)
+        {
+            return reader.AggregateAsync(id, Configuration);
+        }
+        
         public Robot(RobotId id, RobotImported e)
             : base(id)
         {
             SerialNumber = e.SerialNumber;
             
+            InitializeRegistrations(e);
+        }
+
+        public SerialNumber SerialNumber { get; private set; }
+
+        public ImmutableList<RobotRegistration> Registrations { get; private set; } =
+            ImmutableList<RobotRegistration>.Empty;
+
+        private void InitializeRegistrations(RobotImported e)
+        {
             if (e.RegisteredToId.HasValue)
             {
                 var registration = new RobotRegistration.Registered(e, e.RegisteredToId.Value);
@@ -24,29 +66,22 @@ namespace EventSourcing.Demo.Cases
             }
         }
 
-        public SerialNumber SerialNumber { get; private set; }
-
-        public ImmutableList<RobotRegistration> Registrations { get; private set; } =
-            ImmutableList<RobotRegistration>.Empty;
-
-        public static Robot Imported(RobotId id, SerialNumber serialNumber, Application application, EndUserId registeredToId)
-        {
-            var e = new RobotImported(serialNumber, application, registeredToId);
-            
-            var robot = new Robot(id, e);
-            robot.Append(id.Value, RobotImported.EventType, e);
-            return robot;
-        }
-
         public void Apply(RobotRegisteredByUser e)
         {
             var latestRegistration = Registrations.Last();
             latestRegistration.Apply(
-                registration => throw new InvalidOperationException("Robot is already registered"),
-                unregistration =>
+                registered => throw new InvalidOperationException("Robot is already registered"),
+                unregistered =>
                 {
-                    var registration = new RobotRegistration.Registered(e);
-                    Registrations = Registrations.Add(registration);
+                    var distribution = unregistered.Distributions.Last();
+                    
+                    var distributedById = distribution.Apply<DistributorId?>(
+                        distributed => distributed.DistributedById,
+                        inStock => null
+                    );
+                    
+                    var registered = new RobotRegistration.Registered(e, distributedById);
+                    Registrations = Registrations.Add(registered);
                 } 
             );
         }
@@ -55,8 +90,8 @@ namespace EventSourcing.Demo.Cases
         {
             var latestRegistration = Registrations.Last();
             latestRegistration.Apply(
-                registration => registration.Apply(e),
-                unregistration => throw new InvalidOperationException("Robot is not registered")
+                registered => registered.Apply(e),
+                unregistered => throw new InvalidOperationException("Robot is not registered")
             );
         }
 
@@ -64,18 +99,23 @@ namespace EventSourcing.Demo.Cases
         {
             SerialNumber = e.SerialNumber;
             
+            ApplyRobotImportedToRegistrations(e);
+        }
+
+        private void ApplyRobotImportedToRegistrations(RobotImported e)
+        {
             var latestRegistration = Registrations.Last();
             latestRegistration.Apply(
-                registration =>
+                registered =>
                 {
                     if (e.RegisteredToId == null)
                     {
                         var reg = new RobotRegistration.Unregistered(e);
                         Registrations = Registrations.Add(reg);
                     }
-                    else if (e.RegisteredToId.Value == registration.RegisteredToId)
+                    else if (e.RegisteredToId.Value == registered.RegisteredToId)
                     {
-                        registration.Apply(e);
+                        registered.Apply(e);
                     }
                     else
                     {
@@ -83,7 +123,18 @@ namespace EventSourcing.Demo.Cases
                         Registrations = Registrations.Add(reg);
                     }
                 },
-                unregistration => unregistration.Apply(e)
+                unregistered =>
+                {
+                    if (e.RegisteredToId == null)
+                    {
+                        unregistered.Apply(e);
+                    }
+                    else
+                    {
+                        var reg = new RobotRegistration.Registered(e, e.RegisteredToId.Value);
+                        Registrations = Registrations.Add(reg);
+                    }
+                }
             );
         }
     }

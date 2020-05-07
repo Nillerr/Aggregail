@@ -5,11 +5,11 @@ namespace EventSourcing.Demo.Cases
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
     public sealed class JsonDiscriminatorAttribute : Attribute
     {
-        public JsonDiscriminatorAttribute(object discriminator)
+        public JsonDiscriminatorAttribute(string discriminator)
         {
             Discriminator = discriminator;
         }
 
-        public object Discriminator { get; }
+        public string Discriminator { get; }
     }
 }

@@ -1,111 +1,90 @@
 using System;
+using System.Collections.Immutable;
+using System.Linq;
 using JetBrains.Annotations;
 
 namespace EventSourcing.Demo.Cases
 {
     [JsonKnownTypes(typeof(Registered), typeof(Unregistered))]
-    public abstract class RobotRegistration : IUnion<RobotRegistration.Registered, RobotRegistration.Unregistered>
+    public abstract partial class RobotRegistration : 
+        IUnion<RobotRegistration.Registered, RobotRegistration.Unregistered>
     {
-        private RobotRegistration()
+        private RobotRegistration(IRobotInitialization e, DistributorId? distributedById)
         {
+            Registrar = e.Registrar();
+            
+            Application = e.Application;
+            SoftwareVersionId = e.SoftwareVersionId;
+            
+            InitializeDistributions(distributedById);
+        }
+
+        public RobotRegistrar Registrar { get; }
+
+        public Application? Application { get; private set; }
+        public SoftwareVersionId? SoftwareVersionId { get; private set; }
+
+        public ImmutableList<RobotDistribution> Distributions { get; private set; } =
+            ImmutableList<RobotDistribution>.Empty;
+
+        private void InitializeDistributions(DistributorId? distributedById)
+        {
+            if (distributedById.HasValue)
+            {
+                var dist = new RobotDistribution.Distributed(distributedById.Value);
+                Distributions = Distributions.Add(dist);
+            }
+            else
+            {
+                var dist = new RobotDistribution.InStock();
+                Distributions = Distributions.Add(dist);
+            }
+        }
+
+        public virtual void Apply(RobotImported e)
+        {
+            ApplyRobotImportedToDistributions(e);
+        }
+
+        private void ApplyRobotImportedToDistributions(RobotImported e)
+        {
+            var latestDistribution = Distributions.Last();
+            latestDistribution.Apply(
+                distributed =>
+                {
+                    if (e.DistributedById == null)
+                    {
+                        var dist = new RobotDistribution.InStock();
+                        Distributions = Distributions.Add(dist);
+                    }
+                    else if (e.DistributedById.Value == distributed.DistributedById)
+                    {
+                        distributed.Apply(e);
+                    }
+                    else
+                    {
+                        var dist = new RobotDistribution.Distributed(e.DistributedById.Value);
+                        Distributions = Distributions.Add(dist);
+                    }
+                },
+                inStock =>
+                {
+                    if (e.DistributedById == null)
+                    {
+                        inStock.Apply(e);
+                    }
+                    else
+                    {
+                        var dist = new RobotDistribution.Distributed(e.DistributedById.Value);
+                        Distributions = Distributions.Add(dist);
+                    }
+                }
+            );
         }
 
         public abstract TResult Apply<TResult>(
             [InstantHandle] Func<Registered, TResult> registration,
-            [InstantHandle] Func<Unregistered, TResult> unregistration
+            [InstantHandle] Func<Unregistered, TResult> unregistered
         );
-
-        [JsonDiscriminator("registered")]
-        public sealed class Registered : RobotRegistration
-        {
-            public Registered(RobotImported e, EndUserId registeredToId)
-            {
-                RegisteredToId = registeredToId;
-
-                Registrar = RobotRegistrar.Import.Instance;
-                
-                Name = string.Empty;
-                Integrator = string.Empty;
-                Description = string.Empty;
-
-                Application = e.Application;
-                SoftwareVersionId = e.SoftwareVersionId;
-            }
-
-            public Registered(RobotRegisteredByUser e)
-            {
-                RegisteredToId = e.RegisteredToId;
-                
-                Registrar = new RobotRegistrar.User(e.RegisteredById);
-
-                Name = e.Name;
-                Integrator = e.Integrator;
-                Description = e.Description;
-            }
-
-            public EndUserId RegisteredToId { get; }
-
-            public RobotRegistrar Registrar { get; }
-            
-            public UserId? ModifiedById { get; private set; }
-
-            public string Name { get; private set; }
-            public string Integrator { get; private set; }
-            public string Description { get; private set; }
-            
-            public Application? Application { get; private set; }
-            public SoftwareVersionId? SoftwareVersionId { get; private set; }
-
-            public void Apply(RobotModifiedByUser e)
-            {
-                ModifiedById = e.ModifiedById;
-                
-                Name = e.Name;
-                Integrator = e.Integrator;
-                Description = e.Description;
-
-                Application = e.Application;
-                SoftwareVersionId = e.SoftwareVersionId;
-            }
-
-            public void Apply(RobotImported e)
-            {
-                Application = e.Application;
-                SoftwareVersionId = e.SoftwareVersionId;
-            }
-
-            public override TResult Apply<TResult>(
-                Func<Registered, TResult> registration,
-                Func<Unregistered, TResult> unregistration
-            ) => registration(this);
-        }
-
-        [JsonDiscriminator("unregistered")]
-        public sealed class Unregistered : RobotRegistration
-        {
-            public Unregistered(RobotImported e)
-            {
-                Registrar = RobotRegistrar.Import.Instance;
-
-                Application = e.Application;
-                SoftwareVersionId = e.SoftwareVersionId;
-            }
-
-            public RobotRegistrar Registrar { get; }
-            
-            public Application? Application { get; private set; }
-            public SoftwareVersionId? SoftwareVersionId { get; private set; }
-
-            public void Apply(RobotImported e)
-            {
-                Application = e.Application;
-                SoftwareVersionId = e.SoftwareVersionId;
-            }
-
-            public override TResult Apply<TResult>(
-                Func<Registered, TResult> registration,
-                Func<Unregistered, TResult> unregistration
-            ) => unregistration(this);
-        }
     }
 }

@@ -36,7 +36,7 @@ namespace EventSourcing.Demo
 
         private static async Task CreateCaseAsync(IEventStore store, CaseId id)
         {
-            var @case = Case.Create(id, "The Subject", "The Description");
+            var @case = Case.Create(id, "The Subject", "The Description", new CaseType.Service());
             await @case.CommitAsync(store);
         }
 

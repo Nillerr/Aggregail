@@ -2,7 +2,7 @@ using EventSourcing.Demo.Framework;
 
 namespace EventSourcing.Demo.Cases
 {
-    public sealed class RobotRegisteredByUser
+    public sealed class RobotRegisteredByUser : IRobotInitialization
     {
         public static readonly EventType<RobotRegisteredByUser> EventType = "RobotRegistered";
 
@@ -31,5 +31,10 @@ namespace EventSourcing.Demo.Cases
         public string Integrator { get; }
         
         public string Description { get; }
+        
+        public Application? Application { get; }
+        public SoftwareVersionId? SoftwareVersionId { get; }
+        
+        public RobotRegistrar Registrar() => new RobotRegistrar.User(RegisteredById);
     }
 }

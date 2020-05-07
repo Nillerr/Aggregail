@@ -2,21 +2,12 @@ using System;
 
 namespace EventSourcing.Demo.Cases
 {
-    public enum CaseTypeKind
-    {
-        Support,
-        Service,
-        Claim
-    }
-    
-    [JsonKnownTypes(nameof(Kind), typeof(Support), typeof(Service), typeof(Claim))]
+    [JsonKnownTypes(typeof(Support), typeof(Service), typeof(Claim))]
     public abstract class CaseType
     {
         private CaseType()
         {
         }
-        
-        public abstract CaseTypeKind Kind { get; }
 
         public abstract TResult Apply<TResult>(
             Func<Support, TResult> support,
@@ -24,11 +15,9 @@ namespace EventSourcing.Demo.Cases
             Func<Claim, TResult> claim
         );
 
-        [JsonDiscriminator(CaseTypeKind.Support)]
+        [JsonDiscriminator("support")]
         public sealed class Support : CaseType
         {
-            public override CaseTypeKind Kind { get; } = CaseTypeKind.Support;
-
             public override TResult Apply<TResult>(
                 Func<Support, TResult> support,
                 Func<Service, TResult> service,
@@ -36,17 +25,20 @@ namespace EventSourcing.Demo.Cases
             ) => support(this);
         }
 
-        [JsonDiscriminator(CaseTypeKind.Service)]
+        [JsonDiscriminator("service")]
         public sealed class Service : CaseType
         {
-            public Service(RobotRegistrationId robotRegistrationId)
+            public Service()
             {
-                RobotRegistrationId = robotRegistrationId;
+                Robot = null;
+            }
+            
+            public Service(CaseRobot? robot)
+            {
+                Robot = robot;
             }
 
-            public RobotRegistrationId RobotRegistrationId { get; }
-
-            public override CaseTypeKind Kind { get; } = CaseTypeKind.Service;
+            public CaseRobot? Robot { get; }
 
             public override TResult Apply<TResult>(
                 Func<Support, TResult> support,
@@ -55,17 +47,19 @@ namespace EventSourcing.Demo.Cases
             ) => service(this);
         }
 
-        [JsonDiscriminator(CaseTypeKind.Claim)]
+        [JsonDiscriminator("claim")]
         public sealed class Claim : CaseType
         {
-            public Claim(RobotRegistrationId robotRegistrationId)
+            public Claim()
             {
-                RobotRegistrationId = robotRegistrationId;
+            }
+            
+            public Claim(CaseRobot? robot)
+            {
+                Robot = robot;
             }
 
-            public RobotRegistrationId RobotRegistrationId { get; }
-
-            public override CaseTypeKind Kind { get; } = CaseTypeKind.Claim;
+            public CaseRobot? Robot { get; }
 
             public override TResult Apply<TResult>(
                 Func<Support, TResult> support,
