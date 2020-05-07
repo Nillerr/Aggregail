@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
 using EventSourcing.Demo.Cases.Events;
 using EventSourcing.Demo.Framework;
@@ -8,14 +10,22 @@ namespace EventSourcing.Demo.Cases
     public sealed class Case : Aggregate<CaseId, Case>,
         IApplies<IncidentImported>,
         IApplies<CaseAssignedToDistributor>,
-        IApplies<CaseAssignedToService>
+        IApplies<CaseAssignedToService>,
+        IApplies<CaseCommentCreated>,
+        IApplies<PortalCommentImported>,
+        IApplies<CaseCommentExported>,
+        IApplies<PortalCommentAnnotationImported>
     {
         private static readonly AggregateConfiguration<CaseId, Case> Configuration =
             new AggregateConfiguration<CaseId, Case>("case")
                 .Constructs(CaseCreated.EventType, (id, e) => new Case(id, e))
                 .Applies(IncidentImported.EventType)
                 .Applies(CaseAssignedToDistributor.EventType)
-                .Applies(CaseAssignedToService.EventType);
+                .Applies(CaseAssignedToService.EventType)
+                .Applies(CaseCommentCreated.EventType)
+                .Applies(PortalCommentImported.EventType)
+                .Applies(CaseCommentExported.EventType)
+                .Applies(PortalCommentAnnotationImported.EventType);
 
         public static Case Create(CaseId id, string subject, string description, CaseType type)
         {
@@ -42,6 +52,7 @@ namespace EventSourcing.Demo.Cases
             Status = CaseStatus.InProgress;
 
             Type = e.Type;
+            Comments = ImmutableList<CaseComment>.Empty;
         }
 
         public string Subject { get; private set; }
@@ -52,6 +63,8 @@ namespace EventSourcing.Demo.Cases
         public CaseStatus Status { get; private set; }
         
         public CaseType Type { get; private set; }
+        
+        public ImmutableList<CaseComment> Comments { get; private set; }
 
         public Task CommitAsync(IEventStoreAppender appender)
         {
@@ -82,6 +95,38 @@ namespace EventSourcing.Demo.Cases
             Append(Guid.NewGuid(), CaseAssignedToService.EventType, e);
         }
 
+        public void CreateComment(CaseCommentId id, string description, CaseCommentAuthor author)
+        {
+            var e = new CaseCommentCreated(id, description, author);
+            
+            Apply(e);
+            Append(Guid.NewGuid(), CaseCommentCreated.EventType, e);
+        }
+
+        public void ImportPortalComment(PortalCommentId id, string description, SystemUserId ownerId)
+        {
+            var e = new PortalCommentImported(id, description, ownerId);
+            
+            Apply(e);
+            Append(Guid.NewGuid(), PortalCommentImported.EventType, e);
+        }
+
+        public void ExportComment(CaseCommentId id)
+        {
+            var e = new CaseCommentExported(id);
+            
+            Apply(e);
+            Append(Guid.NewGuid(), CaseCommentExported.EventType, e);
+        }
+
+        public void ImportPortalCommentAnnotation(AnnotationId id, PortalCommentId portalCommentId)
+        {
+            var e = new PortalCommentAnnotationImported(id, portalCommentId);
+            
+            Apply(e);
+            Append(Guid.NewGuid(), PortalCommentAnnotationImported.EventType, e);
+        }
+
         public void Apply(IncidentImported e)
         {
             Subject = e.Title;
@@ -102,6 +147,38 @@ namespace EventSourcing.Demo.Cases
         public void Apply(CaseAssignedToService e)
         {
             Status = CaseStatus.InProgress;
+        }
+
+        public void Apply(CaseCommentCreated e)
+        {
+            var comment = new CaseComment(e);
+            Comments = Comments.Add(comment);
+        }
+
+        public void Apply(PortalCommentImported e)
+        {
+            var existing = Comments.FirstOrDefault(c => c.Id == e.Id);
+            if (existing == null)
+            {
+                var comment = new CaseComment(e);
+                Comments = Comments.Add(comment);
+            }
+            else
+            {
+                existing.Apply(e);
+            }
+        }
+
+        public void Apply(CaseCommentExported e)
+        {
+            var comment = Comments.First(c => c.Id == e.Id);
+            comment.Apply(e);
+        }
+
+        public void Apply(PortalCommentAnnotationImported e)
+        {
+            var comment = Comments.First(c => c.Id == e.PortalCommentId);
+            comment.Apply(e);
         }
     }
 }
