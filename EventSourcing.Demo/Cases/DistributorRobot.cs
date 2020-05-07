@@ -19,7 +19,7 @@ namespace EventSourcing.Demo.Cases
 
         public SerialNumber SerialNumber { get; }
 
-        public Application? Application { get; }
+        public RobotApplication? Application { get; }
         public SoftwareVersionId? SoftwareVersionId { get; }
 
         public static DistributorRobot From(Robot robot, DistributorId distributedById)

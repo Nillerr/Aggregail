@@ -29,7 +29,7 @@ namespace EventSourcing.Demo.Cases
         
         public string Description { get; }
         
-        public Application? Application { get; }
+        public RobotApplication? Application { get; }
         public SoftwareVersionId? SoftwareVersionId { get; }
     }
 }

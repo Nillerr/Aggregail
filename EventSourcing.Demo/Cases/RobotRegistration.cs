@@ -21,7 +21,7 @@ namespace EventSourcing.Demo.Cases
 
         public RobotRegistrar Registrar { get; }
 
-        public Application? Application { get; private set; }
+        public RobotApplication? Application { get; private set; }
         public SoftwareVersionId? SoftwareVersionId { get; private set; }
 
         public ImmutableList<RobotDistribution> Distributions { get; private set; } =

@@ -1,6 +1,6 @@
-namespace EventSourcing.Demo.Cases
+namespace EventSourcing.Demo.Cases.CRM
 {
-    public enum Application
+    public enum RobotApplication
     {
         Assembly = 964_110_000,
         MaterialHandling = 964_110_001,

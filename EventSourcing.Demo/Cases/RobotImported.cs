@@ -8,7 +8,7 @@ namespace EventSourcing.Demo.Cases
 
         public RobotImported(
             SerialNumber serialNumber,
-            Application? application,
+            RobotApplication? application,
             SoftwareVersionId? softwareVersionId,
             EndUserId? registeredToId,
             DistributorId? distributedById
@@ -23,7 +23,7 @@ namespace EventSourcing.Demo.Cases
 
         public SerialNumber SerialNumber { get; }
 
-        public Application? Application { get; }
+        public RobotApplication? Application { get; }
 
         public SoftwareVersionId? SoftwareVersionId { get; }
 

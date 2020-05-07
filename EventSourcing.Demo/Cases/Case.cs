@@ -6,23 +6,23 @@ using EventSourcing.Demo.Framework;
 namespace EventSourcing.Demo.Cases
 {
     public sealed class Case : Aggregate<CaseId, Case>,
-        IApplies<CaseImported>,
+        IApplies<IncidentImported>,
         IApplies<CaseAssignedToDistributor>,
         IApplies<CaseAssignedToService>
     {
         private static readonly AggregateConfiguration<CaseId, Case> Configuration =
             new AggregateConfiguration<CaseId, Case>("case")
-                .Constructs(CaseCreated.EventType, (id, @event) => new Case(id, @event))
-                .Applies(CaseImported.EventType)
+                .Constructs(CaseCreated.EventType, (id, e) => new Case(id, e))
+                .Applies(IncidentImported.EventType)
                 .Applies(CaseAssignedToDistributor.EventType)
                 .Applies(CaseAssignedToService.EventType);
 
         public static Case Create(CaseId id, string subject, string description, CaseType type)
         {
-            var @event = new CaseCreated(subject, description, type);
+            var e = new CaseCreated(subject, description, type);
 
-            var @case = new Case(id, @event);
-            @case.Append(id.Value, CaseCreated.EventType, @event);
+            var @case = new Case(id, e);
+            @case.Append(id.Value, CaseCreated.EventType, e);
             return @case;
         }
 
@@ -31,23 +31,23 @@ namespace EventSourcing.Demo.Cases
             return reader.AggregateAsync(id, Configuration);
         }
 
-        private Case(CaseId id, CaseCreated @event)
+        private Case(CaseId id, CaseCreated e)
             : base(id)
         {
-            Subject = @event.Subject;
-            Description = @event.Description;
+            Subject = e.Subject;
+            Description = e.Description;
 
             CaseNumber = null;
 
             Status = CaseStatus.InProgress;
 
-            Type = @event.Type;
+            Type = e.Type;
         }
 
         public string Subject { get; private set; }
         public string Description { get; private set; }
 
-        public string? CaseNumber { get; private set; }
+        public CaseNumber? CaseNumber { get; private set; }
 
         public CaseStatus Status { get; private set; }
         
@@ -58,46 +58,48 @@ namespace EventSourcing.Demo.Cases
             return CommitAsync(appender, Configuration);
         }
 
-        public void Import(string subject, string description, string caseNumber, CaseStatus status)
+        public void Import(CRM.Incident incident)
         {
-            var @event = new CaseImported(subject, description, caseNumber, status);
+            var e = IncidentImported.Create(incident);
 
-            Apply(@event);
-            Append(Guid.NewGuid(), CaseImported.EventType, @event);
+            Apply(e);
+            Append(Guid.NewGuid(), IncidentImported.EventType, e);
         }
 
         public void AssignToDistributor()
         {
-            var @event = new CaseAssignedToDistributor();
+            var e = new CaseAssignedToDistributor();
 
-            Apply(@event);
-            Append(Guid.NewGuid(), CaseAssignedToDistributor.EventType, @event);
+            Apply(e);
+            Append(Guid.NewGuid(), CaseAssignedToDistributor.EventType, e);
         }
 
         public void AssignToService()
         {
-            var @event = new CaseAssignedToService();
+            var e = new CaseAssignedToService();
 
-            Apply(@event);
-            Append(Guid.NewGuid(), CaseAssignedToService.EventType, @event);
+            Apply(e);
+            Append(Guid.NewGuid(), CaseAssignedToService.EventType, e);
         }
 
-        public void Apply(CaseImported @event)
+        public void Apply(IncidentImported e)
         {
-            Subject = @event.Subject;
-            Description = @event.Description;
+            Subject = e.Title;
+            Description = e.Description;
 
-            CaseNumber = @event.CaseNumber;
+            CaseNumber = e.CaseNumber;
 
-            Status = @event.Status;
+            Status = e.ImportedCaseStatus();
+
+            Type = e.ImportedCaseType();
         }
 
-        public void Apply(CaseAssignedToDistributor @event)
+        public void Apply(CaseAssignedToDistributor e)
         {
             Status = CaseStatus.WaitingForDistributor;
         }
 
-        public void Apply(CaseAssignedToService @event)
+        public void Apply(CaseAssignedToService e)
         {
             Status = CaseStatus.InProgress;
         }

@@ -1,10 +1,6 @@
-﻿using System;
-using System.Threading.Tasks;
-using EventSourcing.Demo.Cases;
-using EventSourcing.Demo.Framework;
+﻿using System.Threading.Tasks;
 using EventSourcing.Demo.Framework.Serialiazation;
 using EventStore.ClientAPI;
-using Newtonsoft.Json;
 
 namespace EventSourcing.Demo
 {
@@ -20,40 +16,7 @@ namespace EventSourcing.Demo
             var decoder = new JsonDecoder();
             var store = new Framework.EventStore(connection, encoder, decoder);
 
-            await TestCase(store);
-        }
-
-        private static async Task TestCase(IEventStore store)
-        {
-            var id = new CaseId(Guid.NewGuid());
-
-            await CreateCaseAsync(store, id);
-            await ModifyCaseAsync(store, id);
-
-            var @case = await Case.FromAsync(store, id);
-            Console.WriteLine(JsonConvert.SerializeObject(@case, Formatting.Indented));
-        }
-
-        private static async Task CreateCaseAsync(IEventStore store, CaseId id)
-        {
-            var @case = Case.Create(id, "The Subject", "The Description", new CaseType.Service());
-            await @case.CommitAsync(store);
-        }
-
-        private static async Task ModifyCaseAsync(IEventStore store, CaseId id)
-        {
-            var @case = await Case.FromAsync(store, id);
-            if (@case == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            @case.Import("Imported Subject", "Imported Description", "TS012345", CaseStatus.WaitingForDistributor);
-            @case.AssignToService();
-            @case.AssignToDistributor();
-            @case.Import("Imported Subject 2", "Imported Description 2", "TS012345", CaseStatus.WaitingForDistributor);
-
-            await @case.CommitAsync(store);
+            await Cases.Demo.RunAsync(store);
         }
     }
 }

@@ -21,7 +21,7 @@ namespace EventSourcing.Demo.Cases
         public static Robot Imported(
             RobotId id,
             SerialNumber serialNumber,
-            Application? application,
+            RobotApplication? application,
             SoftwareVersionId? softwareVersionId,
             EndUserId? registeredToId,
             DistributorId? distributedById
@@ -38,8 +38,8 @@ namespace EventSourcing.Demo.Cases
         {
             return reader.AggregateAsync(id, Configuration);
         }
-        
-        public Robot(RobotId id, RobotImported e)
+
+        private Robot(RobotId id, RobotImported e)
             : base(id)
         {
             SerialNumber = e.SerialNumber;
@@ -51,6 +51,11 @@ namespace EventSourcing.Demo.Cases
 
         public ImmutableList<RobotRegistration> Registrations { get; private set; } =
             ImmutableList<RobotRegistration>.Empty;
+
+        public Task CommitAsync(IEventStoreAppender appender)
+        {
+            return CommitAsync(appender, Configuration);
+        }
 
         private void InitializeRegistrations(RobotImported e)
         {
