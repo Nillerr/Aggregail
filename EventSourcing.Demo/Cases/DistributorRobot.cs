@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 
 namespace EventSourcing.Demo.Cases
@@ -22,29 +21,29 @@ namespace EventSourcing.Demo.Cases
         public RobotApplication? Application { get; }
         public SoftwareVersionId? SoftwareVersionId { get; }
 
-        public static DistributorRobot From(Robot robot, DistributorId distributedById)
+        public static DistributorRobot? From(Robot robot, DistributorId distributedById)
         {
-            var foo = (
-                from reg in robot.Registrations
-                from dist in reg.Distributions
-                let distributed = dist.Apply(
+            var latest = (
+                from registration in robot.Registrations
+                from distribution in registration.Distributions
+                let distributed = distribution.Apply(
                     distributed => distributed,
                     inStock => null
                 )
                 where distributed?.DistributedById == distributedById
                 select new
                 {
-                    Registration = reg,
+                    Registration = registration,
                     Distribution = distributed
                 }
             ).LastOrDefault();
 
-            if (foo == null)
+            if (latest == null)
             {
-                throw new InvalidOperationException("The robot has never been distributed by the distributor");
+                return null;
             }
             
-            return new DistributorRobot(robot, foo.Registration, foo.Distribution);
+            return new DistributorRobot(robot, latest.Registration, latest.Distribution);
         }
     }
 }

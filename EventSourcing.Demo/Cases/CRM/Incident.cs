@@ -1,3 +1,4 @@
+using System;
 using Newtonsoft.Json;
 
 namespace EventSourcing.Demo.Cases.CRM
@@ -11,7 +12,7 @@ namespace EventSourcing.Demo.Cases.CRM
         public string Description { get; set; }
         
         [JsonProperty("c2rur_urcasenumber")]
-        public CaseNumber CaseNumber { get; set; }
+        public string CaseNumber { get; set; }
         
         [JsonProperty("c2rur_casetype")]
         public CaseType Type { get; set; }
@@ -24,15 +25,15 @@ namespace EventSourcing.Demo.Cases.CRM
         
         // Robot Stuff
         [JsonProperty("_c2rur_serialno_value")]
-        public RobotId? RobotId { get; set; }
+        public Guid? RobotId { get; set; }
         
         [JsonProperty("aka_application_test")]
         public RobotApplication? Application { get; set; }
         
         [JsonProperty("_ur_new_softwareversion_value")]
-        public SoftwareVersionId? SoftwareVersionId { get; set; }
+        public Guid? SoftwareVersionId { get; set; }
         
         [JsonProperty("ur_errorcodes")]
-        public RobotErrorCode[] ErrorCodes { get; set; }
+        public string[] ErrorCodes { get; set; }
     }
 }

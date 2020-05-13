@@ -111,36 +111,40 @@ namespace EventSourcing.Demo.Cases
         {
             var latestRegistration = Registrations.Last();
             latestRegistration.Apply(
-                registered =>
-                {
-                    if (e.RegisteredToId == null)
-                    {
-                        var reg = new RobotRegistration.Unregistered(e);
-                        Registrations = Registrations.Add(reg);
-                    }
-                    else if (e.RegisteredToId.Value == registered.RegisteredToId)
-                    {
-                        registered.Apply(e);
-                    }
-                    else
-                    {
-                        var reg = new RobotRegistration.Registered(e, e.RegisteredToId.Value);
-                        Registrations = Registrations.Add(reg);
-                    }
-                },
-                unregistered =>
-                {
-                    if (e.RegisteredToId == null)
-                    {
-                        unregistered.Apply(e);
-                    }
-                    else
-                    {
-                        var reg = new RobotRegistration.Registered(e, e.RegisteredToId.Value);
-                        Registrations = Registrations.Add(reg);
-                    }
-                }
+                registered => ApplyToLatestRegistration(e, registered),
+                unregistered => ApplyToLatestRegistration(e, unregistered)
             );
+        }
+
+        private void ApplyToLatestRegistration(RobotImported e, RobotRegistration.Registered registered)
+        {
+            if (e.RegisteredToId == null)
+            {
+                var reg = new RobotRegistration.Unregistered(e);
+                Registrations = Registrations.Add(reg);
+            }
+            else if (e.RegisteredToId.Value == registered.RegisteredToId)
+            {
+                registered.Apply(e);
+            }
+            else
+            {
+                var reg = new RobotRegistration.Registered(e, e.RegisteredToId.Value);
+                Registrations = Registrations.Add(reg);
+            }
+        }
+
+        private void ApplyToLatestRegistration(RobotImported e, RobotRegistration.Unregistered unregistered)
+        {
+            if (e.RegisteredToId == null)
+            {
+                unregistered.Apply(e);
+            }
+            else
+            {
+                var reg = new RobotRegistration.Registered(e, e.RegisteredToId.Value);
+                Registrations = Registrations.Add(reg);
+            }
         }
     }
 }

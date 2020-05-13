@@ -9,6 +9,8 @@ namespace EventSourcing.Demo.Cases
 
         public SoftwareVersionId(Guid value) => Value = value;
 
+        public static SoftwareVersionId Create(Guid value) => new SoftwareVersionId(value);
+
         public bool Equals(SoftwareVersionId other) => Value == other.Value;
         public override bool Equals(object? obj) => obj is SoftwareVersionId other && Equals(other);
         public override int GetHashCode() => Value.GetHashCode();

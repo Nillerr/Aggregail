@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using EventSourcing.Demo.Cases.CRM;
 using EventSourcing.Demo.Framework;
 
@@ -19,7 +21,7 @@ namespace EventSourcing.Demo.Cases.Events
             RobotId? robotId,
             RobotApplication? application,
             SoftwareVersionId? softwareVersionId,
-            RobotErrorCode[] errorCodes
+            ImmutableList<RobotErrorCode> errorCodes
         )
         {
             Title = title;
@@ -50,21 +52,21 @@ namespace EventSourcing.Demo.Cases.Events
 
         public SoftwareVersionId? SoftwareVersionId { get; }
 
-        public RobotErrorCode[] ErrorCodes { get; }
+        public ImmutableList<RobotErrorCode> ErrorCodes { get; }
 
         public static IncidentImported Create(Incident source)
         {
             return new IncidentImported(
                 source.Title,
                 source.Description,
-                source.CaseNumber,
+                new CaseNumber(source.CaseNumber),
                 ToCaseType(source.Type),
                 ToCaseOriginCode(source.Origin),
                 ToCaseStatus(source.Status),
-                source.RobotId,
+                source.RobotId.Select(Cases.RobotId.Create),
                 source.Application.Select(ToRobotApplication),
-                source.SoftwareVersionId,
-                source.ErrorCodes
+                source.SoftwareVersionId.Select(Cases.SoftwareVersionId.Create),
+                source.ErrorCodes.Select(RobotErrorCode.Create).ToImmutableList()
             );
         }
 

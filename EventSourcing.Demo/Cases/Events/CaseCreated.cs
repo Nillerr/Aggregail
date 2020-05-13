@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using EventSourcing.Demo.Framework;
 
 namespace EventSourcing.Demo.Cases.Events
@@ -10,12 +11,15 @@ namespace EventSourcing.Demo.Cases.Events
         public string Description { get; }
         
         public CaseType Type { get; }
+        
+        public ImmutableList<CaseAttachmentId> AttachmentIds { get; }
 
-        public CaseCreated(string subject, string description, CaseType type)
+        public CaseCreated(string subject, string description, CaseType type, ImmutableList<CaseAttachmentId> attachmentIds)
         {
             Subject = subject;
             Description = description;
             Type = type;
+            AttachmentIds = attachmentIds;
         }
     }
 }

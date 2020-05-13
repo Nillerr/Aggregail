@@ -32,7 +32,7 @@ namespace EventSourcing.Demo.Cases
         {
             Id = new CaseCommentId(e.Id.Value);
             Description = e.Description;
-            Author = new CaseCommentAuthor.Service(e.OwnerId, e);
+            Author = CaseCommentAuthor.Service.Create(e);
             Attachments = ImmutableList<CaseCommentAttachment>.Empty;
         }
 
@@ -45,7 +45,8 @@ namespace EventSourcing.Demo.Cases
         public void Apply(PortalCommentImported e)
         {
             Description = e.Description;
-            Author = e;
+            // TODO @nsj:
+            // Author = e.;
         }
 
         public void Apply(CaseCommentExported e)

@@ -7,7 +7,7 @@ using EventSourcing.Demo.Framework;
 
 namespace EventSourcing.Demo.Cases
 {
-    public sealed class Case : Aggregate<CaseId, Case>,
+    public sealed partial class Case : Aggregate<CaseId, Case>,
         IApplies<IncidentImported>,
         IApplies<CaseAssignedToDistributor>,
         IApplies<CaseAssignedToService>,
@@ -27,9 +27,15 @@ namespace EventSourcing.Demo.Cases
                 .Applies(CaseCommentExported.EventType)
                 .Applies(PortalCommentAnnotationImported.EventType);
 
-        public static Case Create(CaseId id, string subject, string description, CaseType type)
+        public static Case Create(
+            CaseId id,
+            string subject,
+            string description,
+            CaseType type,
+            params CaseAttachmentId[] attachmentIds
+        )
         {
-            var e = new CaseCreated(subject, description, type);
+            var e = new CaseCreated(subject, description, type, attachmentIds.ToImmutableList());
 
             var @case = new Case(id, e);
             @case.Append(id.Value, CaseCreated.EventType, e);
@@ -52,6 +58,11 @@ namespace EventSourcing.Demo.Cases
             Status = CaseStatus.InProgress;
 
             Type = e.Type;
+            
+            Attachments = e.AttachmentIds
+                .Select(a => new CaseAttachment(a))
+                .ToImmutableList();
+            
             Comments = ImmutableList<CaseComment>.Empty;
         }
 
@@ -63,6 +74,8 @@ namespace EventSourcing.Demo.Cases
         public CaseStatus Status { get; private set; }
         
         public CaseType Type { get; private set; }
+        
+        public ImmutableList<CaseAttachment> Attachments { get; private set; }
         
         public ImmutableList<CaseComment> Comments { get; private set; }
 
@@ -95,17 +108,22 @@ namespace EventSourcing.Demo.Cases
             Append(Guid.NewGuid(), CaseAssignedToService.EventType, e);
         }
 
-        public void CreateComment(CaseCommentId id, string description, CaseCommentAuthor author)
+        public void CreateComment(
+            CaseCommentId id,
+            string description,
+            CaseCommentAuthor author,
+            params CaseCommentAttachmentId[] attachmentIds
+        )
         {
-            var e = new CaseCommentCreated(id, description, author);
+            var e = CaseCommentCreated.Create(id, description, author, attachmentIds);
             
             Apply(e);
             Append(Guid.NewGuid(), CaseCommentCreated.EventType, e);
         }
 
-        public void ImportPortalComment(PortalCommentId id, string description, SystemUserId ownerId)
+        public void ImportPortalComment(CRM.PortalComment source)
         {
-            var e = new PortalCommentImported(id, description, ownerId);
+            var e = PortalCommentImported.Create(source);
             
             Apply(e);
             Append(Guid.NewGuid(), PortalCommentImported.EventType, e);

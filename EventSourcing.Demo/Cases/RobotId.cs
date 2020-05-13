@@ -8,6 +8,8 @@ namespace EventSourcing.Demo.Cases
         public Guid Value { get; }
 
         public RobotId(Guid value) => Value = value;
+        
+        public static RobotId Create(Guid value) => new RobotId(value);
 
         public bool Equals(RobotId other) => Value == other.Value;
         public override bool Equals(object? obj) => obj is RobotId other && Equals(other);

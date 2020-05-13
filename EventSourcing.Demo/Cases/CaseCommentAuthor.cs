@@ -1,4 +1,5 @@
 using System;
+using EventSourcing.Demo.Cases.Events;
 using JetBrains.Annotations;
 
 namespace EventSourcing.Demo.Cases
@@ -67,13 +68,31 @@ namespace EventSourcing.Demo.Cases
                 Recipient = recipient;
             }
 
+            public static Service Create(PortalCommentImported e)
+            {
+                var recipientType = ToRecipientType(e.Audience);
+                return new Service(e.OwnerId, recipientType);
+            }
+
+            private static RecipientType ToRecipientType(PortalCommentImported.PortalCommentAudience audience) =>
+                audience switch
+                {
+                    PortalCommentImported.PortalCommentAudience.All => RecipientType.Everyone,
+                    PortalCommentImported.PortalCommentAudience.EndUser => RecipientType.EndUser,
+                    PortalCommentImported.PortalCommentAudience.Distributor => RecipientType.Distributor,
+                    PortalCommentImported.PortalCommentAudience.DistributorAndSI => RecipientType.Distributor,
+                    PortalCommentImported.PortalCommentAudience.SubDistributorOrSI => RecipientType.Distributor,
+                    _ => throw new ArgumentOutOfRangeException(nameof(audience), audience, null)
+                };
+
             public SystemUserId SystemUserId { get; }
             public RecipientType Recipient { get; }
 
             public enum RecipientType
             {
                 Everyone,
-                Distributor
+                Distributor,
+                EndUser
             }
 
             public override TResult Apply<TResult>(

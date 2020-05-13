@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 
 namespace EventSourcing.Demo.Cases
@@ -30,26 +29,26 @@ namespace EventSourcing.Demo.Cases
         public RobotApplication? Application { get; }
         public SoftwareVersionId? SoftwareVersionId { get; }
 
-        public static EndUserRobot From(Robot robot, EndUserId registeredToId)
+        public static EndUserRobot? From(Robot robot, EndUserId registeredToId)
         {
-            var registration = (
-                from reg in robot.Registrations
+            var latest = (
+                from registration in robot.Registrations
                 
-                let registered = reg.Apply(
+                let registered = registration.Apply(
                         registered => registered,
                         unregistered => null
                     )
                     
                 where registered?.RegisteredToId == registeredToId
-                select registered
+                select new { Registration = registered }
             ).LastOrDefault();
 
-            if (registration == null)
+            if (latest == null)
             {
-                throw new InvalidOperationException("The robot has never been registered to the end user");
+                return null;
             }
 
-            return new EndUserRobot(robot, registration);
+            return new EndUserRobot(robot, latest.Registration);
         }
     }
 }
