@@ -125,21 +125,29 @@ namespace Aggregail.MongoDB
                 return;
             }
 
-            var keyBuilder = Builders<RecordedEvent>.IndexKeys;
-
-            var keys = keyBuilder
-                .Combine(
-                    keyBuilder.Ascending(e => e.Stream),
-                    keyBuilder.Ascending(e => e.EventNumber)
-                );
-
-            var options = new CreateIndexOptions
+            try
             {
-                Unique = true
-            };
+                var keyBuilder = Builders<RecordedEvent>.IndexKeys;
 
-            var model = new CreateIndexModel<RecordedEvent>(keys, options);
-            await _events.Indexes.CreateOneAsync(model);
+                var keys = keyBuilder
+                    .Combine(
+                        keyBuilder.Ascending(e => e.Stream),
+                        keyBuilder.Ascending(e => e.EventNumber)
+                    );
+
+                var options = new CreateIndexOptions
+                {
+                    Unique = true
+                };
+
+                var model = new CreateIndexModel<RecordedEvent>(keys, options);
+                await _events.Indexes.CreateOneAsync(model);
+            }
+            catch (Exception)
+            {
+                Interlocked.Exchange(ref _isInitialized, 0);
+                throw;
+            }
         }
     }
 }
