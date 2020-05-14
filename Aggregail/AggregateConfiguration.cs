@@ -1,18 +1,17 @@
 using System;
 using System.Collections.Generic;
-using EventSourcing.Demo.Framework.Serialiazation;
 
-namespace EventSourcing.Demo.Framework
+namespace Aggregail
 {
     public sealed class AggregateConfiguration<TIdentity, TAggregate>
         where TAggregate : Aggregate<TIdentity, TAggregate>
     {
-        public delegate void EventApplicator(TAggregate aggregate, IJsonDecoder decoder, byte[] data);
+        public delegate void EventApplicator(TAggregate aggregate, IEventSerializer serializer, byte[] data);
+        public delegate TAggregate Constructor(TIdentity id, IEventSerializer serializer, byte[] data);
 
         public AggregateName<TIdentity, TAggregate> Name { get; }
 
-        public Dictionary<string, Func<TIdentity, IJsonDecoder, byte[], TAggregate>> Constructors { get; } =
-            new Dictionary<string, Func<TIdentity, IJsonDecoder, byte[], TAggregate>>();
+        public Dictionary<string, Constructor> Constructors { get; } = new Dictionary<string, Constructor>();
 
         public Dictionary<string, EventApplicator> Applicators { get; } = new Dictionary<string, EventApplicator>();
 

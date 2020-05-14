@@ -11,4 +11,9 @@
       <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Aggregail.Newtonsoft.Json\Aggregail.Newtonsoft.Json.csproj" />
+      <ProjectReference Include="..\Aggregail\Aggregail.csproj" />
+    </ItemGroup>
+
 </Project>

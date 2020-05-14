@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using EventStore.ClientAPI;
 
-namespace EventSourcing.Demo.Framework
+namespace Aggregail
 {
     public abstract class Aggregate<TIdentity, TAggregate>
         where TAggregate : Aggregate<TIdentity, TAggregate>
@@ -30,23 +29,20 @@ namespace EventSourcing.Demo.Framework
             var nextVersionNumber = _versionNumber + 1;
             if (recordableEvent.EventNumber != nextVersionNumber)
             {
-                throw new InvalidOperationException();
+                throw new InvalidOperationException("The versions are out of sync");
             }
 
             _versionNumber = nextVersionNumber;
         }
 
-        protected async Task CommitAsync(
-            IEventStoreAppender appender,
-            AggregateConfiguration<TIdentity, TAggregate> configuration
-        )
+        protected async Task CommitAsync(IEventStore store, AggregateConfiguration<TIdentity, TAggregate> configuration)
         {
             if (_pendingEvents.Count == 0)
             {
-                throw new InvalidOperationException();
+                throw new InvalidOperationException("There are no pending events to commit");
             }
 
-            await appender.AppendToStreamAsync(Id, configuration, _versionNumber, _pendingEvents);
+            await store.AppendToStreamAsync(Id, configuration, _versionNumber, _pendingEvents);
         }
     }
 }

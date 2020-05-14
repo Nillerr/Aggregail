@@ -1,4 +1,9 @@
-# Event Sourcing
+# Aggregail.NET
+
+> A microframework for working with Aggregate Roots in an Event Sourced system, backed by an Event Store.
+
+Provides connectors for eventstore.com and Mongo DB
+
 A practical example
 
 ## Create
@@ -48,7 +53,7 @@ async Task ImportAsync(Guid id) {
  3) `@case.Import` creates an `IncidentImported` event instance, appends it to the `Case` Aggregate Root using `Append(event)`, 
  and calls the associated `Apply(IncidentImported)` method.
  4) Calling `@case.CommitAsync(store, id)` saves the pending event (`IncidentImported`) to the stream `Case-{id}` in the 
- Event Store, expected the stream to already exist at the Version of the latest event applied while constructing the `Case` 
+ Event Store, expecting the stream to already exist at the Version of the latest event applied while constructing the `Case` 
  instance in `Case.FromAsync(eventStore, id)`.
 
  

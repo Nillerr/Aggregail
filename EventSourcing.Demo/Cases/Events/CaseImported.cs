@@ -1,10 +1,10 @@
-using EventSourcing.Demo.Framework;
+using Aggregail;
 
 namespace EventSourcing.Demo.Cases.Events
 {
     public sealed class CaseImported
     {
-        public static EventType<CaseImported> EventType = "CaseImported";
+        public static readonly EventType<CaseImported> EventType = "CaseImported";
         
         public string Subject { get; }
         public string Description { get; }

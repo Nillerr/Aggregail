@@ -1,7 +1,7 @@
 #nullable enable
 using System.Threading.Tasks;
+using Aggregail;
 using EventSourcing.Demo.Cases.Events;
-using EventSourcing.Demo.Framework;
 
 namespace EventSourcing.Demo.Cases
 {
@@ -11,9 +11,9 @@ namespace EventSourcing.Demo.Cases
             new AggregateConfiguration<CaseId, Case>("Case")
                 .Constructs(CaseCreated.EventType, (id, @event) => new Case(id, @event))
                 .Constructs(CaseImported.EventType, (id, @event) => new Case(id, @event))
-                .Applies(CaseImported.EventType)
-                .Applies(CaseAssignedToDistributor.EventType)
-                .Applies(CaseAssignedToService.EventType);
+                .Applies(CaseImported.EventType, (agg, e) => agg.Apply(e))
+                .Applies(CaseAssignedToDistributor.EventType, (agg, e) => agg.Apply(e))
+                .Applies(CaseAssignedToService.EventType, (agg, e) => agg.Apply(e));
 
         public static Case Create(CaseId id, string subject, string description)
         {
@@ -33,14 +33,14 @@ namespace EventSourcing.Demo.Cases
             return @case;
         }
 
-        public static Task<Case?> FromAsync(IEventStoreReader reader, CaseId id)
+        public static Task<Case?> FromAsync(IEventStore store, CaseId id)
         {
-            return reader.AggregateAsync(id, Configuration);
+            return store.AggregateAsync(id, Configuration);
         }
 
-        public Task CommitAsync(IEventStoreAppender appender)
+        public Task CommitAsync(IEventStore store)
         {
-            return CommitAsync(appender, Configuration);
+            return CommitAsync(store, Configuration);
         }
     }
 }

@@ -2,11 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using EventSourcing.Demo.Framework.Serialiazation;
-using EventStore.ClientAPI;
-using EventStore.ClientAPI.Exceptions;
 
-namespace EventSourcing.Demo.Framework
+namespace Aggregail
 {
     public sealed class InMemoryEventStore : IEventStore
     {
@@ -28,13 +25,11 @@ namespace EventSourcing.Demo.Framework
 
         private readonly Dictionary<string, List<StoredEvent>> _streams = new Dictionary<string, List<StoredEvent>>();
 
-        private readonly IJsonEncoder _encoder;
-        private readonly IJsonDecoder _decoder;
+        private readonly IEventSerializer _serializer;
 
-        public InMemoryEventStore(IJsonEncoder encoder, IJsonDecoder decoder)
+        public InMemoryEventStore(IEventSerializer serializer)
         {
-            _encoder = encoder;
-            _decoder = decoder;
+            _serializer = serializer;
         }
 
         public Task AppendToStreamAsync<TIdentity, TAggregate>(
@@ -95,7 +90,7 @@ namespace EventSourcing.Demo.Framework
             pendingEvents.Select((pendingEvent, index) => ToStoredEvent(pendingEvent, currentVersion + 1 + index));
 
         private StoredEvent ToStoredEvent(IPendingEvent pendingEvent, long eventVersion) =>
-            new StoredEvent(pendingEvent.Id, pendingEvent.Type, eventVersion, pendingEvent.EncodedData(_encoder));
+            new StoredEvent(pendingEvent.Id, pendingEvent.Type, eventVersion, pendingEvent.Data(_serializer));
 
         public Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
@@ -112,14 +107,14 @@ namespace EventSourcing.Demo.Framework
                     throw new InvalidOperationException($"Unrecognized construction event type: {createStoredEvent.EventType}");
                 }
 
-                var aggregate = constructor(id, _decoder, createStoredEvent.Data);
+                var aggregate = constructor(id, _serializer, createStoredEvent.Data);
                 aggregate.Record(new RecordableEvent(createStoredEvent.EventNumber));
                 
                 foreach (var storedEvent in eventStream.Skip(1))
                 {
                     if (configuration.Applicators.TryGetValue(storedEvent.EventType, out var applicator))
                     {
-                        applicator(aggregate, _decoder, storedEvent.Data);
+                        applicator(aggregate, _serializer, storedEvent.Data);
                         aggregate.Record(new RecordableEvent(storedEvent.EventNumber));
                     }
                     else

@@ -1,9 +1,9 @@
-using EventSourcing.Demo.Framework;
+using Aggregail;
 
 namespace EventSourcing.Demo.Cases.Events
 {
     public sealed class CaseAssignedToDistributor
     {
-        public static EventType<CaseAssignedToDistributor> EventType = "CaseAssignedToDistributor";
+        public static readonly EventType<CaseAssignedToDistributor> EventType = "CaseAssignedToDistributor";
     }
 }

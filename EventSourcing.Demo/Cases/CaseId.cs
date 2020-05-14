@@ -1,8 +1,10 @@
 using System;
-using EventSourcing.Demo.Framework;
+using Aggregail;
+using Newtonsoft.Json;
 
 namespace EventSourcing.Demo.Cases
 {
+    [JsonConverter(typeof(CaseIdConverter))]
     public readonly struct CaseId : IValueObject<Guid>, IEquatable<CaseId>
     {
         public Guid Value { get; }

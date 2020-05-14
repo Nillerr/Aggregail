@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Aggregail;
+using Aggregail.Newtonsoft.Json;
 using EventSourcing.Demo.Cases;
-using EventSourcing.Demo.Framework;
-using EventSourcing.Demo.Framework.Serialiazation;
 using EventStore.ClientAPI;
 using Newtonsoft.Json;
 
@@ -16,9 +16,8 @@ namespace EventSourcing.Demo
             
             await connection.ConnectAsync();
             
-            var encoder = new JsonEncoder();
-            var decoder = new JsonDecoder();
-            var store = new Framework.EventStore(connection, encoder, decoder);
+            var serializer = new JsonEventSerializer();
+            var store = new EventStore(connection, serializer);
 
             await TestCase(store);
         }
@@ -36,6 +35,7 @@ namespace EventSourcing.Demo
 
         private static async Task CreateCaseAsync(IEventStore store, CaseId id)
         {
+            // Case-ec4f433b-f7e0-41b8-93cc-338d373214ab
             var @case = Case.Create(id, "The Subject", "The Description");
             await @case.CommitAsync(store);
         }
@@ -45,13 +45,11 @@ namespace EventSourcing.Demo
             var @case = await Case.FromAsync(store, id);
             if (@case == null)
             {
-                throw new InvalidOperationException();
+                throw new InvalidOperationException($"The case with id {id} does not exist");
             }
 
             @case.Import("Imported Subject", "Imported Description", "TS012345", CaseStatus.WaitingForDistributor);
             @case.AssignToService();
-            @case.AssignToDistributor();
-            @case.Import("Imported Subject 2", "Imported Description 2", "TS012345", CaseStatus.WaitingForDistributor);
 
             await @case.CommitAsync(store);
         }

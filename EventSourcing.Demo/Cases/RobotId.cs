@@ -1,5 +1,5 @@
 using System;
-using EventSourcing.Demo.Framework;
+using Aggregail;
 
 namespace EventSourcing.Demo.Cases
 {

@@ -1,4 +1,4 @@
-namespace EventSourcing.Demo.Framework
+namespace Aggregail
 {
     public interface IApplies<in TEvent>
     {

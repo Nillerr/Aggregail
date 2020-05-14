@@ -1,14 +1,11 @@
 using System;
 using System.Threading.Tasks;
+using Aggregail;
 using EventSourcing.Demo.Cases.Events;
-using EventSourcing.Demo.Framework;
 
 namespace EventSourcing.Demo.Cases
 {
-    public sealed partial class Case : Aggregate<CaseId, Case>,
-        IApplies<CaseImported>,
-        IApplies<CaseAssignedToDistributor>,
-        IApplies<CaseAssignedToService>
+    public sealed partial class Case : Aggregate<CaseId, Case>
     {
         public string Subject { get; private set; }
         public string Description { get; private set; }
@@ -63,7 +60,7 @@ namespace EventSourcing.Demo.Cases
             Append(Guid.NewGuid(), CaseAssignedToService.EventType, @event);
         }
 
-        public void Apply(CaseImported @event)
+        private void Apply(CaseImported @event)
         {
             Subject = @event.Subject;
             Description = @event.Description;
@@ -73,12 +70,12 @@ namespace EventSourcing.Demo.Cases
             Status = @event.Status;
         }
 
-        public void Apply(CaseAssignedToDistributor @event)
+        private void Apply(CaseAssignedToDistributor @event)
         {
             Status = CaseStatus.WaitingForDistributor;
         }
 
-        public void Apply(CaseAssignedToService @event)
+        private void Apply(CaseAssignedToService @event)
         {
             Status = CaseStatus.InProgress;
         }

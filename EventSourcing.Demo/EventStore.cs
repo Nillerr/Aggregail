@@ -1,19 +1,43 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using EventSourcing.Demo.Framework.Serialiazation;
+using Aggregail;
 using EventStore.ClientAPI;
 
-namespace EventSourcing.Demo.Framework
+namespace EventSourcing.Demo
 {
-    public sealed class EventStoreReader : IEventStoreReader
+    public sealed class EventStore : IEventStore
     {
         private readonly IEventStoreConnection _connection;
-        private readonly IJsonDecoder _decoder;
+        private readonly IEventSerializer _serializer;
 
-        public EventStoreReader(IEventStoreConnection connection, IJsonDecoder decoder)
+        public EventStore(IEventStoreConnection connection, IEventSerializer serializer)
         {
             _connection = connection;
-            _decoder = decoder;
+            _serializer = serializer;
+        }
+
+        public async Task AppendToStreamAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            long expectedVersion,
+            IEnumerable<IPendingEvent> pendingEvents
+        )
+            where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            var events = pendingEvents
+                .Select(EventData)
+                .ToArray();
+
+            var stream = configuration.Name.Stream(id);
+            await _connection.AppendToStreamAsync(stream, expectedVersion, events);
+        }
+
+        private EventData EventData(IPendingEvent pendingEvent)
+        {
+            var data = pendingEvent.Data(_serializer);
+            return new EventData(pendingEvent.Id, pendingEvent.Type, true, data, null);
         }
 
         public async Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
@@ -38,7 +62,7 @@ namespace EventSourcing.Demo.Framework
                 throw new InvalidOperationException($"Unrecognized construction event type: {createdRecordedEvent.EventType}");
             }
 
-            var aggregate = constructor(id, _decoder, createdRecordedEvent.Data);
+            var aggregate = constructor(id, _serializer, createdRecordedEvent.Data);
             aggregate.Record(new RecordableEvent(createdRecordedEvent.EventNumber));
 
             var applicators = configuration.Applicators;
@@ -55,7 +79,7 @@ namespace EventSourcing.Demo.Framework
                     var recordedEvent = resolvedEvent.Event;
                     if (applicators.TryGetValue(recordedEvent.EventType, out var applicator))
                     {
-                        applicator(aggregate, _decoder, recordedEvent.Data);
+                        applicator(aggregate, _serializer, recordedEvent.Data);
                         aggregate.Record(new RecordableEvent(recordedEvent.EventNumber));
                     }
                     else
