@@ -67,12 +67,13 @@ namespace EventSourcing.Demo
 
             var applicators = configuration.Applicators;
 
+            long sliceStart = 1;
             const int sliceSize = 100;
             
             StreamEventsSlice slice; 
             do
             {
-                slice = await _connection.ReadStreamEventsForwardAsync(stream, 1, sliceSize, false);
+                slice = await _connection.ReadStreamEventsForwardAsync(stream, sliceStart, sliceSize, false);
                 
                 foreach (var resolvedEvent in slice.Events)
                 {
@@ -87,6 +88,8 @@ namespace EventSourcing.Demo
                         throw new InvalidOperationException($"Unexpected recorded event type: {recordedEvent.EventType}");
                     }
                 }
+
+                sliceStart = slice.NextEventNumber;
             } while (!slice.IsEndOfStream);
 
             return aggregate;

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MongoDB.Driver" Version="2.10.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Aggregail\Aggregail.csproj" />
+    </ItemGroup>
+
+</Project>
