@@ -14,9 +14,9 @@ namespace Aggregail.MongoDB
         private readonly IMongoCollection<RecordedEvent> _events;
         private readonly IEventSerializer _serializer;
 
-        public MongoEventStore(IMongoCollection<RecordedEvent> events, IEventSerializer serializer)
+        public MongoEventStore(IMongoDatabase database, string collection, IEventSerializer serializer)
         {
-            _events = events;
+            _events = database.GetCollection<RecordedEvent>(collection);
             _serializer = serializer;
         }
 

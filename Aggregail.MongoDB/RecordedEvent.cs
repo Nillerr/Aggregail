@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Aggregail.MongoDB
 {
-    public sealed class RecordedEvent
+    internal sealed class RecordedEvent
     {
         [BsonElement("stream")]
         public string Stream { get; set; }

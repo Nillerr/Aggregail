@@ -5,7 +5,7 @@ using MongoDB.Bson.Serialization.Serializers;
 
 namespace Aggregail.MongoDB
 {
-    public sealed class JsonBsonDocumentSerializer : SealedClassSerializerBase<byte[]>
+    internal sealed class JsonBsonDocumentSerializer : SealedClassSerializerBase<byte[]>
     {
         protected override byte[] DeserializeValue(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
