@@ -2,7 +2,12 @@
 
 > A microframework for working with Aggregate Roots in an Event Sourced system, backed by an Event Store.
 
-Provides connectors for eventstore.com and Mongo DB
+Provides connectors for eventstore.com and MongoDB
+
+`Aggregail`
+`Aggregail.Newtonsoft.Json`
+`Aggregail.MongoDB`
+`Aggregail.EventStore`
 
 A practical example
 

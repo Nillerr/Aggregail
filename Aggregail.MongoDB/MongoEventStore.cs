@@ -46,13 +46,15 @@ namespace Aggregail.MongoDB
                 throw new WrongExpectedVersionException("", expectedVersion, null);
             }
 
+            var currentVersion = latestEvent?.EventNumber ?? -1L;
+
             var recordedEvents = pendingEvents
-                .Select(e => new RecordedEvent
+                .Select((e, i) => new RecordedEvent
                     {
                         Stream = stream,
                         EventId = e.Id,
                         EventType = e.Type,
-                        EventNumber = latestEvent?.EventNumber ?? 0L,
+                        EventNumber = currentVersion + i + 1,
                         Data = e.Data(_serializer)
                     }
                 )
@@ -95,6 +97,7 @@ namespace Aggregail.MongoDB
             var cursor = await _events
                 .Find(e => e.Stream == stream)
                 .SortBy(e => e.EventNumber)
+                .Skip(1)
                 .ToCursorAsync();
 
             while (await cursor.MoveNextAsync())
@@ -124,6 +127,8 @@ namespace Aggregail.MongoDB
             {
                 return;
             }
+            
+            Console.WriteLine("Initializing indexes...");
 
             try
             {
@@ -148,6 +153,8 @@ namespace Aggregail.MongoDB
                 Interlocked.Exchange(ref _isInitialized, 0);
                 throw;
             }
+            
+            Console.WriteLine("Indexes initialized");
         }
     }
 }

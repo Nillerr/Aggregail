@@ -1,10 +1,14 @@
 using System;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Aggregail.MongoDB
 {
     internal sealed class RecordedEvent
     {
+        [BsonId]
+        public ObjectId Id { get; set; }
+        
         [BsonElement("stream")]
         public string Stream { get; set; }
         

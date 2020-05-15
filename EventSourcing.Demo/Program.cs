@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Aggregail;
+using Aggregail.MongoDB;
 using Aggregail.Newtonsoft.Json;
 using EventSourcing.Demo.Cases;
 using EventStore.ClientAPI;
+using MongoDB.Driver;
 using Newtonsoft.Json;
 
 namespace EventSourcing.Demo
@@ -12,14 +15,25 @@ namespace EventSourcing.Demo
     {
         public static async Task Main(string[] args)
         {
-            using var connection = EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113");
-            
-            await connection.ConnectAsync();
-            
             var serializer = new JsonEventSerializer();
-            var store = new EventStore(connection, serializer);
 
-            await TestCase(store);
+            using var connection = EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113");
+            await connection.ConnectAsync();
+            var eventStore = new EventStore(connection, serializer);
+
+            var mongoClient = new MongoClient("mongodb://root:example@localhost");
+            var mongoDatabase = mongoClient.GetDatabase("aggregail_demo");
+            var mongoStore = new MongoEventStore(mongoDatabase, "streams", serializer);
+
+            Console.WriteLine("Running Test Case...");
+            
+            var tasks = Enumerable.Range(0, 500)
+                .Select(_ => TestCase(mongoStore))
+                .ToArray();
+
+            await Task.WhenAll(tasks);
+            
+            Console.WriteLine("Test Case Complete");
         }
 
         private static async Task TestCase(IEventStore store)
