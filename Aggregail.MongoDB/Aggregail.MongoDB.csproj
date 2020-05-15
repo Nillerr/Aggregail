@@ -3,14 +3,15 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
         <Nullable>enable</Nullable>
+        <PackageId>Aggregail.MongoDB</PackageId>
+        <Version>1.0.0-alpha</Version>
+        <Authors>Nicklas Jensen</Authors>
+        <Description>A microframework for working with Aggregate Roots in an Event Sourced system, backed by an Event Store.</Description>
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Aggregail" Version="1.0.0-alpha" />
       <PackageReference Include="MongoDB.Driver" Version="2.10.4" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Aggregail\Aggregail.csproj" />
     </ItemGroup>
 
 </Project>

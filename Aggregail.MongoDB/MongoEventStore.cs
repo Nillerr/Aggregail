@@ -89,7 +89,7 @@ namespace Aggregail.MongoDB
                 );
             }
 
-            var aggregate = constructor(id, _serializer, createdRecordedEvent.Data);
+            var aggregate = constructor(id, _serializer, createdRecordedEvent.Data ?? Array.Empty<byte>());
             aggregate.Record(new RecordableEvent(createdRecordedEvent.EventNumber));
 
             var applicators = configuration.Applicators;
@@ -106,7 +106,7 @@ namespace Aggregail.MongoDB
                 {
                     if (applicators.TryGetValue(recordedEvent.EventType, out var applicator))
                     {
-                        applicator(aggregate, _serializer, recordedEvent.Data);
+                        applicator(aggregate, _serializer, recordedEvent.Data ?? Array.Empty<byte>());
                         aggregate.Record(new RecordableEvent(recordedEvent.EventNumber));
                     }
                     else
