@@ -24,5 +24,9 @@ namespace Aggregail.MongoDB
         [BsonElement("data")]
         [BsonSerializer(typeof(JsonBsonDocumentSerializer))]
         public byte[] Data { get; set; }
+        
+        [BsonElement("metadata")]
+        [BsonSerializer(typeof(JsonBsonDocumentSerializer))]
+        public byte[] Metadata { get; set; }
     }
 }

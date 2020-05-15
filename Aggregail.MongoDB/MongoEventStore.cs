@@ -38,12 +38,12 @@ namespace Aggregail.MongoDB
 
             if (expectedVersion == ExpectedVersion.NoStream && latestEvent != null)
             {
-                throw new WrongExpectedVersionException("", expectedVersion, latestEvent.EventNumber);
+                throw new WrongExpectedVersionException($"Expected stream `{stream}` to not exist, but did exist at version {latestEvent.EventNumber}.", expectedVersion, latestEvent.EventNumber);
             }
 
             if (expectedVersion > ExpectedVersion.NoStream && latestEvent == null)
             {
-                throw new WrongExpectedVersionException("", expectedVersion, null);
+                throw new WrongExpectedVersionException($"Expected stream `{stream}` to be at version {expectedVersion}, but stream did not exist yet.", expectedVersion, null);
             }
 
             var currentVersion = latestEvent?.EventNumber ?? -1L;
