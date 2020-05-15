@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -28,11 +28,20 @@ namespace Aggregail.MongoDB
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             await InitializeIndexesAsync();
+            
+            using var session = await _events.Database.Client.StartSessionAsync();
+            
+            var options = new TransactionOptions(
+                readConcern: ReadConcern.Snapshot,
+                writeConcern: WriteConcern.WMajority
+            );
+            
+            session.StartTransaction(options);
 
             var stream = configuration.Name.Stream(id);
 
             var latestEvent = await _events
-                .Find(e => e.Stream == stream)
+                .Find(session, e => e.Stream == stream)
                 .SortByDescending(e => e.EventNumber)
                 .FirstOrDefaultAsync();
 
@@ -60,7 +69,17 @@ namespace Aggregail.MongoDB
                 )
                 .ToArray();
 
-            await _events.InsertManyAsync(recordedEvents);
+            try
+            {
+                await _events.InsertManyAsync(session, recordedEvents);
+            }
+            catch (MongoWriteException)
+            {
+                await session.AbortTransactionAsync();
+                throw;
+            }
+
+            await session.CommitTransactionAsync();
         }
 
         public async Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
