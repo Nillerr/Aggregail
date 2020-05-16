@@ -16,5 +16,11 @@
         <ProjectReference Include="../Aggregail.MongoDB/Aggregail.MongoDB.csproj" />
         <ProjectReference Include="../Aggregail.Newtonsoft.Json/Aggregail.Newtonsoft.Json.csproj" />
     </ItemGroup>
+    
+    <ItemGroup>
+      <None Update="robots.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
 
 </Project>

@@ -22,11 +22,9 @@ namespace Aggregail.MongoDB
         public long EventNumber { get; set; }
         
         [BsonElement("data")]
-        [BsonSerializer(typeof(JsonBsonDocumentSerializer))]
         public byte[]? Data { get; set; }
         
         [BsonElement("metadata")]
-        [BsonSerializer(typeof(JsonBsonDocumentSerializer))]
         public byte[]? Metadata { get; set; }
     }
 }

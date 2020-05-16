@@ -6,12 +6,14 @@ namespace EventSourcing.Demo.Robots
     {
         public static readonly EventType<RobotEdited> EventType = "RobotEdited";
 
-        public string Name { get; set; }
+        public string? Name { get; set; }
+        public RobotApplication? Application { get; set; }
 
-        public static RobotEdited Create(string name) =>
+        public static RobotEdited Create(string? name, RobotApplication? application) =>
             new RobotEdited
             {
-                Name = name
+                Name = name,
+                Application = application
             };
     }
 }

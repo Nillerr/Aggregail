@@ -20,21 +20,25 @@ namespace EventSourcing.Demo.Robots
         private Robot(RobotId id, RobotImported e)
             : base(id)
         {
-            SerialNumber = new SerialNumber(e.Entity.SerialNumber);
+            SerialNumber = new SerialNumber(e.Entity.C2RurName);
+            Product = e.Entity.RobotProduct();
 
             Registrations = ImmutableList<RobotRegistration>.Empty;
+            ImportRegistrations(e);
         }
 
+        public RobotProduct Product { get; private set; }
+        
         public SerialNumber SerialNumber { get; private set; }
 
         public ImmutableList<RobotRegistration> Registrations { get; private set; }
 
-        public static Robot Import(RobotEntity entity)
+        public static Robot Import(RobotImported.RobotEntity entity)
         {
-            var id = new RobotId(entity.Id);
+            var id = new RobotId(entity.C2RurRobotsid);
             var e = RobotImported.Create(entity);
             var robot = new Robot(id, e);
-            robot.Append(entity.Id, RobotImported.EventType, e);
+            robot.Append(id.Value, RobotImported.EventType, e);
             return robot;
         }
 
@@ -42,20 +46,28 @@ namespace EventSourcing.Demo.Robots
 
         public Task CommitAsync(IEventStore store) => CommitAsync(store, Configuration);
 
-        public RobotRegistration.Registration? LatestRegistrationFor(EndUserId endUserId) =>
-        (
+        public RobotRegistration.Registration? LatestRegistration => (
             from registration in Registrations
             let reg = registration.Apply(r => r, u => null)
-            where reg?.EndUserId == endUserId
             select reg!
         ).LastOrDefault();
 
-        public void Register(EndUserId endUserId, string name)
+        public RobotRegistration.Registration? LatestRegistrationFor(EndUserId endUserId)
+        {
+            return (
+                from registration in Registrations
+                let reg = registration.Apply(r => r, u => null)
+                where reg?.EndUserId == endUserId
+                select reg!
+            ).LastOrDefault();
+        }
+
+        public void Register(EndUserId endUserId, string? name, RobotApplication? application)
         {
             void AddRegistration()
             {
                 var registrationId = new RobotRegistrationId(Guid.NewGuid());
-                var e = RobotRegistered.Create(registrationId, endUserId, name);
+                var e = RobotRegistered.Create(registrationId, endUserId, name, application);
 
                 Apply(e);
                 Append(registrationId.Value, RobotRegistered.EventType, e);
@@ -101,7 +113,7 @@ namespace EventSourcing.Demo.Robots
             );
         }
 
-        public void Edit(EndUserId endUserId, string name)
+        public void Edit(EndUserId endUserId, string? name, RobotApplication? application)
         {
             var latestRegistration = Registrations.LastOrDefault();
             if (latestRegistration == null)
@@ -117,7 +129,7 @@ namespace EventSourcing.Demo.Robots
                         throw new ValidationException("Robot is registered to somebody else");
                     }
 
-                    var e = RobotEdited.Create(name);
+                    var e = RobotEdited.Create(name, application);
 
                     Apply(e);
                     Append(Guid.NewGuid(), RobotEdited.EventType, e);
@@ -128,15 +140,60 @@ namespace EventSourcing.Demo.Robots
 
         private void Apply(RobotImported e)
         {
-            SerialNumber = new SerialNumber(e.Entity.SerialNumber);
+            SerialNumber = new SerialNumber(e.Entity.C2RurName);
+            ImportRegistrations(e);
+        }
+
+        private void ImportRegistrations(RobotImported e)
+        {
+            void AddRegistration(Guid endUserId)
+            {
+                var newRegistration = new RobotRegistration.Registration(this, e, endUserId);
+                Registrations = Registrations.Add(newRegistration);
+            }
+
+            var latestRegistration = Registrations.LastOrDefault();
+            if (latestRegistration == null)
+            {
+                if (e.Entity.C2RurEnduserValue != null)
+                {
+                    AddRegistration(e.Entity.C2RurEnduserValue.Value);
+                }
+            }
+            else
+            {
+                latestRegistration.Apply(
+                    registration =>
+                    {
+                        if (registration.EndUserId.Value == e.Entity.C2RurEnduserValue)
+                        {
+                            registration.Apply(e);
+                        }
+                        else if (e.Entity.C2RurEnduserValue.HasValue)
+                        {
+                            AddRegistration(e.Entity.C2RurEnduserValue.Value);
+                        }
+                        else
+                        {
+                            Registrations = Registrations.Add(RobotRegistration.Unregistration.Instance);
+                        }
+                    },
+                    unregistration =>
+                    {
+                        if (e.Entity.C2RurEnduserValue.HasValue)
+                        {
+                            AddRegistration(e.Entity.C2RurEnduserValue.Value);
+                        }
+                    }
+                );
+            }
         }
 
         private void Apply(RobotRegistered e)
         {
             void AddRegistration()
             {
-                var registrationId = new RobotRegistrationId(Guid.NewGuid());
-                var registration = new RobotRegistration.Registration(registrationId, e.EndUserId, e.Name);
+                var registration = new RobotRegistration.Registration(this, e);
                 Registrations = Registrations.Add(registration);
             }
 
@@ -177,7 +234,7 @@ namespace EventSourcing.Demo.Robots
             }
 
             latestRegistration.Apply(
-                registration => registration.Apply(e),
+                registration => registration.Apply(this, e),
                 unregistration => throw new InvalidOperationException("Robot is not registered")
             );
         }
