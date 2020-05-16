@@ -5,7 +5,7 @@ namespace Aggregail.MongoDB
 {
     public sealed class MongoEventStoreSettings
     {
-        public MongoEventStoreSettings(IMongoDatabase database, string collection, IEventSerializer eventSerializer)
+        public MongoEventStoreSettings(IMongoDatabase database, string collection, IJsonEventSerializer eventSerializer)
         {
             Database = database;
             Collection = collection;
@@ -14,7 +14,7 @@ namespace Aggregail.MongoDB
 
         public IMongoDatabase Database { get; set; }
         public string Collection { get; set; }
-        public IEventSerializer EventSerializer { get; set; }
+        public IJsonEventSerializer EventSerializer { get; set; }
         public ILogger<MongoEventStore>? Logger { get; set; }
         public TransactionOptions TransactionOptions = new TransactionOptions(
             readConcern: ReadConcern.Snapshot,

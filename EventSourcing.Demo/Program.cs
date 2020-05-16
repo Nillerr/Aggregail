@@ -6,8 +6,11 @@ using Aggregail;
 using Aggregail.MongoDB;
 using Aggregail.Newtonsoft.Json;
 using EventSourcing.Demo.Cases;
+using EventSourcing.Demo.Robots;
 using MongoDB.Driver;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 
 namespace EventSourcing.Demo
 {
@@ -15,7 +18,20 @@ namespace EventSourcing.Demo
     {
         public static async Task Main(string[] args)
         {
-            var serializer = new JsonEventSerializer(JsonSerializer.CreateDefault());
+            var jsonSerializerSettings = new JsonSerializerSettings
+            {
+                ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new SnakeCaseNamingStrategy()
+                },
+                Converters =
+                {
+                    new StringEnumConverter()
+                }
+            };
+            
+            var jsonSerializer = JsonSerializer.CreateDefault(jsonSerializerSettings);
+            var serializer = new JsonEventSerializer(jsonSerializer);
 
             // using var connection = EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113");
             // await connection.ConnectAsync();
@@ -29,12 +45,14 @@ namespace EventSourcing.Demo
             var sw = new Stopwatch();
             sw.Start();
             Console.WriteLine("Running Test Case...");
-            
-            var tasks = Enumerable.Range(0, 500)
-                .Select(_ => TestCase(mongoStore))
-                .ToArray();
 
-            await Task.WhenAll(tasks);
+            await RobotProgram.RunAsync(mongoStore);
+            
+            // var tasks = Enumerable.Range(0, 500)
+            //     .Select(_ => TestCase(mongoStore))
+            //     .ToArray();
+            //
+            // await Task.WhenAll(tasks);
             sw.Stop();
             
             Console.WriteLine($"Test Case Complete in {sw.Elapsed}");

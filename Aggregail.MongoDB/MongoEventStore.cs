@@ -13,7 +13,7 @@ namespace Aggregail.MongoDB
         private static int _isInitialized;
 
         private readonly IMongoCollection<RecordedEvent> _events;
-        private readonly IEventSerializer _serializer;
+        private readonly IJsonEventSerializer _serializer;
         private readonly ILogger<MongoEventStore>? _logger;
         private readonly TransactionOptions _transactionOptions;
 

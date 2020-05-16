@@ -44,11 +44,13 @@ namespace Aggregail.Newtonsoft.Json
         /// <inheritdoc/>
         public byte[] Serialize<T>(T source) where T : class
         {
-            using var stream = new MemoryStream();
-            using var textWriter = new StreamWriter(stream, Encoding.UTF8);
-            using var jsonWriter = new JsonTextWriter(textWriter);
-
-            _serializer.Serialize(jsonWriter, source);
+            var stream = new MemoryStream();
+            
+            using (var textWriter = new StreamWriter(stream))
+            using (var jsonWriter = new JsonTextWriter(textWriter))
+            {
+                _serializer.Serialize(jsonWriter, source);
+            }
 
             return stream.ToArray();
         }

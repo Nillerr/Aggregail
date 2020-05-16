@@ -10,9 +10,9 @@ namespace EventSourcing.Demo
     public sealed class EventStore : IEventStore
     {
         private readonly IEventStoreConnection _connection;
-        private readonly IEventSerializer _serializer;
+        private readonly IJsonEventSerializer _serializer;
 
-        public EventStore(IEventStoreConnection connection, IEventSerializer serializer)
+        public EventStore(IEventStoreConnection connection, IJsonEventSerializer serializer)
         {
             _connection = connection;
             _serializer = serializer;

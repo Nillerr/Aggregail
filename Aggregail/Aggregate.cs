@@ -44,6 +44,8 @@ namespace Aggregail
             }
 
             await store.AppendToStreamAsync(Id, configuration, _versionNumber, _pendingEvents);
+            _versionNumber += _pendingEvents.Count;
+            _pendingEvents.Clear();
         }
     }
 }
