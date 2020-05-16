@@ -7,6 +7,8 @@
         <Version>1.0.0-alpha.3</Version>
         <Authors>Nicklas Jensen</Authors>
         <Description>A microframework for working with Aggregate Roots in an Event Sourced system, backed by an Event Store.</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/nillerr/Aggregail</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>
