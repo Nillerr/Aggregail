@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MongoDB.Driver;
+ using Microsoft.Extensions.Logging;
+ using MongoDB.Driver;
 
 namespace Aggregail.MongoDB
 {
@@ -13,11 +14,13 @@ namespace Aggregail.MongoDB
 
         private readonly IMongoCollection<RecordedEvent> _events;
         private readonly IEventSerializer _serializer;
+        private readonly ILogger<MongoEventStore>? _logger;
 
-        public MongoEventStore(IMongoDatabase database, string collection, IEventSerializer serializer)
+        public MongoEventStore(MongoEventStoreSettings settings)
         {
-            _events = database.GetCollection<RecordedEvent>(collection);
-            _serializer = serializer;
+            _events = settings.Database.GetCollection<RecordedEvent>(settings.Collection);
+            _serializer = settings.EventSerializer;
+            _logger = settings.Logger;
         }
 
         public async Task AppendToStreamAsync<TIdentity, TAggregate>(
@@ -91,52 +94,69 @@ namespace Aggregail.MongoDB
 
             var stream = configuration.Name.Stream(id);
 
-            var createdRecordedEvent = await _events
-                .Find(e => e.Stream == stream)
-                .SortBy(e => e.EventNumber)
-                .FirstOrDefaultAsync();
-
-            if (createdRecordedEvent == null)
-            {
-                return null;
-            }
-
-            if (!configuration.Constructors.TryGetValue(createdRecordedEvent.EventType, out var constructor))
-            {
-                throw new InvalidOperationException(
-                    $"Unrecognized construction event type: {createdRecordedEvent.EventType}"
-                );
-            }
-
-            var aggregate = constructor(id, _serializer, createdRecordedEvent.Data ?? Array.Empty<byte>());
-            aggregate.Record(new RecordableEvent(createdRecordedEvent.EventNumber));
-
-            var applicators = configuration.Applicators;
-
             var cursor = await _events
                 .Find(e => e.Stream == stream)
                 .SortBy(e => e.EventNumber)
-                .Skip(1)
                 .ToCursorAsync();
 
+            TAggregate? aggregate = null;
+            
             while (await cursor.MoveNextAsync())
             {
                 foreach (var recordedEvent in cursor.Current)
                 {
-                    if (applicators.TryGetValue(recordedEvent.EventType, out var applicator))
+                    if (aggregate == null)
                     {
-                        applicator(aggregate, _serializer, recordedEvent.Data ?? Array.Empty<byte>());
-                        aggregate.Record(new RecordableEvent(recordedEvent.EventNumber));
+                        aggregate = ConstructAggregate(id, configuration, recordedEvent);
                     }
                     else
                     {
-                        throw new InvalidOperationException($"Unexpected recorded event type: {recordedEvent.EventType}"
-                        );
+                        ApplyEvent(aggregate, configuration, recordedEvent);
                     }
                 }
             }
 
             return aggregate;
+        }
+
+        private TAggregate ConstructAggregate<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            RecordedEvent recordedEvent
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            var constructors = configuration.Constructors;
+
+            if (!constructors.TryGetValue(recordedEvent.EventType, out var constructor))
+            {
+                throw new InvalidOperationException($"Unrecognized construction event type: {recordedEvent.EventType}");
+            }
+
+            var aggregate = constructor(id, _serializer, recordedEvent.Data ?? Array.Empty<byte>());
+
+            var recordableEvent = new RecordableEvent(recordedEvent.EventNumber);
+            aggregate.Record(recordableEvent);
+
+            return aggregate;
+        }
+
+        private void ApplyEvent<TIdentity, TAggregate>(
+            TAggregate aggregate,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            RecordedEvent recordedEvent
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            var applicators = configuration.Applicators;
+
+            if (!applicators.TryGetValue(recordedEvent.EventType, out var applicator))
+            {
+                throw new InvalidOperationException($"Unexpected recorded event type: {recordedEvent.EventType}");
+            }
+
+            applicator(aggregate, _serializer, recordedEvent.Data ?? Array.Empty<byte>());
+
+            var recordableEvent = new RecordableEvent(recordedEvent.EventNumber);
+            aggregate.Record(recordableEvent);
         }
 
         private async Task InitializeIndexesAsync()
@@ -147,7 +167,7 @@ namespace Aggregail.MongoDB
                 return;
             }
             
-            Console.WriteLine("Initializing indexes...");
+            _logger?.LogDebug("Initializing index...");
 
             try
             {
@@ -167,13 +187,14 @@ namespace Aggregail.MongoDB
                 var model = new CreateIndexModel<RecordedEvent>(keys, options);
                 await _events.Indexes.CreateOneAsync(model);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger?.LogCritical(ex, "Index initialization failed");
                 Interlocked.Exchange(ref _isInitialized, 0);
                 throw;
             }
             
-            Console.WriteLine("Indexes initialized");
+            _logger?.LogDebug("Index initialized");
         }
     }
 }
