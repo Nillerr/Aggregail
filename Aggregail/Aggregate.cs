@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 
 namespace Aggregail
 {
@@ -18,7 +19,9 @@ namespace Aggregail
 
         public TIdentity Id { get; }
 
+        [PublicAPI]
         protected void Append<T>(Guid id, EventType<T> type, T data)
+            where T : class
         {
             var pendingEvent = new PendingEvent<T>(id, type, data);
             _pendingEvents.Add(pendingEvent);
@@ -35,6 +38,7 @@ namespace Aggregail
             _versionNumber = nextVersionNumber;
         }
 
+        [PublicAPI]
         protected async Task CommitAsync(IEventStore store, AggregateConfiguration<TIdentity, TAggregate> configuration)
         {
             if (_pendingEvents.Count == 0)

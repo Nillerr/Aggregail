@@ -3,6 +3,7 @@ using System;
 namespace Aggregail
 {
     public sealed class PendingEvent<TData> : IPendingEvent
+        where TData : class
     {
         private readonly TData _data;
         private readonly EventType<TData> _type;
@@ -17,6 +18,6 @@ namespace Aggregail
             _data = data;
         }
 
-        public byte[] Data(IEventSerializer serializer) => serializer.Encode(_data);
+        public byte[] Data(IJsonEventSerializer serializer) => serializer.Serialize(_data);
     }
 }

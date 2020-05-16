@@ -8,6 +8,6 @@ namespace Aggregail
         
         string Type { get; }
         
-        byte[] Data(IEventSerializer serializer);
+        byte[] Data(IJsonEventSerializer serializer);
     }
 }

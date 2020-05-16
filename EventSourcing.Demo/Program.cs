@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Aggregail;
 using Aggregail.MongoDB;
 using Aggregail.Newtonsoft.Json;
 using EventSourcing.Demo.Cases;
-using EventStore.ClientAPI;
 using MongoDB.Driver;
 using Newtonsoft.Json;
 
@@ -15,17 +15,19 @@ namespace EventSourcing.Demo
     {
         public static async Task Main(string[] args)
         {
-            var serializer = new JsonEventSerializer();
+            var serializer = new JsonEventSerializer(JsonSerializer.CreateDefault());
 
-            using var connection = EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113");
-            await connection.ConnectAsync();
-            var eventStore = new EventStore(connection, serializer);
+            // using var connection = EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113");
+            // await connection.ConnectAsync();
+            // var eventStore = new EventStore(connection, serializer);
 
-            var mongoClient = new MongoClient("mongodb://root:example@localhost");
+            var mongoClient = new MongoClient("mongodb://root:example@mongodb-primary:27017,mongodb-secondary:27018,mongodb-arbiter:27019/aggregail_demo?authSource=admin&replicaSet=rs0");
             var mongoDatabase = mongoClient.GetDatabase("aggregail_demo");
             var mongoSettings = new MongoEventStoreSettings(mongoDatabase, "streams", serializer);
             var mongoStore = new MongoEventStore(mongoSettings);
 
+            var sw = new Stopwatch();
+            sw.Start();
             Console.WriteLine("Running Test Case...");
             
             var tasks = Enumerable.Range(0, 500)
@@ -33,8 +35,9 @@ namespace EventSourcing.Demo
                 .ToArray();
 
             await Task.WhenAll(tasks);
+            sw.Stop();
             
-            Console.WriteLine("Test Case Complete");
+            Console.WriteLine($"Test Case Complete in {sw.Elapsed}");
         }
 
         private static async Task TestCase(IEventStore store)

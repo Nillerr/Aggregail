@@ -25,9 +25,9 @@ namespace Aggregail
 
         private readonly Dictionary<string, List<StoredEvent>> _streams = new Dictionary<string, List<StoredEvent>>();
 
-        private readonly IEventSerializer _serializer;
+        private readonly IJsonEventSerializer _serializer;
 
-        public InMemoryEventStore(IEventSerializer serializer)
+        public InMemoryEventStore(IJsonEventSerializer serializer)
         {
             _serializer = serializer;
         }

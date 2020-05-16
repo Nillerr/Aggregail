@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
- using Microsoft.Extensions.Logging;
- using MongoDB.Driver;
+using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
 
 namespace Aggregail.MongoDB
 {
@@ -15,14 +15,21 @@ namespace Aggregail.MongoDB
         private readonly IMongoCollection<RecordedEvent> _events;
         private readonly IEventSerializer _serializer;
         private readonly ILogger<MongoEventStore>? _logger;
+        private readonly TransactionOptions _transactionOptions;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MongoEventStore"/> class.
+        /// </summary>
+        /// <param name="settings">The settings to configure behaviour of the instance.</param>
         public MongoEventStore(MongoEventStoreSettings settings)
         {
             _events = settings.Database.GetCollection<RecordedEvent>(settings.Collection);
             _serializer = settings.EventSerializer;
             _logger = settings.Logger;
+            _transactionOptions = settings.TransactionOptions;
         }
 
+        /// <inheritdoc />
         public async Task AppendToStreamAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
@@ -34,12 +41,7 @@ namespace Aggregail.MongoDB
             
             using var session = await _events.Database.Client.StartSessionAsync();
             
-            var options = new TransactionOptions(
-                readConcern: ReadConcern.Snapshot,
-                writeConcern: WriteConcern.WMajority
-            );
-            
-            session.StartTransaction(options);
+            session.StartTransaction(_transactionOptions);
 
             var stream = configuration.Name.Stream(id);
 
@@ -85,12 +87,15 @@ namespace Aggregail.MongoDB
             await session.CommitTransactionAsync();
         }
 
+        /// <inheritdoc />
         public async Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             await InitializeIndexesAsync();
+
+            using var session = await _events.Database.Client.StartSessionAsync();
 
             var stream = configuration.Name.Stream(id);
 

@@ -16,5 +16,10 @@ namespace Aggregail.MongoDB
         public string Collection { get; set; }
         public IEventSerializer EventSerializer { get; set; }
         public ILogger<MongoEventStore>? Logger { get; set; }
+        public TransactionOptions TransactionOptions = new TransactionOptions(
+            readConcern: ReadConcern.Snapshot,
+            readPreference: ReadPreference.Primary,
+            writeConcern: WriteConcern.WMajority
+        );
     }
 }

@@ -17,8 +17,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aggregail" Version="1.0.0-alpha" />
+<!--        <PackageReference Include="Aggregail" Version="1.0.0-alpha" />-->
         <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Aggregail/Aggregail.csproj" />
     </ItemGroup>
 
 </Project>

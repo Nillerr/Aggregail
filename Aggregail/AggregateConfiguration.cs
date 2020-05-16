@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace Aggregail
 {
+    [PublicAPI]
     public sealed class AggregateConfiguration<TIdentity, TAggregate>
         where TAggregate : Aggregate<TIdentity, TAggregate>
     {
-        public delegate void EventApplicator(TAggregate aggregate, IEventSerializer serializer, byte[] data);
-        public delegate TAggregate Constructor(TIdentity id, IEventSerializer serializer, byte[] data);
+        public delegate void EventApplicator(TAggregate aggregate, IJsonEventSerializer serializer, byte[] data);
+
+        public delegate TAggregate Constructor(TIdentity id, IJsonEventSerializer serializer, byte[] data);
 
         public AggregateName<TIdentity, TAggregate> Name { get; }
 
@@ -24,14 +27,21 @@ namespace Aggregail
             EventType<T> type,
             Func<TIdentity, T, TAggregate> constructor
         )
+            where T : class
         {
-            Constructors.Add(type.Value, (id, decoder, data) => constructor(id, decoder.Decode<T>(data)));
+            Constructors.Add(type.Value, (id, decoder, data) => constructor(id, decoder.Deserialize<T>(data)));
             return this;
         }
 
-        public AggregateConfiguration<TIdentity, TAggregate> Applies<T>(EventType<T> type, Action<TAggregate, T> applicator)
+        public AggregateConfiguration<TIdentity, TAggregate> Applies<T>(
+            EventType<T> type,
+            Action<TAggregate, T> applicator
+        )
+            where T : class
         {
-            Applicators.Add(type.Value, (aggregate, decoder, data) => applicator(aggregate, decoder.Decode<T>(data)));
+            Applicators.Add(type.Value,
+                (aggregate, decoder, data) => applicator(aggregate, decoder.Deserialize<T>(data))
+            );
             return this;
         }
     }

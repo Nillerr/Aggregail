@@ -8,15 +8,15 @@ namespace Aggregail.MongoDB
     {
         [BsonId]
         public ObjectId Id { get; set; }
-        
+
         [BsonElement("stream")]
-        public string Stream { get; set; }
+        public string Stream { get; set; } = null!;
         
         [BsonElement("event_id")]
         public Guid EventId { get; set; }
         
         [BsonElement("event_type")]
-        public string EventType { get; set; }
+        public string EventType { get; set; } = null!;
         
         [BsonElement("event_number")]
         public long EventNumber { get; set; }
