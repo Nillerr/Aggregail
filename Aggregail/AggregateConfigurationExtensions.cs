@@ -1,8 +1,5 @@
-using JetBrains.Annotations;
-
 namespace Aggregail
 {
-    [PublicAPI]
     public static class AggregateConfigurationExtensions
     {
         public static AggregateConfiguration<TIdentity, TAggregate> Applies<T, TIdentity, TAggregate>(

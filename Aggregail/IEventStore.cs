@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 
 namespace Aggregail
 {
@@ -42,7 +41,6 @@ namespace Aggregail
         /// <typeparam name="TIdentity">Type of <paramref name="id"/></typeparam>
         /// <typeparam name="TAggregate">Type of aggregate</typeparam>
         /// <returns>The constructed aggregate</returns>
-        [PublicAPI]
         Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration

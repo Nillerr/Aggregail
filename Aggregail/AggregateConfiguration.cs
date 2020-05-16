@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 
 namespace Aggregail
 {
-    [PublicAPI]
     public sealed class AggregateConfiguration<TIdentity, TAggregate>
         where TAggregate : Aggregate<TIdentity, TAggregate>
     {
