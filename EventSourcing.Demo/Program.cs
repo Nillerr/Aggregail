@@ -6,7 +6,6 @@ using Aggregail.MongoDB;
 using Aggregail.Newtonsoft.Json;
 using EventSourcing.Demo.Cases;
 using EventStore.ClientAPI;
-using EventStore.ClientAPI.Common.Log;
 using MongoDB.Driver;
 using Newtonsoft.Json;
 
@@ -24,10 +23,7 @@ namespace EventSourcing.Demo
 
             var mongoClient = new MongoClient("mongodb://root:example@localhost");
             var mongoDatabase = mongoClient.GetDatabase("aggregail_demo");
-            var mongoSettings = new MongoEventStoreSettings(mongoDatabase, "streams", serializer)
-            {
-                Logger = logger
-            };
+            var mongoSettings = new MongoEventStoreSettings(mongoDatabase, "streams", serializer);
             var mongoStore = new MongoEventStore(mongoSettings);
 
             Console.WriteLine("Running Test Case...");
