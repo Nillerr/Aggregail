@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace EventSourcing.Demo.Robots.CRM
 {
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     public enum RobotProduct
     {
         UR3,

@@ -17,27 +17,24 @@ namespace EventSourcing.Demo.Robots.CRM
             public const char UR10 = '0';
             public const char UR16 = '6';
         }
-        
-        private static readonly Dictionary<(int, int), RobotProduct> Models = new Dictionary<(int, int), RobotProduct>
-        {
-            [(Series.CB, Model.UR3)] = RobotProduct.UR3,
-            [(Series.CB, Model.UR5)] = RobotProduct.UR5,
-            [(Series.CB, Model.UR10)] = RobotProduct.UR10,
-            
-            [(Series.E, Model.UR3)] = RobotProduct.UR3e,
-            [(Series.E, Model.UR5)] = RobotProduct.UR5e,
-            [(Series.E, Model.UR10)] = RobotProduct.UR10e,
-            [(Series.E, Model.UR16)] = RobotProduct.UR16e,
-        }; 
-        
+
+        private static readonly Dictionary<(char series, char model), RobotProduct> Models =
+            new Dictionary<(char, char), RobotProduct>
+            {
+                [(Series.CB, Model.UR3)] = RobotProduct.UR3,
+                [(Series.CB, Model.UR5)] = RobotProduct.UR5,
+                [(Series.CB, Model.UR10)] = RobotProduct.UR10,
+
+                [(Series.E, Model.UR3)] = RobotProduct.UR3e,
+                [(Series.E, Model.UR5)] = RobotProduct.UR5e,
+                [(Series.E, Model.UR10)] = RobotProduct.UR10e,
+                [(Series.E, Model.UR16)] = RobotProduct.UR16e,
+            };
+
         public static RobotProduct FromSerialNumber(string serialNumber)
         {
-            const int seriesIndex = 4;
-            const int typeIndex = 5;
-            
-            // $ - '0' works because numbers are always sequential in character sets
-            var series = serialNumber[seriesIndex];
-            var model = serialNumber[typeIndex];
+            var series = serialNumber[4];
+            var model = serialNumber[5];
 
             return Models[(series, model)];
         }

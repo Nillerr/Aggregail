@@ -1,4 +1,5 @@
 using System;
+using EventSourcing.Demo.Robots.CRM;
 using JetBrains.Annotations;
 
 namespace EventSourcing.Demo.Robots
