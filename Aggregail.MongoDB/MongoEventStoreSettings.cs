@@ -48,7 +48,7 @@ namespace Aggregail.MongoDB
         /// The options for MongoDB transactions when storing events. It is <b><i>not</i></b> recommended to change the
         /// defaults, as they are already configured for maximum consistency.
         /// </summary>
-        public TransactionOptions TransactionOptions = new TransactionOptions(
+        public TransactionOptions TransactionOptions { get; set; } = new TransactionOptions(
             readConcern: ReadConcern.Snapshot,
             readPreference: ReadPreference.Primary,
             writeConcern: WriteConcern.WMajority
