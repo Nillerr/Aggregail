@@ -5,6 +5,12 @@ using System.Threading.Tasks;
 
 namespace Aggregail
 {
+    /// <summary>
+    /// A simple in-memory implementation of an event store.
+    /// </summary>
+    /// <remarks>
+    /// This class is <b><i>not</i></b> thread-safe, and will fail if used on several threads simultaneously.
+    /// </remarks>
     public sealed class InMemoryEventStore : IEventStore
     {
         private sealed class StoredEvent
@@ -27,11 +33,16 @@ namespace Aggregail
 
         private readonly IJsonEventSerializer _serializer;
 
+        /// <summary>
+        /// Creates an instance of the <see cref="InMemoryEventStore"/> class.
+        /// </summary>
+        /// <param name="serializer">The event serializer.</param>
         public InMemoryEventStore(IJsonEventSerializer serializer)
         {
             _serializer = serializer;
         }
 
+        /// <inheritdoc />
         public Task AppendToStreamAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
@@ -92,6 +103,7 @@ namespace Aggregail
         private StoredEvent ToStoredEvent(IPendingEvent pendingEvent, long eventVersion) =>
             new StoredEvent(pendingEvent.Id, pendingEvent.Type, eventVersion, pendingEvent.Data(_serializer));
 
+        /// <inheritdoc />
         public Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration

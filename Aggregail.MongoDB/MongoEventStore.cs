@@ -8,6 +8,14 @@ using MongoDB.Driver;
 
 namespace Aggregail.MongoDB
 {
+    /// <summary>
+    /// An event store driver using MongoDB as its underlying storage.
+    /// </summary>
+    /// <remarks>
+    /// It is strongly recommended to leave the default <see cref="MongoEventStoreSettings.TransactionOptions"/>, and
+    /// configure the MongoDB connection with <see cref="ReadPreference"/> set to <see cref="ReadPreference.Primary"/>
+    /// (which is the default).
+    /// </remarks>
     public sealed class MongoEventStore : IEventStore
     {
         private static int _isInitialized;
