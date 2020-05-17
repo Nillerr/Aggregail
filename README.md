@@ -1,6 +1,6 @@
-# Aggregail.NET
+# Aggregail
 
-> A microframework for working with Aggregate Roots in an Event Sourced system, backed by an Event Store.
+> A framework for implementing Aggregate Roots, a critical part of Event Sourcing, DDD and CQRS, backed by an Event Store.
 
 Provides connectors for eventstore.com and MongoDB
 

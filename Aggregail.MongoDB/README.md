@@ -1,4 +1,6 @@
-# Aggregail.NET for MongoDB
+# Aggregail (MongoDB)
+
+> MongoDB Event Store for Aggregail
 
 ```c#
 var serializer = new JsonEventSerializer();
