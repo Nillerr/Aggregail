@@ -1,13 +1,16 @@
 # Aggregail
 
-> A framework for implementing Aggregate Roots, a critical part of Event Sourcing, DDD and CQRS, backed by an Event Store.
+> A framework for implementing Aggregate Roots, a critical part of Event Sourcing, DDD and CQRS, backed by an event store.
 
-Provides connectors for eventstore.com and MongoDB
+Provides connectors for [Event Store](https://www.eventstore.com) and MongoDB.
 
-`Aggregail`
-`Aggregail.Newtonsoft.Json`
-`Aggregail.MongoDB`
-`Aggregail.EventStore`
+| Package                    | NuGet                                                               |                                                                         |
+|----------------------------|---------------------------------------------------------------------|-------------------------------------------------------------------------|
+| Aggregail                  | ![NuGet](https://img.shields.io/nuget/v/Aggregail)                  | ![Download](https://img.shields.io/nuget/dt/Aggregail)                  |
+| Aggregail.Newtonsoft.Json  | ![NuGet](https://img.shields.io/nuget/v/Aggregail.Newtonsoft.Json)  | ![Download](https://img.shields.io/nuget/dt/Aggregail.Newtonsoft.Json)  |
+| Aggregail.System.Text.Json | WIP                                                                 |                                                                         |
+| Aggregail.MongoDB          | ![NuGet](https://img.shields.io/nuget/v/Aggregail.MongoDB)          | ![Download](https://img.shields.io/nuget/dt/Aggregail.MongoDB)          |
+| Aggregail.EventStore       | WIP                                                                 |                                                                         |
 
 A practical example
 
