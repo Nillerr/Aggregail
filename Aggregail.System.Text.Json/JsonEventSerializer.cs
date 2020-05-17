@@ -23,7 +23,6 @@ namespace Aggregail.System.Text.Json
         public T Deserialize<T>(byte[] source)
             where T : class
         {
-            
             return JsonSerializer.Deserialize<T>(source);
         }
 
