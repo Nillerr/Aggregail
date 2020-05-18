@@ -4,13 +4,13 @@ A small framework for implementing Aggregate Roots, which are a critical part of
 
 Provides connectors for [Event Store](https://www.eventstore.com) and MongoDB.
 
-| Package                    | NuGet                                                               |                                                                         |
-|----------------------------|---------------------------------------------------------------------|-------------------------------------------------------------------------|
-| Aggregail                  | ![NuGet](https://img.shields.io/nuget/v/Aggregail)                  | ![Download](https://img.shields.io/nuget/dt/Aggregail)                  |
-| Aggregail.Newtonsoft.Json  | ![NuGet](https://img.shields.io/nuget/v/Aggregail.Newtonsoft.Json)  | ![Download](https://img.shields.io/nuget/dt/Aggregail.Newtonsoft.Json)  |
-| Aggregail.System.Text.Json | WIP                                                                 |                                                                         |
-| Aggregail.MongoDB          | ![NuGet](https://img.shields.io/nuget/v/Aggregail.MongoDB)          | ![Download](https://img.shields.io/nuget/dt/Aggregail.MongoDB)          |
-| Aggregail.EventStore       | WIP                                                                 |                                                                         |
+| Package                    | NuGet                                                                                                                           |                                                                                                                                     |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| Aggregail                  | [![NuGet](https://img.shields.io/nuget/v/Aggregail)](https://www.nuget.org/packages/Aggregail)                                  | [![Download](https://img.shields.io/nuget/dt/Aggregail)](https://www.nuget.org/packages/Aggregail)                                  |
+| Aggregail.Newtonsoft.Json  | [![NuGet](https://img.shields.io/nuget/v/Aggregail.Newtonsoft.Json)](https://www.nuget.org/packages/Aggregail.Newtonsoft.Json)  | [![Download](https://img.shields.io/nuget/dt/Aggregail.Newtonsoft.Json)](https://www.nuget.org/packages/Aggregail.Newtonsoft.Json)  |
+| Aggregail.System.Text.Json | WIP                                                                                                                             |                                                                                                                                     |
+| Aggregail.MongoDB          | [![NuGet](https://img.shields.io/nuget/v/Aggregail.MongoDB)](https://www.nuget.org/packages/Aggregail.MongoDB)                  | [![Download](https://img.shields.io/nuget/dt/Aggregail.MongoDB)](https://www.nuget.org/packages/Aggregail.MongoDB)                  |
+| Aggregail.EventStore       | WIP                                                                                                                             |                                                                                                                                     |
 
 A practical example
 
@@ -195,3 +195,17 @@ db.aggregail.deleteMany({ stream: "goat-a4a4e832-f577-4461-a50c-d9c83342ee6f" })
 ```
 
 Likewise, when using Event Store, the streams can be deleted using the `IEventStoreConnection`, or using the UI.
+
+## Concepts
+
+### Aggregate (Root)
+
+#### Events
+
+#### Commands
+
+#### Configuration
+
+##### Constructor
+
+###### Applicator
