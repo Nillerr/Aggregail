@@ -12,8 +12,8 @@ dotnet add package Aggregail.MongoDB
 ### MongoDB Replica Set
 
 Aggregail.MongoDB uses MongoDB Transactions to ensure consistency, and thus requires running a MongoDB configuration 
-with a replica set! See [docker-compose.yml](docker-compose.yml) for an example configuration of a replica set, 
-running with one primary, one secondary and one arbiter node (a PSA configuration).
+with a replica set, or a sharded cluster. See [docker-compose.yml](docker-compose.yml) for an example configuration 
+of a replica set, running with one primary, one secondary and one arbiter node (a PSA configuration).
 
 Aggregail.MongoDB works for [sharded](https://docs.mongodb.com/manual/sharding/) configurations as well.
 
