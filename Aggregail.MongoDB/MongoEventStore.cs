@@ -24,6 +24,7 @@ namespace Aggregail.MongoDB
         private readonly IJsonEventSerializer _serializer;
         private readonly ILogger<MongoEventStore>? _logger;
         private readonly TransactionOptions _transactionOptions;
+        private readonly IClock _clock;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MongoEventStore"/> class.
@@ -34,6 +35,7 @@ namespace Aggregail.MongoDB
             _events = settings.Database.GetCollection<RecordedEvent>(settings.Collection);
             _serializer = settings.EventSerializer;
             _logger = settings.Logger;
+            _clock = settings.Clock;
             _transactionOptions = settings.TransactionOptions;
         }
 
@@ -71,15 +73,7 @@ namespace Aggregail.MongoDB
             var currentVersion = latestEvent?.EventNumber ?? -1L;
 
             var recordedEvents = pendingEvents
-                .Select((e, i) => new RecordedEvent
-                    {
-                        Stream = stream,
-                        EventId = e.Id,
-                        EventType = e.Type,
-                        EventNumber = currentVersion + i + 1,
-                        Data = e.Data(_serializer)
-                    }
-                )
+                .Select((pendingEvent, index) => RecordedEvent(stream, pendingEvent, currentVersion + index + 1))
                 .ToArray();
 
             try
@@ -93,6 +87,32 @@ namespace Aggregail.MongoDB
             }
 
             await session.CommitTransactionAsync();
+        }
+
+        private RecordedEvent RecordedEvent(string stream, IPendingEvent pendingEvent, long eventNumber)
+        {
+            var e = new RecordedEvent();
+            e.Stream = stream;
+            e.EventId = pendingEvent.Id;
+            e.EventType = pendingEvent.Type;
+            e.EventNumber = eventNumber;
+            e.Created = UtcNow;
+            e.Data = pendingEvent.Data(_serializer);
+            return e;
+        }
+
+        private DateTime UtcNow
+        {
+            get
+            {
+                var created = _clock.UtcNow;
+                if (created.Kind != DateTimeKind.Utc)
+                {
+                    throw new InvalidOperationException("The clock returned a timestamp which was not in UTC.");
+                }
+
+                return created;
+            }
         }
 
         /// <inheritdoc />

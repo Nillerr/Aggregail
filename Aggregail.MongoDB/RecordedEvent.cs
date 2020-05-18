@@ -21,10 +21,10 @@ namespace Aggregail.MongoDB
         [BsonElement("event_number")]
         public long EventNumber { get; set; }
         
+        [BsonElement("created")]
+        public DateTime Created { get; set; }
+        
         [BsonElement("data")]
         public byte[]? Data { get; set; }
-        
-        [BsonElement("metadata")]
-        public byte[]? Metadata { get; set; }
     }
 }

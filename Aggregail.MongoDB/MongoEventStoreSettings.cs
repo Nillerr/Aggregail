@@ -43,6 +43,14 @@ namespace Aggregail.MongoDB
         /// Defaults to <c>null</c>
         /// </remarks>
         public ILogger<MongoEventStore>? Logger { get; set; } = null;
+
+        /// <summary>
+        /// The clock for recording the current time when appending events.
+        /// </summary>
+        /// <remarks>
+        /// Defaults to <see cref="SystemClock"/>
+        /// </remarks>
+        public IClock Clock { get; set; } = SystemClock.Instance;
         
         /// <summary>
         /// The options for MongoDB transactions when storing events. It is <b><i>not</i></b> recommended to change the
