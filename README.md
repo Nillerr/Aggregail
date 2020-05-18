@@ -117,13 +117,6 @@ public class GoatsController
 }
 ```
 
- 1) `POST /cases`
- 2) `Case.Create(...)` validates the input, and creates a new instance of `Case`, by creating a `new CaseCreated(...)` event, 
- appends it to the `Case` Aggregate Root using `Append(event)`, and calls the associated `Apply(CaseCreated)` method on the 
- new `Case` instance.
- 3) Calling `@case.CommitAsync(store, id)` saves the `CaseCreated` event in the stream `Case-{id}` as Event `#0`
- 4) Respond with `201 Created`
-
 ### Fetch
 
 ```c#
