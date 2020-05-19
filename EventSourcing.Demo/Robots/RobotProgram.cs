@@ -19,6 +19,12 @@ namespace EventSourcing.Demo.Robots
             {
                 await ImportRobotAsync(store, entity);
             }
+
+            Console.WriteLine("[Robots]");
+            await foreach (var robotId in Robot.IdsAsync(store))
+            {
+                Console.WriteLine(robotId);
+            }
         }
 
         private static async Task ImportRobotAsync(IEventStore store, RobotImported.RobotEntity entity)

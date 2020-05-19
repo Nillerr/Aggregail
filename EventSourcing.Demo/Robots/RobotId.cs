@@ -20,5 +20,7 @@ namespace EventSourcing.Demo.Robots
         public static bool operator !=(RobotId left, RobotId right) => !left.Equals(right);
 
         public override string ToString() => Value.ToString();
+
+        public static RobotId Parse(string source) => new RobotId(Guid.Parse(source));
     }
 }

@@ -31,7 +31,7 @@ namespace Aggregail
             IEnumerable<IPendingEvent> pendingEvents
         )
             where TAggregate : Aggregate<TIdentity, TAggregate>;
-        
+
         /// <summary>
         /// Asynchronously constructs an aggregate from an event stream, by replaying every event in the stream in
         /// order (oldest to newest), invoking the event applicators configured in <paramref name="configuration"/>.
@@ -43,6 +43,19 @@ namespace Aggregail
         /// <returns>The constructed aggregate</returns>
         Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration
+        )
+            where TAggregate : Aggregate<TIdentity, TAggregate>;
+
+        /// <summary>
+        /// Returns the ids of every aggregate of the type <typeparamref name="TAggregate"/>, using the constructors
+        /// declared in <paramref name="configuration"/>. 
+        /// </summary>
+        /// <param name="configuration">Aggregate configuration</param>
+        /// <typeparam name="TIdentity">Type of id</typeparam>
+        /// <typeparam name="TAggregate">Type of aggregate</typeparam>
+        /// <returns>The ids of every aggregate of type <typeparamref name="TAggregate"/>.</returns>
+        IAsyncEnumerable<TIdentity> AggregateIdsAsync<TIdentity, TAggregate>(
             AggregateConfiguration<TIdentity, TAggregate> configuration
         )
             where TAggregate : Aggregate<TIdentity, TAggregate>;

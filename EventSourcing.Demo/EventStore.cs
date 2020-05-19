@@ -94,5 +94,10 @@ namespace EventSourcing.Demo
 
             return aggregate;
         }
+
+        public IAsyncEnumerable<TIdentity> AggregateIdsAsync<TIdentity, TAggregate>(AggregateConfiguration<TIdentity, TAggregate> configuration) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            throw new NotImplementedException();
+        }
     }
 }

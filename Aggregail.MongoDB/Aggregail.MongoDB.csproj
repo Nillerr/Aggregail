@@ -17,13 +17,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aggregail" Version="1.0.0-alpha.4" />
+        <PackageReference Include="Aggregail" Version="1.0.0-alpha.5" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.4" />
         <PackageReference Include="MongoDB.Driver" Version="2.10.4" />
     </ItemGroup>
 
     <ItemGroup>
-        <!--        <ProjectReference Include="../Aggregail/Aggregail.csproj" />-->
+<!--                <ProjectReference Include="../Aggregail/Aggregail.csproj" />-->
     </ItemGroup>
 
 </Project>

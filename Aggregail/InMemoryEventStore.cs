@@ -15,21 +15,27 @@ namespace Aggregail
     {
         private sealed class StoredEvent
         {
-            public StoredEvent(Guid eventId, string eventType, long eventNumber, byte[] data)
+            public StoredEvent(Guid eventId, string eventStreamId, string eventType, long eventNumber, byte[] data)
             {
                 EventId = eventId;
+                EventStreamId = eventStreamId;
                 EventType = eventType;
                 EventNumber = eventNumber;
                 Data = data;
             }
 
             public Guid EventId { get; }
+            public string EventStreamId { get; }
             public string EventType { get; }
             public long EventNumber { get; }
             public byte[] Data { get; }
         }
 
-        private readonly Dictionary<string, List<StoredEvent>> _streams = new Dictionary<string, List<StoredEvent>>();
+        private readonly Dictionary<string, List<StoredEvent>> _streams = 
+            new Dictionary<string, List<StoredEvent>>();
+
+        private readonly Dictionary<string, List<StoredEvent>> _byEventType =
+            new Dictionary<string, List<StoredEvent>>();
 
         private readonly IJsonEventSerializer _serializer;
 
@@ -64,10 +70,11 @@ namespace Aggregail
 
                     eventStream = new List<StoredEvent>();
 
-                    var storedEvents = ToStoredEvents(pendingEvents, ExpectedVersion.NoStream);
+                    var storedEvents = ToStoredEvents(stream, pendingEvents, ExpectedVersion.NoStream);
                     foreach (var storedEvent in storedEvents)
                     {
                         eventStream.Add(storedEvent);
+                        AddByEventType(storedEvent);
                     }
 
                     _streams[stream] = eventStream;
@@ -80,10 +87,11 @@ namespace Aggregail
                     {
                         var currentVersion = eventStream.Last().EventNumber;
 
-                        var storedEvents = ToStoredEvents(pendingEvents, currentVersion);
+                        var storedEvents = ToStoredEvents(stream, pendingEvents, currentVersion);
                         foreach (var storedEvent in storedEvents)
                         {
                             eventStream.Add(storedEvent);
+                            AddByEventType(storedEvent);
                         }
                     }
 
@@ -95,13 +103,42 @@ namespace Aggregail
         }
 
         private IEnumerable<StoredEvent> ToStoredEvents(
+            string stream,
             IEnumerable<IPendingEvent> pendingEvents,
             long currentVersion
-        ) =>
-            pendingEvents.Select((pendingEvent, index) => ToStoredEvent(pendingEvent, currentVersion + 1 + index));
+        )
+        {
+            return pendingEvents
+                .Select((pendingEvent, index) => ToStoredEvent(stream, pendingEvent, currentVersion + 1 + index));
+        }
 
-        private StoredEvent ToStoredEvent(IPendingEvent pendingEvent, long eventVersion) =>
-            new StoredEvent(pendingEvent.Id, pendingEvent.Type, eventVersion, pendingEvent.Data(_serializer));
+        private StoredEvent ToStoredEvent(string stream, IPendingEvent pendingEvent, long eventVersion)
+        {
+            var data = pendingEvent.Data(_serializer);
+            
+            return new StoredEvent(
+                pendingEvent.Id,
+                stream,
+                pendingEvent.Type,
+                eventVersion,
+                data
+            );
+        }
+
+        private void AddByEventType(StoredEvent storedEvent)
+        {
+            if (_byEventType.TryGetValue(storedEvent.EventType, out var byEventType))
+            {
+                byEventType.Add(storedEvent);
+            }
+            else
+            {
+                byEventType = new List<StoredEvent>();
+                byEventType.Add(storedEvent);
+                
+                _byEventType[storedEvent.EventType] = byEventType;
+            }
+        }
 
         /// <inheritdoc />
         public Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
@@ -116,12 +153,14 @@ namespace Aggregail
                 var createStoredEvent = eventStream.First();
                 if (!configuration.Constructors.TryGetValue(createStoredEvent.EventType, out var constructor))
                 {
-                    throw new InvalidOperationException($"Unrecognized construction event type: {createStoredEvent.EventType}");
+                    throw new InvalidOperationException(
+                        $"Unrecognized construction event type: {createStoredEvent.EventType}"
+                    );
                 }
 
                 var aggregate = constructor(id, _serializer, createStoredEvent.Data);
                 aggregate.Record(new RecordableEvent(createStoredEvent.EventNumber));
-                
+
                 foreach (var storedEvent in eventStream.Skip(1))
                 {
                     if (configuration.Applicators.TryGetValue(storedEvent.EventType, out var applicator))
@@ -139,6 +178,36 @@ namespace Aggregail
             }
 
             return Task.FromResult<TAggregate?>(null);
+        }
+
+        /// <inheritdoc />
+        public async IAsyncEnumerable<TIdentity> AggregateIdsAsync<TIdentity, TAggregate>(
+            AggregateConfiguration<TIdentity, TAggregate> configuration
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            await Task.Yield();
+            
+            var constructors = configuration.Constructors;
+            foreach (var (eventType, _) in constructors)
+            {
+                if (!_byEventType.TryGetValue(eventType, out var eventStream))
+                {
+                    continue;
+                }
+                
+                foreach (var storedEvent in eventStream)
+                {
+                    if (storedEvent.EventNumber != 0)
+                    {
+                        continue;
+                    }
+                    
+                    var eventStreamParts = storedEvent.EventStreamId.Split("-", 2);
+                    var lastEventStreamPart = eventStreamParts[1];
+                    var id = configuration.IdentityParser(lastEventStreamPart);
+                    yield return id;
+                }
+            }
         }
     }
 }

@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <!--        <ProjectReference Include="../Aggregail/Aggregail.csproj"/>-->
+<!--                <ProjectReference Include="../Aggregail/Aggregail.csproj"/>-->
     </ItemGroup>
 
 </Project>

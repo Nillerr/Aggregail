@@ -19,5 +19,7 @@ namespace EventSourcing.Demo.Cases
         public static bool operator !=(CaseId left, CaseId right) => !left.Equals(right);
 
         public override string ToString() => Value.ToString();
+
+        public static CaseId Parse(string input) => new CaseId(Guid.Parse(input));
     }
 }

@@ -22,6 +22,7 @@ namespace Aggregail.MongoDB.Admin.Hubs
             var properties = new AuthenticationProperties
             {
                 AllowRefresh = true,
+                ExpiresUtc = DateTimeOffset.UtcNow + TimeSpan.FromMinutes(10),
                 IsPersistent = false,
                 IssuedUtc = DateTimeOffset.UtcNow,
             };

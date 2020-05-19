@@ -126,7 +126,7 @@ namespace Aggregail.MongoDB
             using var session = await _events.Database.Client.StartSessionAsync();
 
             var stream = configuration.Name.Stream(id);
-
+    
             var cursor = await _events
                 .Find(e => e.Stream == stream)
                 .SortBy(e => e.EventNumber)
@@ -192,6 +192,31 @@ namespace Aggregail.MongoDB
             aggregate.Record(recordableEvent);
         }
 
+        /// <inheritdoc />
+        public async IAsyncEnumerable<TIdentity> AggregateIdsAsync<TIdentity, TAggregate>(
+            AggregateConfiguration<TIdentity, TAggregate> configuration
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            var constructors = configuration.Constructors;
+            foreach (var (eventType, _) in constructors)
+            {
+                var cursor = await _events
+                    .Find(e => e.EventType == eventType && e.EventNumber == 0)
+                    .ToCursorAsync();
+
+                while (await cursor.MoveNextAsync())
+                {
+                    foreach (var recordedEvent in cursor.Current)
+                    {
+                        var eventStreamParts = recordedEvent.Stream.Split("-", 2);
+                        var lastEventStreamPart = eventStreamParts[1];
+                        var id = configuration.IdentityParser(lastEventStreamPart);
+                        yield return id;
+                    }
+                }
+            }
+        }
+
         private async Task InitializeIndexesAsync()
         {
             var isInitialized = Interlocked.Exchange(ref _isInitialized, 1);
@@ -204,21 +229,8 @@ namespace Aggregail.MongoDB
 
             try
             {
-                var keyBuilder = Builders<RecordedEvent>.IndexKeys;
-
-                var keys = keyBuilder
-                    .Combine(
-                        keyBuilder.Ascending(e => e.Stream),
-                        keyBuilder.Ascending(e => e.EventNumber)
-                    );
-
-                var options = new CreateIndexOptions
-                {
-                    Unique = true
-                };
-
-                var model = new CreateIndexModel<RecordedEvent>(keys, options);
-                await _events.Indexes.CreateOneAsync(model);
+                await CreateStreamEventNumberIndexAsync();
+                await CreateEventTypeIndexAsync();
             }
             catch (Exception ex)
             {
@@ -228,6 +240,40 @@ namespace Aggregail.MongoDB
             }
             
             _logger?.LogDebug("Index initialized");
+        }
+
+        private async Task CreateStreamEventNumberIndexAsync()
+        {
+            var keyBuilder = Builders<RecordedEvent>.IndexKeys;
+
+            var keys = keyBuilder
+                .Combine(
+                    keyBuilder.Ascending(e => e.Stream),
+                    keyBuilder.Ascending(e => e.EventNumber)
+                );
+
+            var options = new CreateIndexOptions();
+            options.Unique = true;
+
+            var model = new CreateIndexModel<RecordedEvent>(keys, options);
+            await _events.Indexes.CreateOneAsync(model);
+        }
+
+        private async Task CreateEventTypeIndexAsync()
+        {
+            var keyBuilder = Builders<RecordedEvent>.IndexKeys;
+
+            var keys = keyBuilder
+                .Combine(
+                    keyBuilder.Ascending(e => e.EventType),
+                    keyBuilder.Ascending(e => e.EventNumber)
+                );
+
+            var options = new CreateIndexOptions();
+            options.Unique = false;
+
+            var model = new CreateIndexModel<RecordedEvent>(keys, options);
+            await _events.Indexes.CreateOneAsync(model);
         }
     }
 }

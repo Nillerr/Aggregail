@@ -13,7 +13,7 @@ namespace Aggregail
         where TAggregate : Aggregate<TIdentity, TAggregate>
     {
         /// <summary>
-        /// Creates an instance of <typeparamref name="TAggregate"/> by deserializing event data, and passing it to the
+        /// Creates an instance of <c>TAggregate</c> by deserializing event data, and passing it to the
         /// called constructor.
         /// </summary>
         /// <param name="id">Id of the aggregate being constructed.</param>
@@ -22,7 +22,7 @@ namespace Aggregail
         public delegate TAggregate Constructor(TIdentity id, IJsonEventSerializer serializer, byte[] data);
 
         /// <summary>
-        /// Applies an event to an <typeparamref name="TAggregate"/> by deserializing event data, and passing it to the
+        /// Applies an event to an <c>TAggregate</c> by deserializing event data, and passing it to the
         /// called <c>Apply(TEvent e)</c> method.
         /// </summary>
         /// <param name="aggregate">Aggregate instance to apply the event to.</param>
@@ -34,15 +34,20 @@ namespace Aggregail
         /// Type-safe name of the aggregate type.
         /// </summary>
         public AggregateName<TIdentity, TAggregate> Name { get; }
+        
+        /// <summary>
+        /// Parses a string into an instance of <c>TIdentity</c>.
+        /// </summary>
+        public Parser<TIdentity> IdentityParser { get; }
 
         /// <summary>
-        /// Configured constructors for the <typeparamref naame="TAggregate"/>, keyed by the string value of the
+        /// Configured constructors for the <c>TAggregate</c>, keyed by the string value of the
         /// <see cref="EventType{T}"/> for the event associated with the constructor.
         /// </summary>
         public Dictionary<string, Constructor> Constructors { get; } = new Dictionary<string, Constructor>();
 
         /// <summary>
-        /// Configured event applicators for the <typeparamref name="TAggregate"/>, keyed by the string value of the
+        /// Configured event applicators for the <c>TAggregate</c>, keyed by the string value of the
         /// <see cref="EventType{T}"/> for the event associated with the applicator.
         /// </summary>
         public Dictionary<string, EventApplicator> Applicators { get; } = new Dictionary<string, EventApplicator>();
@@ -51,9 +56,11 @@ namespace Aggregail
         /// Creates an instance of the <see cref="AggregateConfiguration{TIdentity,TAggregate}"/> class.
         /// </summary>
         /// <param name="name">Name of the aggregate type.</param>
-        public AggregateConfiguration(AggregateName<TIdentity, TAggregate> name)
+        /// <param name="identityParser">The identity parser.</param>
+        public AggregateConfiguration(AggregateName<TIdentity, TAggregate> name, Parser<TIdentity> identityParser)
         {
             Name = name;
+            IdentityParser = identityParser;
         }
 
         /// <summary>
@@ -90,9 +97,20 @@ namespace Aggregail
         )
             where T : class
         {
-            Applicators.Add(type.Value,
-                (aggregate, decoder, data) => applicator(aggregate, decoder.Deserialize<T>(data))
-            );
+            Applicators.Add(type.Value, (aggregate, decoder, data) => applicator(aggregate, decoder.Deserialize<T>(data)));
+            return this;
+        }
+
+        /// <summary>
+        /// Configures an applicator for the event of type <typeparamref name="T"/>, identified by the
+        /// <paramref name="type"/> argument, which does nothing when the event is received.
+        /// </summary>
+        /// <param name="type">Type of the event.</param>
+        /// <typeparam name="T">Type of event.</typeparam>
+        /// <returns>The modified aggregate configuration.</returns>
+        public AggregateConfiguration<TIdentity, TAggregate> Ignores<T>(EventType<T> type) where T : class
+        {
+            Applicators.Add(type.Value, (a, d, c) => { });
             return this;
         }
     }

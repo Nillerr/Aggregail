@@ -8,7 +8,7 @@ namespace EventSourcing.Demo.Cases
     public partial class Case
     {
         private static readonly AggregateConfiguration<CaseId, Case> Configuration =
-            new AggregateConfiguration<CaseId, Case>("Case")
+            new AggregateConfiguration<CaseId, Case>("Case", CaseId.Parse)
                 .Constructs(CaseCreated.EventType, (id, @event) => new Case(id, @event))
                 .Constructs(CaseImported.EventType, (id, @event) => new Case(id, @event))
                 .Applies(CaseImported.EventType, (agg, e) => agg.Apply(e))

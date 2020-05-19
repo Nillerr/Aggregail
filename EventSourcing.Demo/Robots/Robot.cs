@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ namespace EventSourcing.Demo.Robots
     public sealed class Robot : Aggregate<RobotId, Robot>
     {
         private static readonly AggregateConfiguration<RobotId, Robot> Configuration =
-            new AggregateConfiguration<RobotId, Robot>("Robot")
+            new AggregateConfiguration<RobotId, Robot>("Robot", RobotId.Parse)
                 .Constructs(RobotImported.EventType, (id, e) => new Robot(id, e))
                 .Applies(RobotImported.EventType, (robot, e) => robot.Apply(e))
                 .Applies(RobotRegistered.EventType, (robot, e) => robot.Apply(e))
@@ -41,6 +42,8 @@ namespace EventSourcing.Demo.Robots
             robot.Append(id.Value, RobotImported.EventType, e);
             return robot;
         }
+
+        public static IAsyncEnumerable<RobotId> IdsAsync(IEventStore store) => store.AggregateIdsAsync(Configuration);
 
         public static Task<Robot?> FromAsync(IEventStore store, RobotId id) => store.AggregateAsync(id, Configuration);
 
