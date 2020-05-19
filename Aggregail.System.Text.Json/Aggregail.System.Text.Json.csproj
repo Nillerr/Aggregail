@@ -1,23 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <TargetFramework>netcoreapp3.0</TargetFramework>
-        <Nullable>enable</Nullable>
-        <PackageId>Aggregail.System.Text.Json</PackageId>
-        <Version>1.0.0-alpha.1</Version>
-        <Authors>Nicklas Jensen</Authors>
-        <Description>A microframework for working with Aggregate Roots in an Event Sourced system, backed by an Event Store.</Description>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageProjectUrl>https://github.com/nillerr/Aggregail</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/nillerr/Aggregail.git</RepositoryUrl>
-        <RepositoryType>git</RepositoryType>
-        <IncludeSymbols>true</IncludeSymbols>
-        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Aggregail" Version="1.0.0-alpha.4" />
-    </ItemGroup>
-
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <PackageId>Aggregail.System.Text.Json</PackageId>
+    <Version>1.0.0-alpha.1</Version>
+    <Authors>Nicklas Jensen</Authors>
+    <Description>A microframework for working with Aggregate Roots in an Event Sourced system, backed by an Event Store.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/nillerr/Aggregail</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nillerr/Aggregail.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <UserSecretsId>8e8f318f-53ab-4dfb-a326-d03695241e09</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Aggregail" Version="1.0.0-alpha.4" />
+  </ItemGroup>
 </Project>
