@@ -1,5 +1,4 @@
 using Aggregail.MongoDB.Admin.Documents;
-using Aggregail.MongoDB.Admin.Hubs;
 using Aggregail.MongoDB.Admin.Settings;
 using MongoDB.Driver;
 

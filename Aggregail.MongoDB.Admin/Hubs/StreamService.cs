@@ -23,10 +23,9 @@ namespace Aggregail.MongoDB.Admin.Hubs
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            var pipelineDefinition = PipelineDefinitionBuilder.For<ChangeStreamDocument<BsonDocument>>()
-                .Match(csd => csd.CollectionNamespace.FullName == _events.CollectionNamespace.FullName);
+            var pipelineDefinition = PipelineDefinitionBuilder.For<ChangeStreamDocument<RecordedEventDocument>>();
 
-            var cursor = await _events.Database.WatchAsync(pipelineDefinition, cancellationToken: cancellationToken);
+            var cursor = await _events.WatchAsync(pipelineDefinition, cancellationToken: cancellationToken);
             await cursor.ForEachAsync(async csd =>
                 {
                     var json = csd.BackingDocument.ToJson();

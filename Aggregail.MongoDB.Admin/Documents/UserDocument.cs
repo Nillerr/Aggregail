@@ -6,7 +6,8 @@ namespace Aggregail.MongoDB.Admin.Documents
     public sealed class UserDocument
     {
         [BsonId]
-        public ObjectId Id { get; set; }
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string Id { get; set; }
 
         [BsonElement("username")]
         public string Username { get; set; } = null!;

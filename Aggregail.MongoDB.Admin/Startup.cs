@@ -1,3 +1,4 @@
+using Aggregail.MongoDB.Admin.Controllers;
 using Aggregail.MongoDB.Admin.Documents;
 using Aggregail.MongoDB.Admin.Hubs;
 using Aggregail.MongoDB.Admin.Services;
@@ -7,7 +8,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,15 +33,22 @@ namespace Aggregail.MongoDB.Admin
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
 
-            services.AddOptions<AggregailSettings>("Aggregail");
+            var aggregailSettings = new AggregailSettings();
+            Configuration.Bind("Aggregail", aggregailSettings);
+            
+            services.AddSingleton(aggregailSettings);
 
             services.AddSingleton<MongoDatabaseFactory>();
             services.AddSingleton<MongoCollectionFactory>();
 
             services.AddSingleton<RecordedEventCollectionFactory>();
             services.AddSingleton(s => s.GetRequiredService<RecordedEventCollectionFactory>().Collection);
+            services.AddSingleton(s => s.GetRequiredService<MongoCollectionFactory>().Collection<UserDocument>("users"));
+            
+            services.AddSingleton<UserDocumentPasswordHasher>();
 
             services.AddHostedService<StreamService>();
+            services.AddHostedService<UserSeederBackgroundService>();
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie();
