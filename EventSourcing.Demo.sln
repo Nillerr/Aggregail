@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aggregail.MongoDB", "Aggreg
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aggregail.System.Text.Json", "Aggregail.System.Text.Json\Aggregail.System.Text.Json.csproj", "{9D4A22D6-C8F7-4FEF-A0F9-40A99AF6F324}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aggregail.MongoDB.Admin", "Aggregail.MongoDB.Admin\Aggregail.MongoDB.Admin.csproj", "{5C2D6552-CCBA-4C9E-9CA2-066CCAD20605}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{9D4A22D6-C8F7-4FEF-A0F9-40A99AF6F324}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9D4A22D6-C8F7-4FEF-A0F9-40A99AF6F324}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9D4A22D6-C8F7-4FEF-A0F9-40A99AF6F324}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C2D6552-CCBA-4C9E-9CA2-066CCAD20605}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C2D6552-CCBA-4C9E-9CA2-066CCAD20605}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C2D6552-CCBA-4C9E-9CA2-066CCAD20605}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C2D6552-CCBA-4C9E-9CA2-066CCAD20605}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
