@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Aggregail.MongoDB.Admin.Documents;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
@@ -17,12 +20,12 @@ namespace Aggregail.MongoDB.Admin.Controllers
     {
         private readonly IMongoCollection<UserDocument> _users;
         private readonly UserDocumentPasswordHasher _passwordHasher;
-        private readonly IClock _clock;
+        private readonly ISystemClock _clock;
 
         public AuthenticationController(
             IMongoCollection<UserDocument> users,
             UserDocumentPasswordHasher passwordHasher,
-            IClock clock
+            ISystemClock clock
         )
         {
             _users = users;
@@ -30,22 +33,38 @@ namespace Aggregail.MongoDB.Admin.Controllers
             _clock = clock;
         }
 
+        [Authorize]
+        [HttpGet("test")]
+        public IActionResult Test()
+        {
+            return Ok(User.Claims.ToDictionary(e => e.Type, e => e.Value));
+        }
+
+        [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> SignIn(string username, string password, CancellationToken cancellationToken)
+        public async Task<IActionResult> SignIn(
+            [FromForm] string username,
+            [FromForm] string password,
+            CancellationToken cancellationToken
+        )
         {
             var user = await _users
                 .Find(e => e.Username == username)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (user == null || !_passwordHasher.VerifyHashedPassword(user, user.Password, password))
+            if (user == null || !_passwordHasher.VerifyHashedPassword(user.Id, user.Password, password))
             {
                 return Unauthorized();
             }
 
+            var pwv = user.GetPasswordVersion()
+                .ToString("D", CultureInfo.InvariantCulture);
+            
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Name, username)
+                new Claim(ClaimTypes.Name, username),
+                new Claim("pwv", pwv)
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -53,7 +72,7 @@ namespace Aggregail.MongoDB.Admin.Controllers
             var properties = new AuthenticationProperties
             {
                 AllowRefresh = false,
-                ExpiresUtc = null,
+                ExpiresUtc = DateTimeOffset.MaxValue,
                 IsPersistent = true,
                 IssuedUtc = _clock.UtcNow,
             };
@@ -67,6 +86,7 @@ namespace Aggregail.MongoDB.Admin.Controllers
             return Ok();
         }
 
+        [AllowAnonymous]
         [HttpPost("logout")]
         public async Task<IActionResult> SignOut()
         {

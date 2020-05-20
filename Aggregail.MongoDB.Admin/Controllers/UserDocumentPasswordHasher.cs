@@ -8,18 +8,18 @@ namespace Aggregail.MongoDB.Admin.Controllers
 {
     public sealed class UserDocumentPasswordHasher
     {
-        public string HashPassword(UserDocument user, string password)
+        public string HashPassword(string userId, string password)
         {
-            var hashedPassword = HashedPassword(user, password);
+            var hashedPassword = HashedPassword(userId, password);
             return Convert.ToBase64String(hashedPassword);
         }
 
-        private static byte[] Salt(UserDocument user)
+        private static byte[] Salt(string userId)
         {
-            return Encoding.UTF8.GetBytes(user.Id);
+            return Encoding.UTF8.GetBytes(userId);
         }
 
-        public bool VerifyHashedPassword(UserDocument user, string hashedPassword, string providedPassword)
+        public bool VerifyHashedPassword(string userId, string hashedPassword, string providedPassword)
         {
             var decodedHashedPassword = Convert.FromBase64String(hashedPassword);
             if (decodedHashedPassword.Length == 0)
@@ -27,13 +27,13 @@ namespace Aggregail.MongoDB.Admin.Controllers
                 return false;
             }
 
-            var hashedProvidedPassword = HashedPassword(user, providedPassword);
+            var hashedProvidedPassword = HashedPassword(userId, providedPassword);
             return CryptographicOperations.FixedTimeEquals(decodedHashedPassword, hashedProvidedPassword);
         }
 
-        private static byte[] HashedPassword(UserDocument user, string password)
+        private static byte[] HashedPassword(string userId, string password)
         {
-            var salt = Encoding.UTF8.GetBytes(user.Id);
+            var salt = Encoding.UTF8.GetBytes(userId);
             return KeyDerivation.Pbkdf2(password, salt, KeyDerivationPrf.HMACSHA256, 10_000, 256 / 8);
         }
     }

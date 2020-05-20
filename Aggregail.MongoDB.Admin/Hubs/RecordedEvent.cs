@@ -5,6 +5,7 @@ namespace Aggregail.MongoDB.Admin.Hubs
 {
     public sealed class RecordedEvent
     {
+        public string Id { get; set; }
         public string Stream { get; set; }
         public Guid EventId { get; set; }
         public string EventType { get; set; }

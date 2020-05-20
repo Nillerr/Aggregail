@@ -14,5 +14,7 @@ namespace Aggregail.MongoDB.Admin.Documents
 
         [BsonElement("password")]
         public string Password { get; set; } = null!;
+
+        public int GetPasswordVersion() => Password.GetHashCode();
     }
 }

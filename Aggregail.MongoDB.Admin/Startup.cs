@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Aggregail.MongoDB.Admin.Authentication;
 using Aggregail.MongoDB.Admin.Controllers;
 using Aggregail.MongoDB.Admin.Documents;
 using Aggregail.MongoDB.Admin.Hubs;
@@ -48,10 +50,15 @@ namespace Aggregail.MongoDB.Admin
             services.AddSingleton<UserDocumentPasswordHasher>();
 
             services.AddHostedService<StreamService>();
-            services.AddHostedService<UserSeederBackgroundService>();
+            services.AddHostedService<AdminSeeder>();
+
+            services.AddSingleton<UserValidationEvents>();
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie();
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+                {
+                    options.EventsType = typeof(UserValidationEvents);
+                });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -78,14 +85,14 @@ namespace Aggregail.MongoDB.Admin
                 }
             );
 
-            app.UseAuthentication();
-            app.UseAuthorization();
-
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseSpaStaticFiles();
 
             app.UseRouting();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
                 {
@@ -94,8 +101,7 @@ namespace Aggregail.MongoDB.Admin
                         pattern: "{controller}/{action=Index}/{id?}"
                     );
                     
-                    endpoints.MapHub<StreamHub>("stream");
-                    endpoints.MapHub<AuthenticationHub>("auth");
+                    endpoints.MapHub<StreamHub>("hubs/stream");
                 }
             );
 

@@ -7,7 +7,8 @@ namespace Aggregail.MongoDB.Admin.Documents
     public sealed class RecordedEventDocument
     {
         [BsonId]
-        public ObjectId Id { get; set; }
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string Id { get; set; }
 
         [BsonElement("stream")]
         public string Stream { get; set; } = null!;
@@ -23,8 +24,8 @@ namespace Aggregail.MongoDB.Admin.Documents
         
         [BsonElement("created")]
         public DateTime Created { get; set; }
-        
+
         [BsonElement("data")]
-        public byte[]? Data { get; set; }
+        public byte[] Data { get; set; } = Array.Empty<byte>();
     }
 }
