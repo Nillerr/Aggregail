@@ -8,12 +8,12 @@ using MongoDB.Driver;
 
 namespace Aggregail.MongoDB.Admin.Services
 {
-    public sealed class AdminSeeder : BackgroundService
+    public sealed class UserSeederService : BackgroundService
     {
         private readonly IMongoCollection<UserDocument> _users;
         private readonly UserDocumentPasswordHasher _passwordHasher;
 
-        public AdminSeeder(
+        public UserSeederService(
             IMongoCollection<UserDocument> users,
             UserDocumentPasswordHasher passwordHasher
         )
@@ -39,6 +39,7 @@ namespace Aggregail.MongoDB.Admin.Services
             {
                 Id = id,
                 Username = "admin",
+                FullName = "Event Store Administrator",
                 Password = _passwordHasher.HashPassword(id, "changeit")
             };
             

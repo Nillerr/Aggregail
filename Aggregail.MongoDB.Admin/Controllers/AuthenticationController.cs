@@ -15,7 +15,7 @@ using MongoDB.Driver;
 namespace Aggregail.MongoDB.Admin.Controllers
 {
     [ApiController]
-    [Route("auth")]
+    [Route("api/auth")]
     public sealed class AuthenticationController : ControllerBase
     {
         private readonly IMongoCollection<UserDocument> _users;
@@ -42,7 +42,7 @@ namespace Aggregail.MongoDB.Admin.Controllers
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> SignIn(
+        public async Task<IActionResult> SignInAsync(
             [FromForm] string username,
             [FromForm] string password,
             CancellationToken cancellationToken
@@ -58,7 +58,7 @@ namespace Aggregail.MongoDB.Admin.Controllers
             }
 
             var pwv = user.GetPasswordVersion()
-                .ToString("D", CultureInfo.InvariantCulture);
+                .ToString();
             
             var claims = new List<Claim>
             {
@@ -88,7 +88,7 @@ namespace Aggregail.MongoDB.Admin.Controllers
 
         [AllowAnonymous]
         [HttpPost("logout")]
-        public async Task<IActionResult> SignOut()
+        public async Task<IActionResult> SignOutAsync()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Ok();

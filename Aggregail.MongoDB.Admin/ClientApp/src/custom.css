@@ -3,6 +3,14 @@ a {
   color: #0366d6;
 }
 
+#root {
+  height: 100%;
+}
+
+html, body {
+  height: 100%;
+}
+
 .btn-primary {
   color: #fff;
   background-color: #1b6ec2;

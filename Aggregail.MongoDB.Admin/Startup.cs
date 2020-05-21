@@ -50,7 +50,7 @@ namespace Aggregail.MongoDB.Admin
             services.AddSingleton<UserDocumentPasswordHasher>();
 
             services.AddHostedService<StreamService>();
-            services.AddHostedService<AdminSeeder>();
+            services.AddHostedService<UserSeederService>();
 
             services.AddSingleton<UserValidationEvents>();
 

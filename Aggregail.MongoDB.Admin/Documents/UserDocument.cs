@@ -7,10 +7,13 @@ namespace Aggregail.MongoDB.Admin.Documents
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
+        public string Id { get; set; } = null!;
 
         [BsonElement("username")]
         public string Username { get; set; } = null!;
+
+        [BsonElement("full_name")]
+        public string FullName { get; set; } = null!;
 
         [BsonElement("password")]
         public string Password { get; set; } = null!;
