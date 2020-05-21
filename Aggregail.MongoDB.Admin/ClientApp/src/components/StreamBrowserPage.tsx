@@ -1,7 +1,7 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {Link} from "react-router-dom";
-import Axios, {CancelToken, CancelTokenStatic} from "axios";
 import {Alert, Button, Form, Input, InputGroup, InputGroupAddon, Spinner, Table} from "reactstrap";
+import {usePolling} from "../hooks";
 
 const StreamRow = (props: { name: string }) => (
   <tr>
@@ -55,46 +55,8 @@ type StreamsTableState =
 
 const StreamBrowserPage = (props: { onStreamBrowse: (stream: string) => void }) => {
 
-  const [recentlyCreatedStreams, setRecentlyCreatedStreams] = useState<StreamsTableState>({kind: 'Loading'});
-  const [recentlyChangedStreams, setRecentlyChangedStreams] = useState<StreamsTableState>({kind: 'Loading'});
-  const [currentReloadTimeout, setCurrentReloadTimeout] = useState<NodeJS.Timeout>();
-  
-  const loadStreams = (cancelToken: CancelToken) => {
-    return Axios
-      .get<RecentStreams>('/api/streams', {cancelToken})
-      .then(response => {
-        setRecentlyCreatedStreams({kind: 'Loaded', streams: response.data.recentlyCreatedStreams});
-        setRecentlyChangedStreams({kind: 'Loaded', streams: response.data.recentlyChangedStreams});
-      })
-      .catch(reason => {
-        setRecentlyCreatedStreams({kind: "Failed", reason});
-        setRecentlyChangedStreams({kind: "Failed", reason});
-      });
-  };
-  
-  const reloadStreams = (cancelToken: CancelToken) => {
-    const timeout = setTimeout(
-      () => loadStreams(cancelToken).finally(() => reloadStreams(cancelToken)),
-      2_500
-    );
-    
-    setCurrentReloadTimeout(timeout);
-  }
-  
-  useEffect(() => {
-    const cts = Axios.CancelToken.source();
-
-    loadStreams(cts.token)
-      .finally(() => reloadStreams(cts.token));
-
-    return () => {
-      cts.cancel();
-      
-      if (currentReloadTimeout) {
-        clearTimeout(currentReloadTimeout);
-      }
-    };
-  }, []);
+  const recentlyCreatedStreams = usePolling<RecentStreams, StreamsTableState>('/api/streams')(data => ({kind: 'Loaded', streams: data.recentlyCreatedStreams}));
+  const recentlyChangedStreams = usePolling<RecentStreams, StreamsTableState>('/api/streams')(data => ({kind: 'Loaded', streams: data.recentlyChangedStreams}));
 
   const [stream, setStream] = useState('');
 

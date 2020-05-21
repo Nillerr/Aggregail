@@ -3,11 +3,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Aggregail.MongoDB.Admin.Documents;
 using Aggregail.MongoDB.Admin.Hubs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
 namespace Aggregail.MongoDB.Admin.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/streams")]
     public sealed class StreamsController : ControllerBase

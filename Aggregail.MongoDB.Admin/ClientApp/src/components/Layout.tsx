@@ -3,9 +3,9 @@ import {Container} from 'reactstrap';
 import NavMenu from './NavMenu';
 import Footer from "./Footer";
 
-export default (props: { children?: React.ReactNode }) => (
+export default (props: { onSignOut: () => void, children?: React.ReactNode }) => (
   <React.Fragment>
-    <NavMenu/>
+    <NavMenu onSignOut={props.onSignOut}/>
     <Container>
       {props.children}
     </Container>

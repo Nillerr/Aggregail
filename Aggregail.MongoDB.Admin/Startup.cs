@@ -54,6 +54,7 @@ namespace Aggregail.MongoDB.Admin
 
             services.AddSingleton<UserValidationEvents>();
 
+            services.AddAuthorization();
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
                 {

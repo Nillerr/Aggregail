@@ -1,5 +1,5 @@
 import React from "react";
-import {Alert, Button, Spinner, Table} from "reactstrap";
+import {Alert, Spinner, Table} from "reactstrap";
 import {Link} from "react-router-dom";
 import {usePolling} from "../hooks";
 import {User} from "../model";
@@ -13,9 +13,9 @@ const UserRow = (props: { user: User }) => {
   );
 };
 
-const UsersPage = () => {
+const UsersPage = (props: {}) => {
 
-  const usersState = usePolling<User[], { users: User[] }>('/api/users', users => ({users}));
+  const usersState = usePolling<User[], { users: User[] }>('/api/users')(users => ({users}));
 
   return (
     <React.Fragment>

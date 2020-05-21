@@ -33,13 +33,6 @@ namespace Aggregail.MongoDB.Admin.Controllers
             _clock = clock;
         }
 
-        [Authorize]
-        [HttpGet("test")]
-        public IActionResult Test()
-        {
-            return Ok(User.Claims.ToDictionary(e => e.Type, e => e.Value));
-        }
-
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> SignInAsync(

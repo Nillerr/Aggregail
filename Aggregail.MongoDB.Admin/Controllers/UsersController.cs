@@ -2,11 +2,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Aggregail.MongoDB.Admin.Documents;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
 namespace Aggregail.MongoDB.Admin.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/users")]
     public sealed class UsersController : ControllerBase
