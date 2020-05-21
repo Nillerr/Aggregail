@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react";
 import {RecordedEvent} from "./StreamHub";
 import {Link} from "react-router-dom";
 import Axios from "axios";
+import {Alert, Spinner, Table} from "reactstrap";
 
 const EventRow = (props: { event: RecordedEvent }) => {
   let name = `${props.event.eventNumber}@${props.event.stream}`;
@@ -21,29 +22,35 @@ interface StreamResponse {
   events: RecordedEvent[];
 }
 
+type StreamPageState =
+  | { kind: 'Loading' }
+  | { kind: 'Loaded' } & StreamResponse
+  | { kind: 'Failed', reason: any };
+
 const StreamPage = (props: { name: string }) => {
 
-  const [page, setPage] = useState(1);
-  const [numberOfPages, setNumberOfPages] = useState(0);
-  const [events, setEvents] = useState<RecordedEvent[]>([]);
+  // const [page, setPage] = useState(1);
+  // const [numberOfPages, setNumberOfPages] = useState(0);
+
+  const [stream, setStream] = useState<StreamPageState>({kind: 'Loading'});
 
   useEffect(() => {
     const cts = Axios.CancelToken.source();
 
     Axios
       .get<StreamResponse>(`/api/streams/${props.name}`, {cancelToken: cts.token})
-      .then(response => setEvents(response.data.events))
-      .catch(console.error);
+      .then(response => setStream({kind: 'Loaded', ...response.data}))
+      .catch(reason => setStream({kind: 'Failed', reason}));
 
     return () => {
       cts.cancel();
     };
-  }, [])
+  }, [props.name])
 
   return (
     <React.Fragment>
       <div className="d-flex mt-2 mb-2">
-        <h5 className="mb-3 mr-auto">Event Stream '{props.name}'</h5>
+        <h5 className="mr-auto">Event Stream '{props.name}'</h5>
         <div className="btn-group" role="group">
           <button className="btn btn-outline-secondary" disabled={true}>Pause</button>
           <button className="btn btn-outline-secondary" disabled={true}>Delete</button>
@@ -58,7 +65,7 @@ const StreamPage = (props: { name: string }) => {
           <button className="btn btn-outline-secondary" disabled={true}>Previous</button>
         </div>
       </div>
-      <table className="table table-bordered table-sm">
+      <Table bordered={true} size="sm">
         <thead className="thead-dark">
         <tr>
           <th scope="col">Event #</th>
@@ -69,9 +76,22 @@ const StreamPage = (props: { name: string }) => {
         </tr>
         </thead>
         <tbody>
-        {events.map(event => (<EventRow key={event.eventId} event={event}/>))}
+        {stream.kind === 'Loaded'
+          ? stream.events.map(event => (<EventRow key={event.eventId} event={event}/>))
+          : null
+        }
         </tbody>
-      </table>
+      </Table>
+      {stream.kind === 'Loading'
+        ? <div className="d-flex justify-content-center">
+          <Spinner>Loading...</Spinner>
+        </div>
+        : null
+      }
+      {stream.kind === 'Failed'
+        ? <Alert color="danger">{`${stream.reason}`}</Alert>
+        : null
+      }
     </React.Fragment>
   );
 };

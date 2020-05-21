@@ -1,26 +1,14 @@
 import React, {useEffect, useState} from "react";
 import {RecordedEvent} from "./StreamHub";
-import {Redirect} from "react-router";
 import {Link} from "react-router-dom";
-import {Alert, Spinner} from 'reactstrap';
+import {Alert, Spinner, Table} from 'reactstrap';
 import Axios from "axios";
+import Json from "./Json";
 
 type EventState =
   | { kind: 'Loading' }
   | { kind: 'Loaded', event: RecordedEvent }
-  | { kind: 'NotFound' }
   | { kind: 'Failed', reason: any };
-
-const EventButton = (props: { label: string, event?: { stream: string, eventNumber: number } }) => {
-  return props.event
-    ? (
-      <Link
-        className="btn btn-outline-secondary"
-        to={`/streams/${props.event.stream}/${props.event.eventNumber}`}
-      >{props.label}</Link>
-    )
-    : (<button className="btn btn-outline-secondary" disabled={true}>{props.label}</button>);
-};
 
 const loadEventState = (stream: string, eventNumber: number, setState: (state: EventState) => void) => {
   const cts = Axios.CancelToken.source();
@@ -33,10 +21,21 @@ const loadEventState = (stream: string, eventNumber: number, setState: (state: E
   return cts;
 }
 
+const EventButton = (props: { label: string, event?: { stream: string, eventNumber: number } }) => {
+  return props.event
+    ? (
+      <Link
+        className="btn btn-outline-secondary"
+        to={`/streams/${props.event.stream}/${props.event.eventNumber}`}
+      >{props.label}</Link>
+    )
+    : (<button className="btn btn-outline-secondary" disabled={true}>{props.label}</button>);
+};
+
 const EventContent = (props: { event: RecordedEvent }) => {
   return (
     <React.Fragment>
-      <table className="table table-bordered table-sm mt-2 mb-2">
+      <Table bordered={true} size="sm" className="mt-2 mb-2">
         <thead className="thead-dark">
         <tr>
           <th scope="col">No</th>
@@ -55,11 +54,11 @@ const EventContent = (props: { event: RecordedEvent }) => {
         <tr>
           <td colSpan={4}>
             <strong>Data</strong>
-            <pre className="mt-2 mb-4">
-                <code>
-                  {JSON.stringify(props.event.data, null, 2)}
-                </code>
-              </pre>
+            <div className="mt-2 mb-4">
+              <Json>
+                {JSON.stringify(props.event.data, null, 2)}
+              </Json>
+            </div>
           </td>
         </tr>
         </tbody>
@@ -74,7 +73,7 @@ const EventContent = (props: { event: RecordedEvent }) => {
           <td colSpan={3}>{props.event.eventId}</td>
         </tr>
         </tbody>
-      </table>
+      </Table>
     </React.Fragment>
   );
 }
@@ -93,10 +92,6 @@ const EventPage = (props: { stream: string, eventNumber: number }) => {
       loadNextEventToken.cancel();
     };
   }, [props.stream, props.eventNumber]);
-
-  if (eventState.kind === 'NotFound') {
-    return (<Redirect to={`/streams/${props.stream}`}/>);
-  }
 
   const previousEvent = props.eventNumber === 0
     ? undefined
@@ -122,14 +117,18 @@ const EventPage = (props: { stream: string, eventNumber: number }) => {
         </div>
       </div>
       {eventState.kind === 'Loading'
-        ? (
-          <div className="d-flex justify-content-center">
-            <Spinner>Loading...</Spinner>
-          </div>
-        )
-        : eventState.kind === 'Failed'
-          ? (<Alert color="danger">{eventState.reason}</Alert>)
-          : (<EventContent event={eventState.event}/>)
+        ? <div className="d-flex justify-content-center">
+          <Spinner>Loading...</Spinner>
+        </div>
+        : null
+      }
+      {eventState.kind === 'Failed'
+        ? <Alert color="danger">{eventState.reason}</Alert>
+        : null
+      }
+      {eventState.kind === 'Loaded'
+        ? <EventContent event={eventState.event}/>
+        : null
       }
     </React.Fragment>
   );

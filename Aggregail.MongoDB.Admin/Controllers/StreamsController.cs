@@ -55,9 +55,15 @@ namespace Aggregail.MongoDB.Admin.Controllers
         }
 
         [HttpGet("{name}")]
-        public Task<IActionResult> StreamAsync(string name, CancellationToken cancellationToken)
+        public async Task<ActionResult<StreamResponse>> StreamAsync(string name, CancellationToken cancellationToken)
         {
-            return ReadStreamEventsForwardAsync(name, 0, 20, cancellationToken);
+            var response = await ReadStreamEventsForwardAsync(name, 0, 20, cancellationToken);
+            if (response.Events.Length == 0)
+            {
+                return NotFound();
+            }
+            
+            return response;
         }
 
         [HttpGet("{name}/{eventNumber}")]
@@ -81,7 +87,7 @@ namespace Aggregail.MongoDB.Admin.Controllers
         }
 
         [HttpGet("{name}/{from}/forward/{limit}")]
-        public async Task<IActionResult> ReadStreamEventsForwardAsync(
+        public async Task<StreamResponse> ReadStreamEventsForwardAsync(
             string name,
             int from,
             int limit,
@@ -96,13 +102,9 @@ namespace Aggregail.MongoDB.Admin.Controllers
 
             var events = documents
                 .Select(RecordedEvent.FromDocument)
-                .ToList();
+                .ToArray();
 
-            return Ok(new
-                {
-                    Events = events
-                }
-            );
+            return new StreamResponse(events);
         }
     }
 }
