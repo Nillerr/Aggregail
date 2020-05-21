@@ -1,8 +1,10 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {RecordedEvent} from "./StreamHub";
 import {Link} from "react-router-dom";
-import Axios from "axios";
-import {Alert, Spinner, Table} from "reactstrap";
+import {Alert, Button, Spinner, Table} from "reactstrap";
+import {StreamResponse} from "../model";
+import {usePolling} from "../hooks";
+import {LoadableState} from "../lib";
 
 const EventRow = (props: { event: RecordedEvent }) => {
   let name = `${props.event.eventNumber}@${props.event.stream}`;
@@ -18,51 +20,54 @@ const EventRow = (props: { event: RecordedEvent }) => {
   );
 };
 
-interface StreamResponse {
-  events: RecordedEvent[];
+const max = (source: number[]): number | undefined => {
+  let max: number | undefined = undefined;
+  for (const s of source) {
+    if (max === undefined || max < s) {
+      max = s;
+    }
+  }
+  return max;
 }
 
-type StreamPageState =
-  | { kind: 'Loading' }
-  | { kind: 'Loaded' } & StreamResponse
-  | { kind: 'Failed', reason: any };
+const StreamPage = (props: { from: number, direction: 'backward' | 'forward', name: string, onNext: (from: number) => void, onPrevious: (from: number) => void }) => {
 
-const StreamPage = (props: { name: string }) => {
+  const limit = 20;
+  const streamState = usePolling<StreamResponse>(`/api/streams/${props.name}/${props.from}/${props.direction}/${limit}`);
+  const stream = LoadableState.map(streamState, data => ({events: data.events}));
 
-  // const [page, setPage] = useState(1);
-  // const [numberOfPages, setNumberOfPages] = useState(0);
+  const events = stream.kind === 'Loaded'
+    ? stream.events
+    : [];
 
-  const [stream, setStream] = useState<StreamPageState>({kind: 'Loading'});
-
-  useEffect(() => {
-    const cts = Axios.CancelToken.source();
-
-    Axios
-      .get<StreamResponse>(`/api/streams/${props.name}`, {cancelToken: cts.token})
-      .then(response => setStream({kind: 'Loaded', ...response.data}))
-      .catch(reason => setStream({kind: 'Failed', reason}));
-
-    return () => {
-      cts.cancel();
-    };
-  }, [props.name])
+  const latestEvent = max(events.map(e => e.eventNumber));
 
   return (
     <React.Fragment>
       <div className="d-flex mt-2 mb-2">
         <h5 className="mr-auto">Event Stream '{props.name}'</h5>
         <div className="btn-group" role="group">
-          <button className="btn btn-outline-secondary" disabled={true}>Pause</button>
-          <button className="btn btn-outline-secondary" disabled={true}>Delete</button>
-          <button className="btn btn-outline-secondary" disabled={true}>Add Event</button>
-          <Link className="btn btn-outline-secondary" to={'/streams'}>Back</Link>
+          <Button color="secondary" outline={true} disabled={true}>Pause</Button>
+          <Button color="secondary" outline={true} disabled={true}>Delete</Button>
+          <Button color="secondary" outline={true} disabled={true}>Add Event</Button>
+          <Button tag={Link} color="secondary" outline={true} to={'/streams'}>Back</Button>
         </div>
       </div>
       <div className="mt-2 mb-2">
         <div className="btn-group" role="group">
-          <button className="btn btn-outline-secondary" disabled={true}>Self</button>
-          <button className="btn btn-outline-secondary" disabled={true}>First</button>
-          <button className="btn btn-outline-secondary" disabled={true}>Previous</button>
+          <Button color="secondary" outline={true} disabled={true}>Self</Button>
+          <Button color="secondary" outline={true} disabled={true}>First</Button>
+          <Button
+            color="secondary" 
+            outline={true}
+            disabled={latestEvent === undefined || props.from === 0}
+            onClick={() => props.onPrevious(0)}>Previous</Button>
+          <Button
+            color="secondary"
+            outline={true}
+            disabled={latestEvent === undefined || events.length < limit}
+            onClick={() => props.onNext(limit)}
+          >Next</Button>
         </div>
       </div>
       <Table bordered={true} size="sm">

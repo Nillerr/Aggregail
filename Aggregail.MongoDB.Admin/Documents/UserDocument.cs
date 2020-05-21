@@ -1,3 +1,4 @@
+using Aggregail.MongoDB.Admin.Services;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -18,6 +19,6 @@ namespace Aggregail.MongoDB.Admin.Documents
         [BsonElement("password")]
         public string Password { get; set; } = null!;
 
-        public int GetPasswordVersion() => Password.GetHashCode();
+        public string GetPasswordVersion() => SHA256.ComputeHash(Password);
     }
 }

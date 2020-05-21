@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {useEffect, useState} from 'react';
-import {Redirect, Route, Switch} from 'react-router';
+import {Redirect, Route, RouteComponentProps, StaticContext, Switch} from 'react-router';
 import Layout from './components/Layout';
 import StreamBrowserPage from './components/StreamBrowserPage';
 import StreamPage from "./components/StreamPage";
@@ -14,6 +14,33 @@ import LoginPage from "./components/LoginPage";
 import {User} from "./model";
 import Axios from "axios";
 import querystring from 'querystring';
+import {History} from "history";
+
+const queryParam = (query: querystring.ParsedUrlQuery, key: string): string | null => {
+  const value = query[key];
+  return value !== null && value !== undefined
+    ? value instanceof Array ? value.join(",") : value
+    : null;
+}
+
+const RoutedStreamPage = (props: RouteComponentProps<any, StaticContext, History.PoorMansUnknown> & { direction: 'forward' | 'backward' }) => {
+  const name = props.match.params.name;
+  const from = Math.max(0, parseInt(props.match.params.from ?? '0'));
+  const limit = Math.max(1, parseInt(props.match.params.limit ?? '20'));
+  
+  return <StreamPage
+    key={`/streams/${name}`}
+    from={from}
+    name={name}
+    direction="forward"
+    onPrevious={f => {
+      props.history.push(`/streams/${name}/${from}/backward/${limit}`);
+    }}
+    onNext={() => {
+      props.history.push(`/streams/${name}/${from}/forward/${limit}`);
+    }}
+  />;
+}
 
 const Session = (props: { onSignOut: () => void }) => {
   return (
@@ -28,8 +55,12 @@ const Session = (props: { onSignOut: () => void }) => {
         <Route exact path='/streams' render={route =>
           <StreamBrowserPage key="/streams" onStreamBrowse={stream => route.history.push(`/streams/${stream}`)}/>
         }/>
-        <Route exact path='/streams/:name' render={route =>
-          <StreamPage key={`/streams/${route.match.params.name}`} name={route.match.params.name}/>
+        <Route exact path='/streams/:name' component={RoutedStreamPage}/>
+        <Route exact path='/streams/:name/:from/backward/:limit' render={props => 
+          <RoutedStreamPage {...props} direction="forward"/>
+        }/>
+        <Route exact path='/streams/:name/:from/forward/:limit' render={props =>
+          <RoutedStreamPage {...props} direction="forward"/>
         }/>
         <Route exact path='/streams/:name/:eventNumber' render={props =>
           <EventPage
@@ -69,9 +100,9 @@ const Login = (props: { onSignIn: () => void }) => {
 };
 
 const App = () => {
-  
+
   const [isSignedIn, setIsSignedIn] = useState<boolean>();
-  
+
   useEffect(() => {
     if (isSignedIn === false) {
       return;
@@ -93,7 +124,7 @@ const App = () => {
       };
     }
   }, [isSignedIn]);
-  
+
   switch (isSignedIn) {
     case undefined:
       return null;

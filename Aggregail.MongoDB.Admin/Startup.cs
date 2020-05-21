@@ -5,6 +5,7 @@ using Aggregail.MongoDB.Admin.Documents;
 using Aggregail.MongoDB.Admin.Hubs;
 using Aggregail.MongoDB.Admin.Services;
 using Aggregail.MongoDB.Admin.Settings;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.CookiePolicy;
@@ -58,7 +59,9 @@ namespace Aggregail.MongoDB.Admin
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
                 {
+                    options.Cookie.Name = "Authorization";
                     options.EventsType = typeof(UserValidationEvents);
+                    options.TicketDataFormat = new JsonWebTokenDataFormat(new Microsoft.AspNetCore.Authentication.SystemClock());
                 });
         }
 

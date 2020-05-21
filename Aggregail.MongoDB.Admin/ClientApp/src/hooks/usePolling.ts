@@ -2,12 +2,11 @@ import {useEffect, useRef, useState} from "react";
 import Axios from "axios";
 import {LoadableState} from "../lib";
 
-export const usePolling = <T, R extends object>(url: string, interval: number = 2500): (selector: ((data: T) => R)) => LoadableState<R> => {
+export const usePolling = <T>(url: string, interval: number = 2500): LoadableState<{ data: T }> => {
   const [state, setState] = useState(LoadableState.loading<{ data: T }>());
   const refreshTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    console.log('useEffect');
     const cts = Axios.CancelToken.source();
 
     const poll = () => {
@@ -32,12 +31,5 @@ export const usePolling = <T, R extends object>(url: string, interval: number = 
     };
   }, [url, interval]);
 
-  switch (state.kind) {
-    case "Loading":
-      return () => ({kind: 'Loading'});
-    case "Loaded":
-      return (selector) => ({kind: "Loaded", ...selector(state.data)});
-    case "Failed":
-      return () => ({kind: "Failed", reason: state.reason});
-  }
+  return state;
 }

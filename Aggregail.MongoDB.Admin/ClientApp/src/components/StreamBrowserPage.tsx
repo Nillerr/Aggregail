@@ -2,6 +2,8 @@ import React, {useState} from "react";
 import {Link} from "react-router-dom";
 import {Alert, Button, Form, Input, InputGroup, InputGroupAddon, Spinner, Table} from "reactstrap";
 import {usePolling} from "../hooks";
+import {LoadableState} from "../lib";
+import {RecentStream, RecentStreams} from "../model";
 
 const StreamRow = (props: { name: string }) => (
   <tr>
@@ -9,7 +11,7 @@ const StreamRow = (props: { name: string }) => (
   </tr>
 );
 
-const StreamsTable = (props: { legend: string, state: StreamsTableState }) => (
+const StreamsTable = (props: { legend: string, state: LoadableState<{ streams: RecentStream[] }> }) => (
   <Table bordered={true} size="sm">
     <thead className="thead-dark">
     <tr>
@@ -39,24 +41,12 @@ const StreamsTable = (props: { legend: string, state: StreamsTableState }) => (
   </Table>
 );
 
-interface RecentStream {
-  name: string;
-}
-
-interface RecentStreams {
-  recentlyCreatedStreams: RecentStream[];
-  recentlyChangedStreams: RecentStream[];
-}
-
-type StreamsTableState =
-  | { kind: 'Loading' }
-  | { kind: 'Loaded', streams: RecentStream[] }
-  | { kind: 'Failed', reason: any };
-
 const StreamBrowserPage = (props: { onStreamBrowse: (stream: string) => void }) => {
 
-  const recentlyCreatedStreams = usePolling<RecentStreams, StreamsTableState>('/api/streams')(data => ({kind: 'Loaded', streams: data.recentlyCreatedStreams}));
-  const recentlyChangedStreams = usePolling<RecentStreams, StreamsTableState>('/api/streams')(data => ({kind: 'Loaded', streams: data.recentlyChangedStreams}));
+  const recentStreams = usePolling<RecentStreams>('/api/streams');
+  
+  const recentlyCreatedStreams = LoadableState.map(recentStreams, data => ({ streams: data.recentlyCreatedStreams }));
+  const recentlyChangedStreams = LoadableState.map(recentStreams, data => ({ streams: data.recentlyChangedStreams }));
 
   const [stream, setStream] = useState('');
 

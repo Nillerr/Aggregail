@@ -33,8 +33,8 @@ namespace Aggregail.MongoDB.Admin.Authentication
                 return;
             }
             
-            var passwordVersionValue = principal.FindFirstValue("pwv");
-            if (passwordVersionValue == null || !int.TryParse(passwordVersionValue, out var passwordVersion))
+            var passwordVersion = principal.FindFirstValue("pwv");
+            if (passwordVersion == null)
             {
                 context.RejectPrincipal();
                 return;

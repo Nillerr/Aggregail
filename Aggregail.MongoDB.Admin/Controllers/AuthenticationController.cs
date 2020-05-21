@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,9 +47,8 @@ namespace Aggregail.MongoDB.Admin.Controllers
             {
                 return Unauthorized();
             }
-
-            var pwv = user.GetPasswordVersion()
-                .ToString();
+            
+            var pwv = user.GetPasswordVersion();
             
             var claims = new List<Claim>
             {

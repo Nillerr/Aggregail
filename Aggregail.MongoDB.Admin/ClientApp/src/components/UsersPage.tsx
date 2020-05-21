@@ -15,7 +15,7 @@ const UserRow = (props: { user: User }) => {
 
 const UsersPage = (props: {}) => {
 
-  const usersState = usePolling<User[], { users: User[] }>('/api/users')(users => ({users}));
+  const usersState = usePolling<User[]>('/api/users');
 
   return (
     <React.Fragment>
@@ -50,7 +50,7 @@ const UsersPage = (props: {}) => {
           : null
         }
         {usersState.kind === 'Loaded'
-          ? usersState.users.map(user => <UserRow key={user.id} user={user}/>)
+          ? usersState.data.map(user => <UserRow key={user.id} user={user}/>)
           : null
         }
         </tbody>
