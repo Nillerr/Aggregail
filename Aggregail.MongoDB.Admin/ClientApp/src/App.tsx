@@ -13,6 +13,7 @@ import NewUserPage from "./components/NewUserPage";
 import LoginPage from "./components/LoginPage";
 import {User} from "./model";
 import Axios from "axios";
+import querystring from 'querystring';
 
 const Session = (props: { onSignOut: () => void }) => {
   return (
@@ -43,12 +44,29 @@ const Session = (props: { onSignOut: () => void }) => {
   );
 };
 
-const Login = (props: { onSignIn: () => void }) => (
-  <Switch>
-    <Route exact path="/" render={() => <LoginPage onSignIn={props.onSignIn}/>}/>
-    <Route render={() => <Redirect to="/"/>}/>
-  </Switch>
-);
+const returnUrl = () => {
+  const path = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  return encodeURIComponent(path);
+};
+
+const Login = (props: { onSignIn: () => void }) => {
+  return (
+    <Switch>
+      <Route exact path="/" render={route => {
+        const query: any = querystring.parse(route.location.search.substring(1));
+        return <LoginPage onSignIn={() => {
+          props.onSignIn();
+          route.history.push(query.returnTo || '/');
+        }}/>;
+      }
+      }/>
+      <Route render={() => <Redirect to={{
+        pathname: '/',
+        search: `returnTo=${returnUrl()}`
+      }}/>}/>
+    </Switch>
+  );
+};
 
 const App = () => {
   
@@ -57,28 +75,33 @@ const App = () => {
   useEffect(() => {
     if (isSignedIn === false) {
       return;
+    } else if (isSignedIn === undefined) {
+      const cts = Axios.CancelToken.source();
+
+      Axios
+        .get<User>('/api/userinfo', {cancelToken: cts.token, withCredentials: true})
+        .then(response => setIsSignedIn(true))
+        .catch(() => {
+          setIsSignedIn(false);
+          Axios.post('/api/auth/logout', {cancelToken: cts.token})
+            .then(() => console.log('Signed out'))
+            .catch(reason => console.error(reason));
+        });
+
+      return () => {
+        cts.cancel();
+      };
     }
-    
-    const cts = Axios.CancelToken.source();
-    
-    Axios
-      .get<User>('/api/userinfo', {cancelToken: cts.token, withCredentials: true})
-      .then(response => setIsSignedIn(true))
-      .catch(() => {
-        setIsSignedIn(false);
-        Axios.post('/api/auth/logout', {cancelToken: cts.token})
-          .then(() => console.log('Signed out'))
-          .catch(reason => console.error(reason));
-      });
-    
-    return () => {
-      cts.cancel();
-    };
   }, [isSignedIn]);
   
-  return isSignedIn
-    ? <Session onSignOut={() => setIsSignedIn(false)}/>
-    : <Login onSignIn={() => setIsSignedIn(true)}/>;
+  switch (isSignedIn) {
+    case undefined:
+      return null;
+    case true:
+      return <Session onSignOut={() => setIsSignedIn(false)}/>;
+    case false:
+      return <Login onSignIn={() => setIsSignedIn(true)}/>;
+  }
 };
 
 export default App;
