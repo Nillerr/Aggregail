@@ -29,16 +29,19 @@ namespace EventSourcing.Demo.Robots
 
         private static async Task ImportRobotAsync(IEventStore store, RobotImported.RobotEntity entity)
         {
-            // var olympusControlCorpGulf = new EndUserId(Guid.Parse("1ab17979-ff43-e911-a970-000d3a391cda"));
+            var olympusControlCorpGulf = new EndUserId(Guid.Parse("1ab17979-ff43-e911-a970-000d3a391cda"));
 
             var robot = Robot.Import(entity);
             await robot.CommitAsync(store);
+            
+            robot.Unregister(olympusControlCorpGulf);
+            await robot.CommitAsync(store);
 
-            // robot.Register(olympusControlCorpGulf, null, RobotApplication.MachineTending);
-            // await robot.CommitAsync(store);
+            robot.Register(olympusControlCorpGulf, null, RobotApplication.Dispensing);
+            await robot.CommitAsync(store);
 
-            // robot.Edit(olympusControlCorpGulf, "Machinist", RobotApplication.MachineTending);
-            // await robot.CommitAsync(store);
+            robot.Edit(olympusControlCorpGulf, "Machinist", RobotApplication.MachineTending);
+            await robot.CommitAsync(store);
 
             // var json = JsonConvert.SerializeObject(robot, Formatting.Indented, new StringEnumConverter());
             // Console.WriteLine(json);

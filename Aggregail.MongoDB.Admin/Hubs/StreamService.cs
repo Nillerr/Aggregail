@@ -1,20 +1,16 @@
 using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Aggregail.MongoDB.Admin.Documents;
-using Aggregail.Newtonsoft.Json;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
 using MongoDB.Driver;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Aggregail.MongoDB.Admin.Hubs
 {
     public sealed class StreamService : BackgroundService
     {
-        private readonly JsonEventSerializer _serializer = new JsonEventSerializer(JsonSerializer.CreateDefault());
-        
         private readonly IMongoCollection<RecordedEventDocument> _events;
         private readonly IHubContext<StreamHub, IStreamClient> _hub;
 
@@ -48,9 +44,9 @@ namespace Aggregail.MongoDB.Admin.Hubs
             {
                 case ChangeStreamOperationType.Insert:
                 {
-                    var recordedEvent = ToRecordedEvent(document);
+                    var recordedEvent = RecordedEvent.FromDocument(document);
                     Console.WriteLine("Broadcasting insert:");
-                    Console.WriteLine(recordedEvent.Data.ToString(Formatting.Indented));
+                    Console.WriteLine(Encoding.UTF8.GetString(recordedEvent.Data));
                     await _hub.Clients.All.EventRecorded(recordedEvent);
                     break;
                 }
@@ -64,24 +60,6 @@ namespace Aggregail.MongoDB.Admin.Hubs
                 default:
                     throw new ArgumentOutOfRangeException(nameof(operationType), operationType, null);
             }
-        }
-
-        private RecordedEvent ToRecordedEvent(RecordedEventDocument document)
-        {
-            var data = _serializer.Deserialize<JObject>(document.Data);
-
-            var recordedEvent = new RecordedEvent
-            {
-                Id = document.Id,
-                Stream = document.Stream,
-                EventId = document.EventId,
-                EventType = document.EventType,
-                EventNumber = document.EventNumber,
-                Created = document.Created,
-                Data = data
-            };
-            
-            return recordedEvent;
         }
     }
 }
