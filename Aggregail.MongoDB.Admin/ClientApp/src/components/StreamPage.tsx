@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React from "react";
 import {RecordedEvent} from "./StreamHub";
 import {Link} from "react-router-dom";
 import {Alert, Button, Spinner, Table} from "reactstrap";
@@ -30,10 +30,19 @@ const max = (source: number[]): number | undefined => {
   return max;
 }
 
-const StreamPage = (props: { from: number, direction: 'backward' | 'forward', name: string, onNext: (from: number) => void, onPrevious: (from: number) => void }) => {
+interface StreamPageProps {
+  name: string;
+  from: number;
+  limit: number;
+  onReset: () => void;
+  onFirst: () => void;
+  onNext: () => void;
+  onPrevious: () => void;
+}
 
-  const limit = 20;
-  const streamState = usePolling<StreamResponse>(`/api/streams/${props.name}/${props.from}/${props.direction}/${limit}`);
+const StreamPage = (props: StreamPageProps) => {
+
+  const streamState = usePolling<StreamResponse>(`/api/streams/${props.name}/${props.from}/forward/${props.limit}`);
   const stream = LoadableState.map(streamState, data => ({events: data.events}));
 
   const events = stream.kind === 'Loaded'
@@ -55,18 +64,28 @@ const StreamPage = (props: { from: number, direction: 'backward' | 'forward', na
       </div>
       <div className="mt-2 mb-2">
         <div className="btn-group" role="group">
-          <Button color="secondary" outline={true} disabled={true}>Self</Button>
-          <Button color="secondary" outline={true} disabled={true}>First</Button>
-          <Button
-            color="secondary" 
-            outline={true}
-            disabled={latestEvent === undefined || props.from === 0}
-            onClick={() => props.onPrevious(0)}>Previous</Button>
           <Button
             color="secondary"
             outline={true}
-            disabled={latestEvent === undefined || events.length < limit}
-            onClick={() => props.onNext(limit)}
+            onClick={() => props.onReset()}
+          >Reset</Button>
+          <Button
+            color="secondary"
+            outline={true}
+            disabled={props.from === 0}
+            onClick={() => props.onFirst()}
+          >First</Button>
+          <Button
+            color="secondary"
+            outline={true}
+            disabled={props.from === 0}
+            onClick={() => props.onPrevious()}
+          >Previous</Button>
+          <Button
+            color="secondary"
+            outline={true}
+            disabled={latestEvent === undefined || events.length < props.limit}
+            onClick={() => props.onNext()}
           >Next</Button>
         </div>
       </div>

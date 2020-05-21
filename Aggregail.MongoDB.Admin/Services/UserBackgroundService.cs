@@ -8,12 +8,12 @@ using MongoDB.Driver;
 
 namespace Aggregail.MongoDB.Admin.Services
 {
-    public sealed class UserSeederService : BackgroundService
+    public sealed class UserBackgroundService : BackgroundService
     {
         private readonly IMongoCollection<UserDocument> _users;
         private readonly UserDocumentPasswordHasher _passwordHasher;
 
-        public UserSeederService(
+        public UserBackgroundService(
             IMongoCollection<UserDocument> users,
             UserDocumentPasswordHasher passwordHasher
         )
@@ -24,6 +24,8 @@ namespace Aggregail.MongoDB.Admin.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            await CreateIndexesAsync(stoppingToken);
+
             var hasAnyUsers = await _users
                 .Find(FilterDefinition<UserDocument>.Empty)
                 .AnyAsync(stoppingToken);
@@ -44,6 +46,18 @@ namespace Aggregail.MongoDB.Admin.Services
             };
             
             await _users.InsertOneAsync(admin, cancellationToken: stoppingToken);
+        }
+
+        private async Task CreateIndexesAsync(CancellationToken cancellationToken)
+        {
+            var keyBuilder = Builders<UserDocument>.IndexKeys;
+            var keys = keyBuilder.Ascending(e => e.Username);
+
+            var options = new CreateIndexOptions();
+            options.Unique = true;
+            
+            var model = new CreateIndexModel<UserDocument>(keys, options);
+            await _users.Indexes.CreateOneAsync(model, null, cancellationToken);
         }
     }
 }

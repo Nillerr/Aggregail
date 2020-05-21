@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {useEffect, useState} from 'react';
-import {Redirect, Route, RouteComponentProps, StaticContext, Switch} from 'react-router';
+import {Redirect, Route, Switch} from 'react-router';
 import Layout from './components/Layout';
 import StreamBrowserPage from './components/StreamBrowserPage';
 import StreamPage from "./components/StreamPage";
@@ -14,32 +14,41 @@ import LoginPage from "./components/LoginPage";
 import {User} from "./model";
 import Axios from "axios";
 import querystring from 'querystring';
-import {History} from "history";
 
-const queryParam = (query: querystring.ParsedUrlQuery, key: string): string | null => {
-  const value = query[key];
-  return value !== null && value !== undefined
-    ? value instanceof Array ? value.join(",") : value
-    : null;
+interface RoutedStreamPageProps {
+  name: string;
+  from: number;
+  limit: number;
+  navigate: (path: string) => void;
 }
 
-const RoutedStreamPage = (props: RouteComponentProps<any, StaticContext, History.PoorMansUnknown> & { direction: 'forward' | 'backward' }) => {
-  const name = props.match.params.name;
-  const from = Math.max(0, parseInt(props.match.params.from ?? '0'));
-  const limit = Math.max(1, parseInt(props.match.params.limit ?? '20'));
-  
+const RoutedStreamPage = (props: RoutedStreamPageProps) => {
   return <StreamPage
-    key={`/streams/${name}`}
-    from={from}
-    name={name}
-    direction="forward"
-    onPrevious={f => {
-      props.history.push(`/streams/${name}/${from}/backward/${limit}`);
+    key={`/streams/${props.name}`}
+    from={props.from}
+    name={props.name}
+    limit={props.limit}
+    onReset={() => {
+      props.navigate(`/streams/${props.name}`);
+    }}
+    onFirst={() => {
+      props.navigate(`/streams/${props.name}/0/forward/${props.limit}`);
+    }}
+    onPrevious={() => {
+      props.navigate(`/streams/${props.name}/${Math.max(0, props.from - props.limit)}/forward/${props.limit}`);
     }}
     onNext={() => {
-      props.history.push(`/streams/${name}/${from}/forward/${limit}`);
+      props.navigate(`/streams/${props.name}/${props.from + props.limit}/forward/${props.limit}`);
     }}
   />;
+}
+
+const intParam = (value: string | undefined, defaultValue: number) => {
+  return value === null || value === undefined ? defaultValue : parseInt(value);
+};
+
+const minMax = (value: number, options: { min: number, max: number }) => {
+  return Math.max(options.min, Math.min(options.max, value));
 }
 
 const Session = (props: { onSignOut: () => void }) => {
@@ -55,12 +64,21 @@ const Session = (props: { onSignOut: () => void }) => {
         <Route exact path='/streams' render={route =>
           <StreamBrowserPage key="/streams" onStreamBrowse={stream => route.history.push(`/streams/${stream}`)}/>
         }/>
-        <Route exact path='/streams/:name' component={RoutedStreamPage}/>
-        <Route exact path='/streams/:name/:from/backward/:limit' render={props => 
-          <RoutedStreamPage {...props} direction="forward"/>
+        <Route exact path='/streams/:name' render={props =>
+          <RoutedStreamPage
+            name={props.match.params.name}
+            from={0}
+            limit={20}
+            navigate={props.history.push}
+          />
         }/>
         <Route exact path='/streams/:name/:from/forward/:limit' render={props =>
-          <RoutedStreamPage {...props} direction="forward"/>
+          <RoutedStreamPage
+            name={props.match.params.name}
+            from={Math.max(0, intParam(props.match.params.from, 0))}
+            limit={minMax(intParam(props.match.params.limit, 20), { min: 0, max: 20 })}
+            navigate={props.history.push}
+          />
         }/>
         <Route exact path='/streams/:name/:eventNumber' render={props =>
           <EventPage

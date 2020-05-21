@@ -28,28 +28,48 @@ const NewUserPage = () => {
         <div className="form-row">
           <FormGroup className="col-md-6">
             <Label for="username">Username</Label>
-            <Input type="email" name="username" id="username" value={username}
-                   onChange={(e) => setUsername(e.target.value)}/>
+            <Input
+              type="text"
+              name="username"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
           </FormGroup>
           <FormGroup className="col-md-6">
             <Label for="full_name">Full Name</Label>
-            <Input type="email" name="full_name" id="full_name" value={fullName}
-                   onChange={(e) => setFullName(e.target.value)}/>
+            <Input
+              type="email"
+              name="full_name"
+              id="full_name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
           </FormGroup>
         </div>
         <div className="form-row">
           <FormGroup className="col-md-6">
             <Label for="password">Password</Label>
-            <Input type="email" name="password" id="password" value={password}
-                   onChange={(e) => setPassword(e.target.value)}/>
+            <Input
+              type="email"
+              name="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </FormGroup>
           <FormGroup className="col-md-6">
             <Label for="confirm_password">Confirm Password</Label>
-            <Input type="email" name="confirm_password" id="confirm_password" value={confirmedPassword}
-                   onChange={(e) => setConfirmedPassword(e.target.value)}/>
+            <Input
+              type="email"
+              name="confirm_password"
+              id="confirm_password"
+              value={confirmedPassword}
+              onChange={(e) => setConfirmedPassword(e.target.value)}
+            />
           </FormGroup>
         </div>
-        <Button type="submit" color="primary" disabled={isFormInvalid}>Create</Button>
+        <Button type="submit" color="primary" disabled={isFormInvalid && true}>Create</Button>
       </Form>
     </React.Fragment>
   );

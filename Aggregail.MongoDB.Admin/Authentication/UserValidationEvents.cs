@@ -44,7 +44,7 @@ namespace Aggregail.MongoDB.Admin.Authentication
                 .Find(e => e.Id == userId)
                 .FirstOrDefaultAsync();
 
-            if (user.Username != username || user.GetPasswordVersion() != passwordVersion)
+            if (user == null || user.Username != username || user.GetPasswordVersion() != passwordVersion)
             {
                 context.RejectPrincipal();
             }

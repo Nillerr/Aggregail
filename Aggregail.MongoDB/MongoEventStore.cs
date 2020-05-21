@@ -231,6 +231,8 @@ namespace Aggregail.MongoDB
             {
                 await CreateStreamEventNumberIndexAsync();
                 await CreateEventTypeIndexAsync();
+                await CreateEventNumberCreatedIndexAsync();
+                await CreateCreatedIndexAsync();
             }
             catch (Exception ex)
             {
@@ -271,6 +273,35 @@ namespace Aggregail.MongoDB
 
             var options = new CreateIndexOptions();
             options.Unique = false;
+
+            var model = new CreateIndexModel<RecordedEvent>(keys, options);
+            await _events.Indexes.CreateOneAsync(model);
+        }
+
+        private async Task CreateEventNumberCreatedIndexAsync()
+        {
+            var keyBuilder = Builders<RecordedEvent>.IndexKeys;
+
+            var keys = keyBuilder.Combine(
+                keyBuilder.Ascending(e => e.EventNumber),
+                keyBuilder.Ascending(e => e.Created)
+            );
+
+            var options = new CreateIndexOptions();
+            options.Background = true;
+
+            var model = new CreateIndexModel<RecordedEvent>(keys, options);
+            await _events.Indexes.CreateOneAsync(model);
+        }
+
+        private async Task CreateCreatedIndexAsync()
+        {
+            var keyBuilder = Builders<RecordedEvent>.IndexKeys;
+
+            var keys = keyBuilder.Ascending(e => e.Created);
+
+            var options = new CreateIndexOptions();
+            options.Background = true;
 
             var model = new CreateIndexModel<RecordedEvent>(keys, options);
             await _events.Indexes.CreateOneAsync(model);
