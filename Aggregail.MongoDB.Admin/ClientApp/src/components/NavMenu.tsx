@@ -29,7 +29,7 @@ const NavMenu = (props: { onSignOut: () => void }) => {
                 <NavLink tag={Link} to="/streams">Stream Browser</NavLink>
               </NavItem>
               <NavItem>
-                <NavLink tag={Link} to="/users" disabled={true}>Users</NavLink>
+                <NavLink tag={Link} to="/users">Users</NavLink>
               </NavItem>
               <NavItem>
                 <NavLink tag={Button} color="link" onClick={() => signOut()}>Sign out</NavLink>
