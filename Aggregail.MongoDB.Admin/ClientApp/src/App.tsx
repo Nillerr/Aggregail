@@ -160,15 +160,13 @@ const AppContent = () => {
       Axios
         .get<User>('/api/userinfo', {cancelToken: cts.token, withCredentials: true})
         .then(response => setIsSignedIn(true))
-        .catch(() => {
-          // Errors are handled by the effect above
-        });
+        .catch(() => setIsSignedIn(false));
 
       return () => {
         cts.cancel();
       };
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, setIsSignedIn]);
   
   switch (isSignedIn) {
     case undefined:
