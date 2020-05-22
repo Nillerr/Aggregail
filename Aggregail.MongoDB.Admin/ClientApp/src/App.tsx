@@ -14,6 +14,7 @@ import LoginPage from "./components/LoginPage";
 import {User} from "./model";
 import Axios from "axios";
 import querystring from 'querystring';
+import UserPage from "./components/UserPage";
 
 interface RoutedStreamPageProps {
   name: string;
@@ -60,7 +61,20 @@ const Session = (props: { onSignOut: () => void }) => {
         <Route exact path='/users' render={() =>
           <UsersPage key="/users"/>
         }/>
-        <Route exact path='/users/new' component={NewUserPage}/>
+        <Route exact path='/users/new' render={props => 
+          <NewUserPage
+            key={`users/new`}
+            onCreate={() => props.history.push('/users')}
+          />
+        }/>
+        <Route exact path='/users/:id' render={props => 
+          <UserPage
+            key={`/users/${props.match.params.id}`}
+            id={props.match.params.id}
+            onDelete={() => props.history.push('/users')}
+            onBack={() => props.history.push(`/users`)}
+          />
+        }/>
         <Route exact path='/streams' render={route =>
           <StreamBrowserPage key="/streams" onStreamBrowse={stream => route.history.push(`/streams/${stream}`)}/>
         }/>

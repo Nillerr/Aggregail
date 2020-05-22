@@ -1,18 +1,14 @@
 import * as React from 'react';
+import {useState} from 'react';
 import {Button, Collapse, Container, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink} from 'reactstrap';
 import {Link} from 'react-router-dom';
 import './NavMenu.css';
-import {useState} from "react";
-import Axios from "axios";
+import {useAction} from "../hooks";
 
 const NavMenu = (props: { onSignOut: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   
-  const signOut = () => {
-    Axios.post('/api/auth/logout')
-      .then(() => props.onSignOut())
-      .catch(reason => console.error(reason));
-  };
+  const signOut = useAction('POST', '/api/auth/logout', props.onSignOut);
 
   return (
     <header>
@@ -32,7 +28,7 @@ const NavMenu = (props: { onSignOut: () => void }) => {
                 <NavLink tag={Link} to="/users">Users</NavLink>
               </NavItem>
               <NavItem>
-                <NavLink tag={Button} color="link" onClick={() => signOut()}>Sign out</NavLink>
+                <NavLink tag={Button} color="link" onClick={signOut}>Sign out</NavLink>
               </NavItem>
             </ul>
           </Collapse>

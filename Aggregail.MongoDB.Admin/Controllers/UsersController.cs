@@ -37,16 +37,32 @@ namespace Aggregail.MongoDB.Admin.Controllers
             return users;
         }
 
+        [HttpGet("{id}")]
+        public async Task<User?> UserAsync(string id, CancellationToken cancellationToken)
+        {
+            var document = await _users
+                .Find(e => e.Id == id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (document == null)
+            {
+                return null;
+            }
+            
+            var user = new User(document.Id, document.Username, document.FullName);
+            return user;
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateAsync(
             [FromForm] string username,
             [FromForm] string fullName,
             [FromForm] string password,
-            [FromForm] string confirmPassword,
+            [FromForm] string confirmedPassword,
             CancellationToken cancellationToken
         )
         {
-            if (password != confirmPassword)
+            if (password != confirmedPassword)
             {
                 return BadRequest();
             }
@@ -62,6 +78,55 @@ namespace Aggregail.MongoDB.Admin.Controllers
             };
 
             await _users.InsertOneAsync(document, null, cancellationToken);
+            return Ok();
+        }
+
+        [HttpPost("{id}")]
+        public async Task<IActionResult> EditAsync(
+            string id,
+            [FromForm] string fullName,
+            CancellationToken cancellationToken
+        )
+        {
+            var filter = Builders<UserDocument>.Filter.Where(e => e.Id == id);
+            var update = Builders<UserDocument>.Update.Set(e => e.FullName, fullName);
+            var document = await _users.FindOneAndUpdateAsync(filter, update, cancellationToken: cancellationToken);
+            if (document == null)
+            {
+                return NotFound();
+            }
+            
+            return Ok();
+        }
+
+        [HttpPost("{id}/password")]
+        public async Task<IActionResult> ChangePasswordAsync(
+            string id,
+            [FromForm] string password,
+            [FromForm] string confirmedPassword,
+            CancellationToken cancellationToken
+        )
+        {
+            if (password != confirmedPassword)
+            {
+                return BadRequest();
+            }
+            
+            var filter = Builders<UserDocument>.Filter.Where(e => e.Id == id);
+            var update = Builders<UserDocument>.Update.Set(e => e.Password, password);
+            var document = await _users.FindOneAndUpdateAsync(filter, update, cancellationToken: cancellationToken);
+            if (document == null)
+            {
+                return NotFound();
+            }
+            
+            return Ok();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAsync(string id, CancellationToken cancellationToken)
+        {
+            await _users.DeleteOneAsync(e => e.Id == id, cancellationToken);
             return Ok();
         }
     }

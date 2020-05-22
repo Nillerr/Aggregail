@@ -33,3 +33,4 @@ export const usePolling = <T>(url: string, interval: number = 2500): LoadableSta
 
   return state;
 }
+

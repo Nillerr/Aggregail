@@ -34,7 +34,9 @@ const StreamsTable = (props: { legend: string, state: LoadableState<{ streams: R
     {props.state.kind === 'Loaded'
       ? props.state.streams.length > 0
         ? props.state.streams.map(stream => <StreamRow key={stream.name} name={stream.name}/>)
-        : <tr><td>No streams</td></tr>
+        : <tr>
+          <td>No streams</td>
+        </tr>
       : null
     }
     </tbody>
@@ -44,9 +46,9 @@ const StreamsTable = (props: { legend: string, state: LoadableState<{ streams: R
 const StreamBrowserPage = (props: { onStreamBrowse: (stream: string) => void }) => {
 
   const recentStreams = usePolling<RecentStreams>('/api/streams');
-  
-  const recentlyCreatedStreams = LoadableState.map(recentStreams, data => ({ streams: data.recentlyCreatedStreams }));
-  const recentlyChangedStreams = LoadableState.map(recentStreams, data => ({ streams: data.recentlyChangedStreams }));
+
+  const recentlyCreatedStreams = LoadableState.map(recentStreams, data => ({streams: data.recentlyCreatedStreams}));
+  const recentlyChangedStreams = LoadableState.map(recentStreams, data => ({streams: data.recentlyChangedStreams}));
 
   const [stream, setStream] = useState('');
 
@@ -57,8 +59,13 @@ const StreamBrowserPage = (props: { onStreamBrowse: (stream: string) => void }) 
         <div>
           <Form onSubmit={() => props.onStreamBrowse(stream)}>
             <InputGroup>
-              <Input className="" type="text" placeholder="Stream" value={stream}
-                     onChange={e => setStream(e.target.value)}/>
+              <Input
+                className=""
+                type="text"
+                placeholder="Stream"
+                value={stream}
+                onChange={e => setStream(e.target.value)}
+              />
               <InputGroupAddon addonType="append" className="mr-2">
                 <Button type="submit" outline={true} color="secondary" className="text-nowrap">Browse</Button>
               </InputGroupAddon>

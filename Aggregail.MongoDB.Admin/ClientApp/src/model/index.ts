@@ -18,3 +18,10 @@ export interface RecentStreams {
 export interface StreamResponse {
   events: RecordedEvent[];
 }
+
+export interface CreateUserData {
+  username: string;
+  fullName: string;
+  password: string;
+  confirmedPassword: string;
+}
