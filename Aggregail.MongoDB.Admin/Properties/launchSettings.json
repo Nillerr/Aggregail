@@ -20,8 +20,10 @@
       "launchBrowser": false,
       "applicationUrl": "https://localhost:5001;http://localhost:5000",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "AGGREGAIL_ConnectionString": "mongodb://root:example@mongodb-primary:27017,mongodb-secondary:27018,mongodb-arbiter:27019/aggregail_demo?authSource=admin&replicaSet=rs0"
+      },
+      "commandLineArgs": " --Database=aggregail_demo"
     }
   }
 }

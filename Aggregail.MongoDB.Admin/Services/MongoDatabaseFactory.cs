@@ -7,9 +7,9 @@ namespace Aggregail.MongoDB.Admin.Services
     {
         private readonly IMongoClient _client;
 
-        public MongoDatabaseFactory(AggregailSettings settings)
+        public MongoDatabaseFactory(AggregailMongoDBSettings settings)
         {
-            _client = new MongoClient(settings.MongoDB.ConnectionString);
+            _client = new MongoClient(settings.ConnectionString);
         }
 
         public IMongoDatabase GetDatabase(string name)

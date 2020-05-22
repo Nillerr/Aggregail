@@ -1,11 +1,12 @@
-using System.Text.Json;
+using System;
+using System.Linq;
 using Aggregail.MongoDB.Admin.Authentication;
 using Aggregail.MongoDB.Admin.Controllers;
 using Aggregail.MongoDB.Admin.Documents;
+using Aggregail.MongoDB.Admin.Helpers;
 using Aggregail.MongoDB.Admin.Hubs;
 using Aggregail.MongoDB.Admin.Services;
 using Aggregail.MongoDB.Admin.Settings;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.CookiePolicy;
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MongoDB.Driver;
 
 namespace Aggregail.MongoDB.Admin
 {
@@ -30,14 +32,17 @@ namespace Aggregail.MongoDB.Admin
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            Console.WriteLine(string.Empty);
+            Console.WriteLine("Starting Aggregail MongoDB Admin UI...");
+            
             services.AddControllersWithViews();
             services.AddSignalR();
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
 
-            var aggregailSettings = new AggregailSettings();
-            Configuration.Bind("Aggregail", aggregailSettings);
+            var aggregailSettings = new AggregailMongoDBSettings();
+            Configuration.Bind(aggregailSettings);
             
             services.AddSingleton(aggregailSettings);
 
@@ -63,6 +68,12 @@ namespace Aggregail.MongoDB.Admin
                     options.EventsType = typeof(UserValidationEvents);
                     options.TicketDataFormat = new JsonWebTokenDataFormat(new Microsoft.AspNetCore.Authentication.SystemClock());
                 });
+
+            var connectionString = MongoConnectionString.Censored(aggregailSettings.ConnectionString);
+            Console.WriteLine($" - MongoDB ConnectionString: {connectionString}");
+            Console.WriteLine($"   - Database: {aggregailSettings.Database}");
+            Console.WriteLine($"   - Collection: {aggregailSettings.Collection}");
+            Console.WriteLine(string.Empty);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -75,21 +86,16 @@ namespace Aggregail.MongoDB.Admin
             else
             {
                 app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                // app.UseHsts();
             }
 
             app.UseCookiePolicy(new CookiePolicyOptions
                 {
                     MinimumSameSitePolicy = SameSiteMode.Strict,
                     HttpOnly = HttpOnlyPolicy.Always,
-                    Secure = env.IsDevelopment()
-                        ? CookieSecurePolicy.SameAsRequest
-                        : CookieSecurePolicy.Always,
+                    Secure = CookieSecurePolicy.SameAsRequest,
                 }
             );
 
-            // app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseSpaStaticFiles();
 

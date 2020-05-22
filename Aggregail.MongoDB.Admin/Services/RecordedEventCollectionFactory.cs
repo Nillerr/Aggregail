@@ -6,9 +6,9 @@ namespace Aggregail.MongoDB.Admin.Services
 {
     public sealed class RecordedEventCollectionFactory
     {
-        public RecordedEventCollectionFactory(MongoCollectionFactory collectionFactory, AggregailSettings settings)
+        public RecordedEventCollectionFactory(MongoCollectionFactory collectionFactory, AggregailMongoDBSettings settings)
         {
-            Collection = collectionFactory.Collection<RecordedEventDocument>(settings.MongoDB.Collection);
+            Collection = collectionFactory.Collection<RecordedEventDocument>(settings.Collection);
         }
 
         public IMongoCollection<RecordedEventDocument> Collection { get; }

@@ -7,9 +7,9 @@ namespace Aggregail.MongoDB.Admin.Services
     {
         private readonly IMongoDatabase _database;
 
-        public MongoCollectionFactory(MongoDatabaseFactory databaseFactory, AggregailSettings settings)
+        public MongoCollectionFactory(MongoDatabaseFactory databaseFactory, AggregailMongoDBSettings settings)
         {
-            _database = databaseFactory.GetDatabase(settings.MongoDB.Database);
+            _database = databaseFactory.GetDatabase(settings.Database);
         }
 
         public IMongoCollection<T> Collection<T>(string name)

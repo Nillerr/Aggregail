@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Aggregail.MongoDB.Admin.Services
+namespace Aggregail.MongoDB.Admin.Helpers
 {
     public static class SHA256
     {
