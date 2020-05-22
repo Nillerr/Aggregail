@@ -15,6 +15,9 @@ An administration UI for event stores built using [Aggregail.MongoDB](../Aggrega
       --Database=<Your Database> \
       --Collection=<Your Streams Collection>
     ```
+     - `--Database` defaults to `aggregail`
+     - `--Collection` defaults to `streams`
+     - The arguments can also be specified using [environment variables](Environment-Variables)
  4. Log in with the user `admin` and password `changeit`.
  5. By default the application will launch on the urls: `http://localhost:5000` and 
     `https://localhost:5001`. This can be changed by specifying the `--urls` command line argument:
@@ -22,6 +25,18 @@ An administration UI for event stores built using [Aggregail.MongoDB](../Aggrega
     dotnet Aggregail.MongoDB.Admin.dll \
       --urls=http://localhost:3014
     ``` 
+ 
+ ## Environment Variables
+
+The application can also be configured using these environment variables:
+
+```sh
+AGGREGAIL__ConnectionString=<Your MongoDB Connection String>
+AGGREGAIL__Database=<Your Database>
+AGGREGAIL__Collection=<Your Streams Collection>
+
+ASPNETCORE__Urls=<Your launch urls>
+```
 
 ## Troubleshooting
 
