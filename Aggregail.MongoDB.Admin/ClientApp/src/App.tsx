@@ -136,6 +136,22 @@ const AppContent = () => {
   const [isSignedIn, setIsSignedIn] = useState<boolean>();
 
   useEffect(() => {
+    Axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+    const interceptor = Axios.interceptors.response.use(undefined, reason => {
+      if (reason.response && reason.response.status === 401) {
+        setIsSignedIn(false);
+      }
+
+      throw reason;
+    });
+
+    return () => {
+      Axios.interceptors.response.eject(interceptor);
+    };
+  }, [setIsSignedIn]);
+
+  useEffect(() => {
     if (isSignedIn === false) {
       return;
     } else if (isSignedIn === undefined) {
@@ -145,10 +161,7 @@ const AppContent = () => {
         .get<User>('/api/userinfo', {cancelToken: cts.token, withCredentials: true})
         .then(response => setIsSignedIn(true))
         .catch(() => {
-          setIsSignedIn(false);
-          Axios.post('/api/auth/logout', {cancelToken: cts.token})
-            .then(() => console.log('Signed out'))
-            .catch(reason => console.error(reason));
+          // Errors are handled by the effect above
         });
 
       return () => {

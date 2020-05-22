@@ -14,11 +14,23 @@ function startPolling<S>(
   const poll = () => {
     return Axios
       .get<S>(url, {cancelToken: cts.token})
-      .then(response => setState(LoadableState.loaded({data: response.data})))
-      .catch(reason => setState(LoadableState.failed(reason)));
+      .then(response => {
+        setState(LoadableState.loaded({data: response.data}));
+      })
+      .catch(reason => {
+        if (Axios.isCancel(reason) || (reason.response && reason.response.status === 401)) {
+          return;
+        }
+        
+        setState(LoadableState.failed(reason));
+      });
   };
 
   const refresh = () => {
+    if (cts.token.reason) {
+      return;
+    }
+    
     refreshTimeoutRef.current = setTimeout(() => poll().finally(() => refresh()), interval);
   };
 
