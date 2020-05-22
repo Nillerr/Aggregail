@@ -15,8 +15,25 @@ An administration UI for event stores built using [Aggregail.MongoDB](../Aggrega
       --Database=<Your Database> \
       --Collection=<Your Streams Collection>
     ```
- 4. By default the application will launch on the urls: `http://localhost:5000` and `https://localhost:5001`. This can be changed by specifying the `--urls` command line argument:
+ 4. Log in with the user `admin` and password `changeit`.
+ 5. By default the application will launch on the urls: `http://localhost:5000` and 
+    `https://localhost:5001`. This can be changed by specifying the `--urls` command line argument:
     ```bash
     dotnet Aggregail.MongoDB.Admin.dll \
       --urls=http://localhost:3014
     ``` 
+
+## Troubleshooting
+
+### All users have been deleted
+
+Restarting the application, while there are no users in the `users` MongoDB collection, will 
+re-create the default `admin` user, with the password `changeit`.
+
+### I have been locked out
+
+ 1. Connect to your MongoDB server
+ 2. Open the database specified when launching the application
+ 3. Delete the `users` collection
+ 4. See [All users have been deleted](#All-users-have-been-deleted)
+ 
