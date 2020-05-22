@@ -41,15 +41,24 @@ AGGREGAIL__Collection=<Your Streams Collection>
 ASPNETCORE__Urls=<Your launch urls>
 ```
 
-## Troubleshooting
+## Troubleshooting and FAQ
 
 The application is by no means perfect, and several corners have been cut in an effort to 
 get a minimal viable product ready. Here are some of the known issues you might experience.
+
+
+### This application looks very familiar...
+
+The layout, the URLs, even the HTTP API and the polling model is a blatant clone of the 
+Admin UI for Event Store. This application was written from scratch though, and shares 
+no code or resources with Event Store.
+    
 
 ### Some buttons are always disabled
 
 There are several features that haven't been implemented yet, some of which may yet be 
 dropped. The buttons are there only to confuse you.
+
 
 #### I can't change a user password
 
@@ -57,10 +66,12 @@ Changing user password is one of the features that haven't been implemented yet.
 suggested workaround is to delete and and create the user again with the same username and 
 a new password.
 
+
 ### All users have been deleted
 
 Restarting the application, while there are no users in the `users` MongoDB collection, will 
 re-create the default `admin` user, with the password `changeit`.
+
 
 ### I have been locked out
 
@@ -68,7 +79,8 @@ re-create the default `admin` user, with the password `changeit`.
  2. Open the database specified when launching the application
  3. Delete the `users` collection
  4. See [All users have been deleted](#all-users-have-been-deleted)
- 
+
+
 ### Missing UI / Theme / Stylesheet
 
 If a mismatch occurs with the `localStorage` keys `theme` and `theme-style` vs the provided 
@@ -76,7 +88,22 @@ themes in the application, there's not implemented any nice fallback, and as suc
 look very pale. Delete those `localStorage` keys to restore the default theme and style, or 
 clear all site data.
 
+
 ### My theme is not synchronized with my user
 
 The selected theme is stored in `localStorage`, and will not be synchronized with your user 
-login.   
+login.
+
+
+### Frequent polling, really?
+
+Since this application is essentially a clone of the Admin UI included in Event Store, so 
+is the polling model - it's simple, it works.
+
+Using the polling model meant we ended up developing most of a REST API for accessing an 
+[Aggregail.MongoDB](../Aggregail.MongoDB) event store, although it was never the plan to support 
+such a thing.
+
+There are plans to implement real-time updates using SignalR, by using the 
+[db.collection.watch()](https://docs.mongodb.com/manual/reference/method/db.collection.watch/) 
+in MongoDB.
