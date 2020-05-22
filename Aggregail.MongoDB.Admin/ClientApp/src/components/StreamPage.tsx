@@ -3,7 +3,7 @@ import {RecordedEvent} from "./StreamHub";
 import {Link} from "react-router-dom";
 import {Button, Table} from "reactstrap";
 import {StreamResponse} from "../model";
-import {usePolling} from "../hooks";
+import {usePauseablePolling} from "../hooks";
 import {LoadableTableBody} from "./LoadableTableBody";
 
 const EventRow = (props: { event: RecordedEvent }) => {
@@ -42,7 +42,9 @@ interface StreamPageProps {
 
 const StreamPage = (props: StreamPageProps) => {
 
-  const streamState = usePolling<StreamResponse>(`/api/streams/${props.name}/${props.from}/forward/${props.limit}`);
+  const [streamState, isPaused, setIsPaused] = usePauseablePolling<StreamResponse>(
+    `/api/streams/${props.name}/${props.from}/forward/${props.limit}`
+  );
 
   const events = streamState.kind === 'Loaded'
     ? streamState.data.events
@@ -55,7 +57,9 @@ const StreamPage = (props: StreamPageProps) => {
       <div className="d-flex mt-2 mb-2">
         <h5 className="mr-auto">Event Stream '{props.name}'</h5>
         <div className="btn-group" role="group">
-          <Button color="secondary" outline={true} disabled={true}>Pause</Button>
+          <Button color="secondary" outline={true} onClick={() => setIsPaused(!isPaused)}>
+            {isPaused ? 'Resume' : 'Pause'}
+          </Button>
           <Button color="secondary" outline={true} disabled={true}>Delete</Button>
           <Button color="secondary" outline={true} disabled={true}>Add Event</Button>
           <Button tag={Link} color="secondary" outline={true} to={'/streams'}>Back</Button>
