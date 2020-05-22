@@ -33,11 +33,11 @@ const themes: AppTheme[] = [
 
 const capitalize = (string: string) => string.charAt(0).toUpperCase() + string.substr(1);
 
-const ThemeSelector = (props: { onChange?: (theme: AppTheme) => void }) => {
+const ThemeSelector = (props: { fill?: boolean, color?: string, onChange?: (theme: AppTheme) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const toggle = () => setIsOpen(prevState => !prevState);
   
-  const currentThemeName = localStorage.getItem('theme');
+  const currentThemeName = localStorage.getItem('theme') ?? 'bootstrap';
   
   const setTheme = (theme: AppTheme) => {
     localStorage.setItem('theme', theme.name);
@@ -50,8 +50,8 @@ const ThemeSelector = (props: { onChange?: (theme: AppTheme) => void }) => {
   };
   
   return (
-    <Dropdown isOpen={isOpen} toggle={toggle}>
-      <DropdownToggle caret>Theme</DropdownToggle>
+    <Dropdown className={props.fill ? 'd-flex' : ''} isOpen={isOpen} toggle={toggle}>
+      <DropdownToggle className={props.fill ? 'flex-grow-1' : ''} caret color={props.color}>Theme</DropdownToggle>
       <DropdownMenu>
         {themes.map(theme => 
           <DropdownItem key={theme.name} onClick={() => setTheme(theme)} disabled={currentThemeName === theme.name}>

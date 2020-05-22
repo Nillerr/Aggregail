@@ -15,6 +15,13 @@ import {User} from "./model";
 import Axios from "axios";
 import querystring from 'querystring';
 import UserPage from "./components/UserPage";
+import {AppTheme} from "./components/ThemeSelector";
+
+interface ThemeableProps {
+  // `theme` is not actually used, but is here to trigger re-rendering when changed.
+  theme: string;
+  onChangeTheme?: (theme: AppTheme) => void;
+}
 
 interface RoutedStreamPageProps {
   name: string;
@@ -52,9 +59,13 @@ const minMax = (value: number, options: { min: number, max: number }) => {
   return Math.max(options.min, Math.min(options.max, value));
 }
 
-const Session = (props: { onSignOut: () => void }) => {
+interface SessionProps extends ThemeableProps {
+  onSignOut: () => void;
+}
+
+const Session = (props: SessionProps) => {
   return (
-    <Layout onSignOut={props.onSignOut}>
+    <Layout onSignOut={props.onSignOut} onChangeTheme={props.onChangeTheme}>
       <Switch>
         <Route exact path='/' render={() => <Redirect to={'/streams'}/>}/>
         <Route exact path='/dashboard' component={DashboardPage}/>
@@ -112,7 +123,11 @@ const returnUrl = () => {
   return encodeURIComponent(path);
 };
 
-const Login = (props: { onSignIn: () => void }) => {
+interface LoginProps extends ThemeableProps {
+  onSignIn: () => void;
+}
+
+const Login = (props: LoginProps) => {
   return (
     <Switch>
       <Route exact path="/" render={route => {
@@ -133,6 +148,7 @@ const Login = (props: { onSignIn: () => void }) => {
 
 const AppContent = () => {
 
+  const [theme, setTheme] = useState<string>(localStorage.getItem('theme') ?? 'bootstrap');
   const [isSignedIn, setIsSignedIn] = useState<boolean>();
 
   useEffect(() => {
@@ -172,9 +188,17 @@ const AppContent = () => {
     case undefined:
       return null;
     case true:
-      return <Session onSignOut={() => setIsSignedIn(false)}/>;
+      return <Session
+        onSignOut={() => setIsSignedIn(false)}
+        theme={theme}
+        onChangeTheme={t => setTheme(t.name)}
+      />;
     case false:
-      return <Login onSignIn={() => setIsSignedIn(true)}/>;
+      return <Login
+        onSignIn={() => setIsSignedIn(true)}
+        theme={theme}
+        onChangeTheme={t => setTheme(t.name)}
+      />;
   }
 }
 

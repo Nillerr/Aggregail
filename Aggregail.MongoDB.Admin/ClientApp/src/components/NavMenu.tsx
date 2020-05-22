@@ -3,9 +3,9 @@ import {useState} from 'react';
 import {Button, Collapse, Container, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink} from 'reactstrap';
 import {Link} from 'react-router-dom';
 import {useAction} from "../hooks";
-import ThemeSelector from "./ThemeSelector";
+import ThemeSelector, {AppTheme} from "./ThemeSelector";
 
-const NavMenu = (props: { onSignOut: () => void }) => {
+const NavMenu = (props: { onSignOut: () => void, onChangeTheme?: (theme: AppTheme) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   
   const signOut = useAction('POST', '/api/auth/logout', props.onSignOut);
@@ -19,7 +19,7 @@ const NavMenu = (props: { onSignOut: () => void }) => {
           <Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={isOpen} navbar>
             <ul className="navbar-nav flex-grow">
               <NavItem>
-                <ThemeSelector/>
+                <ThemeSelector onChange={props.onChangeTheme}/>
               </NavItem>
               <NavItem>
                 <NavLink tag={Link} to="/dashboard" disabled={true}>Dashboard</NavLink>
