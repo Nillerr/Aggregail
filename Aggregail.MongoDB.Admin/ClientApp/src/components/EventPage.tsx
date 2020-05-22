@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {RecordedEvent} from "./StreamHub";
 import {Link} from "react-router-dom";
-import {Alert, Spinner, Table} from 'reactstrap';
+import {Alert, Button, ButtonGroup, Spinner, Table} from 'reactstrap';
 import Axios from "axios";
 import Json from "./Json";
 
@@ -24,18 +24,19 @@ const loadEventState = (stream: string, eventNumber: number, setState: (state: E
 const EventButton = (props: { label: string, event?: { stream: string, eventNumber: number } }) => {
   return props.event
     ? (
-      <Link
-        className="btn btn-outline-secondary"
+      <Button
+        tag={Link}
+        color="secondary"
         to={`/streams/${props.event.stream}/${props.event.eventNumber}`}
-      >{props.label}</Link>
+      >{props.label}</Button>
     )
-    : (<button className="btn btn-outline-secondary" disabled={true}>{props.label}</button>);
+    : (<Button type="button" color="secondary" disabled={true}>{props.label}</Button>);
 };
 
 const EventContent = (props: { event: RecordedEvent }) => {
   return (
     <React.Fragment>
-      <Table bordered={true} size="sm" className="mt-2 mb-2">
+      <Table responsive bordered size="sm" className="mt-2 mb-2">
         <thead className="thead-dark">
         <tr>
           <th scope="col">No</th>
@@ -103,15 +104,15 @@ const EventPage = (props: { stream: string, eventNumber: number }) => {
 
   return (
     <React.Fragment>
-      <div className="d-flex mt-2 mb-2">
+      <div className="d-flex mt-2 mb-2 flex-wrap">
         <h5 className="mb-3 mr-auto">{props.eventNumber}@{props.stream}</h5>
-        <div className="btn-group" role="group">
-          <button className="btn btn-outline-secondary" disabled={true}>Add New Like This</button>
-          <Link className="btn btn-outline-secondary" to={`/streams/${props.stream}`}>Back</Link>
-        </div>
+        <ButtonGroup className="flex-grow-1 flex-sm-grow-0" role="group">
+          <Button type="button" color="secondary" disabled={true}>Add New Like This</Button>
+          <Button tag={Link} color="secondary" to={`/streams/${props.stream}`}>Back</Button>
+        </ButtonGroup>
       </div>
-      <div className="mt-2 mb-2">
-        <div className="btn-group" role="group">
+      <div className="d-flex mt-2 mb-2">
+        <div className="btn-group flex-grow-1 flex-sm-grow-0" role="group">
           <EventButton label="Previous" event={previousEvent}/>
           <EventButton label="Next" event={nextEvent}/>
         </div>

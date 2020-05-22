@@ -131,7 +131,7 @@ const Login = (props: { onSignIn: () => void }) => {
   );
 };
 
-const App = () => {
+const AppContent = () => {
 
   const [isSignedIn, setIsSignedIn] = useState<boolean>();
 
@@ -156,7 +156,7 @@ const App = () => {
       };
     }
   }, [isSignedIn]);
-
+  
   switch (isSignedIn) {
     case undefined:
       return null;
@@ -165,6 +165,12 @@ const App = () => {
     case false:
       return <Login onSignIn={() => setIsSignedIn(true)}/>;
   }
+}
+
+const App = () => {
+  return <React.Fragment>
+    <AppContent/>
+  </React.Fragment>;
 };
 
 export default App;

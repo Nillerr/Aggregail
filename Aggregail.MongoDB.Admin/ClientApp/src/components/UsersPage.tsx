@@ -1,5 +1,5 @@
 import React from "react";
-import {Table} from "reactstrap";
+import {Button, ButtonGroup, Table} from "reactstrap";
 import {Link} from "react-router-dom";
 import {usePolling} from "../hooks";
 import {User} from "../model";
@@ -22,11 +22,15 @@ const UsersPage = (props: {}) => {
     <React.Fragment>
       <div className="d-flex mb-4">
         <h5 className="mr-auto">Users</h5>
-        <div>
-          <Link className="ml-2 flex-shrink-0 text-nowrap btn btn-outline-secondary" to="/users/new">New User</Link>
-        </div>
+        <ButtonGroup>
+          <Button
+            tag={Link}
+            color="secondary"
+            className="ml-2 flex-shrink-0 text-nowrap" to="/users/new"
+          >New User</Button>
+        </ButtonGroup>
       </div>
-      <Table bordered={true} size="sm">
+      <Table responsive bordered size="sm">
         <thead className="thead-dark">
         <tr>
           <th scope="col">Login Name</th>

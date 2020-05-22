@@ -54,45 +54,41 @@ const StreamPage = (props: StreamPageProps) => {
 
   return (
     <React.Fragment>
-      <div className="d-flex mt-2 mb-2">
+      <div className="d-flex mt-2 mb-2 flex-wrap">
         <h5 className="mr-auto">Event Stream '{props.name}'</h5>
-        <div className="btn-group" role="group">
-          <Button color="secondary" outline={true} onClick={() => setIsPaused(!isPaused)}>
+        <div className="btn-group flex-grow-1 flex-sm-grow-0" role="group">
+          <Button color="secondary" onClick={() => setIsPaused(!isPaused)}>
             {isPaused ? 'Resume' : 'Pause'}
           </Button>
-          <Button color="secondary" outline={true} disabled={true}>Delete</Button>
-          <Button color="secondary" outline={true} disabled={true}>Add Event</Button>
-          <Button tag={Link} color="secondary" outline={true} to={'/streams'}>Back</Button>
+          <Button color="secondary" disabled={true}>Delete</Button>
+          <Button color="secondary" disabled={true}>Add Event</Button>
+          <Button tag={Link} color="secondary" to={'/streams'}>Back</Button>
         </div>
       </div>
-      <div className="mt-2 mb-2">
-        <div className="btn-group" role="group">
+      <div className="d-flex mt-2 mb-2">
+        <div className="btn-group flex-grow-1 flex-sm-grow-0" role="group">
           <Button
             color="secondary"
-            outline={true}
             onClick={() => props.onReset()}
           >Reset</Button>
           <Button
             color="secondary"
-            outline={true}
             disabled={props.from === 0}
             onClick={() => props.onFirst()}
           >First</Button>
           <Button
             color="secondary"
-            outline={true}
             disabled={props.from === 0}
             onClick={() => props.onPrevious()}
           >Previous</Button>
           <Button
             color="secondary"
-            outline={true}
             disabled={latestEvent === undefined || events.length < props.limit}
             onClick={() => props.onNext()}
           >Next</Button>
         </div>
       </div>
-      <Table bordered={true} size="sm">
+      <Table responsive bordered size="sm">
         <thead className="thead-dark">
         <tr>
           <th scope="col">Event #</th>

@@ -26,7 +26,7 @@ const NewUserForm = (props: { onSubmit: (data: CreateUserData) => void }) => {
     <div className="d-flex mt-2 mb-2">
       <h5 className="mr-auto">New User</h5>
       <div className="btn-group" role="group">
-        <Link className="btn btn-outline-secondary" to="/users">Back</Link>
+        <Button tag={Link} color="secondary" to="/users">Back</Button>
       </div>
     </div>
     <Form onSubmit={e => onSubmit(e)}>

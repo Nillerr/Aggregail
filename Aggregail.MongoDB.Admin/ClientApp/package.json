@@ -32,6 +32,7 @@
     "@types/reactstrap": "^8.4.2",
     "@types/use-persisted-state": "^0.3.0",
     "@typescript-eslint/parser": "^2.34.0",
+    "bootswatch": "^4.5.0",
     "copyfiles": "^2.2.0",
     "cross-env": "6.0.3",
     "eslint": "^6.5.1",
@@ -42,9 +43,9 @@
     "typescript": "^3.9.3"
   },
   "scripts": {
-    "copy": "copyfiles",
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "copy-themes": "sh ./copy-themes.sh",
+    "start": "npm run copy-themes && react-scripts start",
+    "build": "npm run copy-themes && react-scripts build",
     "test": "cross-env CI=true react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "lint": "eslint ./src/**/*.ts ./src/**/*.tsx"

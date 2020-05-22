@@ -3,7 +3,7 @@ import {Container} from 'reactstrap';
 import NavMenu from './NavMenu';
 import Footer from "./Footer";
 
-export default (props: { onSignOut: () => void, children?: React.ReactNode }) => (
+const Layout = (props: { onSignOut: () => void, children?: React.ReactNode }) => (
   <React.Fragment>
     <NavMenu onSignOut={props.onSignOut}/>
     <Container>
@@ -12,3 +12,5 @@ export default (props: { onSignOut: () => void, children?: React.ReactNode }) =>
     <Footer/>
   </React.Fragment>
 );
+
+export default Layout;

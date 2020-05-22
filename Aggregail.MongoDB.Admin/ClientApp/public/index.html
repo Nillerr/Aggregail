@@ -20,8 +20,45 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
-    <title>Aggregail.MongoDB.Admin</title>
+    <title>Aggregail MongoDB</title>
+    <script type="text/javascript">
+      (function() {
+        var isInitialized = false;
+        
+        window.$appUpdateTheme = function() {
+          var $base = document.getElementsByTagName('base')[0];
+          var publicUrl = `${$base.href}themes/`;
+
+          var $head = document.getElementsByTagName('head')[0];
+
+          function setTheme(elementId, theme, name) {
+
+            var link = document.createElement('link');
+            link.id = elementId;
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.setAttribute('data-public-url', publicUrl);
+            link.href = `${publicUrl}${theme}/${name}`;
+
+            if (isInitialized) {
+              var existingLink = document.getElementById(elementId);
+
+              link.onload = function () {
+                existingLink.remove();
+              }
+            }
+
+            $head.appendChild(link);
+          }
+
+          var theme = localStorage.getItem('theme') || 'bootstrap';
+          setTheme('theme', theme, 'bootstrap.min.css');
+          isInitialized = true;
+        };
+
+        window.$appUpdateTheme();
+      })();
+    </script>
   </head>
   <body>
     <noscript>

@@ -13,7 +13,7 @@ const StreamRow = (props: { name: string }) => (
 );
 
 const StreamsTable = (props: { legend: string, state: LoadableState<{ streams: RecentStream[] }> }) => (
-  <Table bordered={true} size="sm">
+  <Table responsive bordered size="sm">
     <thead className="thead-dark">
     <tr>
       <th scope="col">{props.legend}</th>
@@ -41,9 +41,9 @@ const StreamBrowserPage = (props: { onStreamBrowse: (stream: string) => void }) 
 
   return (
     <React.Fragment>
-      <div className="d-flex mb-4">
+      <div className="d-flex mb-4 flex-wrap">
         <h5 className="mr-auto">Stream Browser</h5>
-        <div>
+        <div className="flex-grow-1 flex-sm-grow-0">
           <Form onSubmit={() => props.onStreamBrowse(stream)}>
             <InputGroup>
               <Input
@@ -54,13 +54,13 @@ const StreamBrowserPage = (props: { onStreamBrowse: (stream: string) => void }) 
                 onChange={e => setStream(e.target.value)}
               />
               <InputGroupAddon addonType="append" className="mr-2">
-                <Button type="submit" outline={true} color="secondary" className="text-nowrap">Browse</Button>
+                <Button type="submit" color="secondary" className="text-nowrap">Browse</Button>
               </InputGroupAddon>
             </InputGroup>
           </Form>
         </div>
         <div>
-          <Button className="ml-2 flex-shrink-0 text-nowrap" outline={true} color="secondary" disabled={true}>
+          <Button className="ml-2 flex-shrink-0 text-nowrap" color="secondary" disabled={true}>
             Add Event
           </Button>
         </div>

@@ -26,18 +26,16 @@ const UserPage = (props: { id: string, onDelete: () => void, onBack: () => void 
 
   return (
     <React.Fragment>
-      <div className="d-flex mb-4">
+      <div className="d-flex mb-4 flex-wrap">
         <h5 className="mr-auto">User Details</h5>
-        <div>
-          <ButtonGroup>
-            <Button type="button" color="secondary" outline={true} disabled={true}>Edit</Button>
-            <Button type="button" color="secondary" outline={true} disabled={true}>Change Password</Button>
-            <Button type="button" color="danger" outline={true} onClick={deleteUser}>Delete</Button>
-            <Button type="button" color="secondary" outline={true} onClick={props.onBack}>Back</Button>
-          </ButtonGroup>
-        </div>
+        <ButtonGroup className="flex-grow-1 flex-sm-grow-0">
+          <Button type="button" color="secondary" disabled={true}>Edit</Button>
+          <Button type="button" color="secondary" disabled={true}>Change Password</Button>
+          <Button type="button" color="danger" onClick={deleteUser}>Delete</Button>
+          <Button type="button" color="secondary" onClick={props.onBack}>Back</Button>
+        </ButtonGroup>
       </div>
-      <Table bordered={true} size="sm">
+      <Table responsive bordered size="sm">
         <thead className="thead-dark">
         <tr>
           <th scope="col">Fields</th>

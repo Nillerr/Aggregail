@@ -19,3 +19,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# themes are automatically extracted from node_modules by the `copy-themes.sh` script.
+/public/themes
