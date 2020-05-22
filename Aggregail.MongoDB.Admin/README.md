@@ -18,7 +18,7 @@ An administration UI for event stores built using [Aggregail.MongoDB](../Aggrega
      - `--Database` defaults to `aggregail`
      - `--Collection` defaults to `streams`
      - The arguments can also be specified using [environment variables](#environment-variables)
- 4. Log in with the user `admin` and password `changeit`.
+ 4. Log in at `http://localhost:5000` with the user `admin` and password `changeit`.
  5. By default the application will launch on the urls: `http://localhost:5000` and 
     `https://localhost:5001`. This can be changed by specifying the `--urls` command line argument:
     ```bash
