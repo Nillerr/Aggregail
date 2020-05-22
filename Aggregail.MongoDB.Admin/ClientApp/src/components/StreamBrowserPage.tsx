@@ -1,9 +1,10 @@
 import React, {useState} from "react";
 import {Link} from "react-router-dom";
-import {Alert, Button, Form, Input, InputGroup, InputGroupAddon, Spinner, Table} from "reactstrap";
+import {Button, Form, Input, InputGroup, InputGroupAddon, Table} from "reactstrap";
 import {usePolling} from "../hooks";
 import {LoadableState} from "../lib";
 import {RecentStream, RecentStreams} from "../model";
+import {LoadableTableBody} from "./LoadableTableBody";
 
 const StreamRow = (props: { name: string }) => (
   <tr>
@@ -18,28 +19,14 @@ const StreamsTable = (props: { legend: string, state: LoadableState<{ streams: R
       <th scope="col">{props.legend}</th>
     </tr>
     </thead>
-    <tbody>
-    {props.state.kind === 'Loading'
-      ? <tr>
-        <td className="text-center"><Spinner>Loading...</Spinner></td>
-      </tr>
-      : null
-    }
-    {props.state.kind === 'Failed'
-      ? <tr>
-        <td><Alert color="danger">{`${props.state.reason}`}</Alert></td>
-      </tr>
-      : null
-    }
-    {props.state.kind === 'Loaded'
-      ? props.state.streams.length > 0
-        ? props.state.streams.map(stream => <StreamRow key={stream.name} name={stream.name}/>)
-        : <tr>
-          <td>No streams</td>
-        </tr>
-      : null
-    }
-    </tbody>
+    <LoadableTableBody
+      colSpan={1}
+      state={props.state}
+      render={({streams}) => streams.length > 0
+        ? streams.map(stream => <StreamRow key={stream.name} name={stream.name}/>)
+        : <tr><td>No streams</td></tr>
+      }
+    />
   </Table>
 );
 

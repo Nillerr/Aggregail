@@ -1,8 +1,9 @@
 import React from "react";
-import {Alert, Spinner, Table} from "reactstrap";
+import {Table} from "reactstrap";
 import {Link} from "react-router-dom";
 import {usePolling} from "../hooks";
 import {User} from "../model";
+import {LoadableTableBody} from "./LoadableTableBody";
 
 const UserRow = (props: { user: User }) => {
   return (
@@ -32,28 +33,11 @@ const UsersPage = (props: {}) => {
           <th scope="col">Full Name</th>
         </tr>
         </thead>
-        <tbody>
-        {usersState.kind === "Loading"
-          ? <tr>
-            <td colSpan={2} className="text-center">
-              <Spinner>Loading...</Spinner>
-            </td>
-          </tr>
-          : null
-        }
-        {usersState.kind === 'Failed'
-          ? <tr>
-            <td colSpan={2}>
-              <Alert color="danger">{`${usersState.reason}`}</Alert>
-            </td>
-          </tr>
-          : null
-        }
-        {usersState.kind === 'Loaded'
-          ? usersState.data.map(user => <UserRow key={user.id} user={user}/>)
-          : null
-        }
-        </tbody>
+        <LoadableTableBody
+          colSpan={2}
+          state={usersState}
+          render={({data: users}) => users.map(user => <UserRow key={user.id} user={user}/>)}
+        />
       </Table>
     </React.Fragment>
   );

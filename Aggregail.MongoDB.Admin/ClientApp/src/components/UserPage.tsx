@@ -1,11 +1,12 @@
 import React from "react";
 import {useAction, useRequest} from "../hooks";
 import {User} from "../model";
-import {Alert, Button, ButtonGroup, Spinner, Table} from "reactstrap";
+import {Button, ButtonGroup, Table} from "reactstrap";
+import {LoadableTableBody} from "./LoadableTableBody";
 
 const UserDetails = (props: { user: User }) => {
   return (
-    <tbody>
+    <React.Fragment>
     <tr>
       <td>Username</td>
       <td>{props.user.username}</td>
@@ -14,15 +15,15 @@ const UserDetails = (props: { user: User }) => {
       <td>Full Name</td>
       <td>{props.user.fullName}</td>
     </tr>
-    </tbody>
+    </React.Fragment>
   );
 };
 
 const UserPage = (props: { id: string, onDelete: () => void, onBack: () => void }) => {
   const userState = useRequest<User>(`/api/users/${props.id}`);
-  
-  const deleteUser = useAction('DELETE', `/api/users/${props.id}`, props.onDelete); 
-  
+
+  const deleteUser = useAction('DELETE', `/api/users/${props.id}`, props.onDelete);
+
   return (
     <React.Fragment>
       <div className="d-flex mb-4">
@@ -43,35 +44,11 @@ const UserPage = (props: { id: string, onDelete: () => void, onBack: () => void 
           <th scope="col">Values</th>
         </tr>
         </thead>
-        {userState.kind === "Loading"
-          ? (
-            <tbody>
-            <tr>
-              <td colSpan={2} className="text-center">
-                <Spinner>Loading...</Spinner>
-              </td>
-            </tr>
-            </tbody>
-          )
-          : null
-        }
-        {userState.kind === 'Failed'
-          ? (
-            <tbody>
-            <tr>
-              <td colSpan={2}>
-                <Alert color="danger">{`${userState.reason}`}</Alert>
-              </td>
-            </tr>
-            </tbody>
-          )
-          : null
-        }
-        {userState.kind === 'Loaded'
-          ? (<UserDetails user={userState.data}/>)
-          : null
-        }
-
+        <LoadableTableBody
+          colSpan={2}
+          state={userState}
+          render={({data: user}) => <UserDetails user={user}/>}
+        />
       </Table>
     </React.Fragment>
   );

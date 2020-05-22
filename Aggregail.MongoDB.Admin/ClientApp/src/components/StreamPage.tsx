@@ -1,10 +1,10 @@
 import React from "react";
 import {RecordedEvent} from "./StreamHub";
 import {Link} from "react-router-dom";
-import {Alert, Button, Spinner, Table} from "reactstrap";
+import {Button, Table} from "reactstrap";
 import {StreamResponse} from "../model";
 import {usePolling} from "../hooks";
-import {LoadableState} from "../lib";
+import {LoadableTableBody} from "./LoadableTableBody";
 
 const EventRow = (props: { event: RecordedEvent }) => {
   let name = `${props.event.eventNumber}@${props.event.stream}`;
@@ -43,10 +43,9 @@ interface StreamPageProps {
 const StreamPage = (props: StreamPageProps) => {
 
   const streamState = usePolling<StreamResponse>(`/api/streams/${props.name}/${props.from}/forward/${props.limit}`);
-  const stream = LoadableState.map(streamState, data => ({events: data.events}));
 
-  const events = stream.kind === 'Loaded'
-    ? stream.events
+  const events = streamState.kind === 'Loaded'
+    ? streamState.data.events
     : [];
 
   const latestEvent = max(events.map(e => e.eventNumber));
@@ -99,23 +98,12 @@ const StreamPage = (props: StreamPageProps) => {
           <th scope="col">&nbsp;</th>
         </tr>
         </thead>
-        <tbody>
-        {stream.kind === 'Loaded'
-          ? stream.events.map(event => (<EventRow key={event.eventId} event={event}/>))
-          : null
-        }
-        </tbody>
+        <LoadableTableBody
+          colSpan={5}
+          state={streamState}
+          render={({data: {events}}) => events.map(event => <EventRow key={event.eventId} event={event}/>)}
+        />
       </Table>
-      {stream.kind === 'Loading'
-        ? <div className="d-flex justify-content-center">
-          <Spinner>Loading...</Spinner>
-        </div>
-        : null
-      }
-      {stream.kind === 'Failed'
-        ? <Alert color="danger">{`${stream.reason}`}</Alert>
-        : null
-      }
     </React.Fragment>
   );
 };
