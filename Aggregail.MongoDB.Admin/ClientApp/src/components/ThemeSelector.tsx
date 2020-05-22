@@ -54,8 +54,8 @@ const ThemeSelector = (props: { onChange?: (theme: AppTheme) => void }) => {
       <DropdownToggle caret>Theme</DropdownToggle>
       <DropdownMenu>
         {themes.map(theme => 
-          <DropdownItem key={theme.name} onClick={() => setTheme(theme)} disabled={currentThemeName == theme.name}>
-            {currentThemeName == theme.name
+          <DropdownItem key={theme.name} onClick={() => setTheme(theme)} disabled={currentThemeName === theme.name}>
+            {currentThemeName === theme.name
               ? <strong>{capitalize(theme.name)} ({capitalize(theme.style)})</strong>
               : `${capitalize(theme.name)} (${capitalize(theme.style)})`
             }

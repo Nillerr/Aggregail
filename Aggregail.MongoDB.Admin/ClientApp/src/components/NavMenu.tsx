@@ -3,7 +3,7 @@ import {useState} from 'react';
 import {Button, Collapse, Container, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink} from 'reactstrap';
 import {Link} from 'react-router-dom';
 import {useAction} from "../hooks";
-import ThemeSelector, {AppTheme} from "./ThemeSelector";
+import ThemeSelector from "./ThemeSelector";
 
 const NavMenu = (props: { onSignOut: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
