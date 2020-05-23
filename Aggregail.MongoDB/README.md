@@ -33,3 +33,9 @@ var mongoSettings = new MongoEventStoreSettings(mongoDatabase, collection, seria
 
 IEventStore mongoStore = new MongoEventStore(mongoSettings);
 ```
+
+## WIP
+
+The following features are being worked on:
+
+ - Supporting soft-deletes of streams, by allowing streams to start from an event other than 0.

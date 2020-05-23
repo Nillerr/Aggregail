@@ -1,7 +1,6 @@
 import React, {useState} from "react";
 import {Alert, Button, Form, Input} from "reactstrap";
 import logo from '../assets/logo.svg';
-import Axios from "axios";
 import ThemeSelector from "./ThemeSelector";
 import {useFormPostAction} from "../hooks";
 
@@ -15,7 +14,7 @@ const LoginPage = (props: { onSignIn: () => void }) => {
     if (reason.response && reason.response.status === 401) {
       setError('Username or password was incorrect');
     }
-  }, [setError]);
+  });
 
   const signIn = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

@@ -34,6 +34,8 @@ interface StreamPageProps {
   name: string;
   from: number;
   limit: number;
+  onAddEvent: (stream: string) => void;
+  onDelete: (stream: string) => void;
   onReset: () => void;
   onFirst: () => void;
   onNext: () => void;
@@ -60,8 +62,8 @@ const StreamPage = (props: StreamPageProps) => {
           <Button color="secondary" onClick={() => setIsPaused(!isPaused)}>
             {isPaused ? 'Resume' : 'Pause'}
           </Button>
-          <Button color="secondary" disabled={true}>Delete</Button>
-          <Button color="secondary" disabled={true}>Add Event</Button>
+          <Button color="secondary" onClick={() => props.onDelete(props.name)}>Delete</Button>
+          <Button color="secondary" onClick={() => props.onAddEvent(props.name)}>Add Event</Button>
           <Button tag={Link} color="secondary" to={'/streams'}>Back</Button>
         </div>
       </div>

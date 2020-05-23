@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Aggregail.MongoDB.Admin.Documents;
 using Aggregail.MongoDB.Admin.Hubs;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
@@ -15,10 +16,12 @@ namespace Aggregail.MongoDB.Admin.Controllers
     public sealed class StreamsController : ControllerBase
     {
         private readonly IMongoCollection<RecordedEventDocument> _events;
+        private readonly ISystemClock _clock;
 
-        public StreamsController(IMongoCollection<RecordedEventDocument> events)
+        public StreamsController(IMongoCollection<RecordedEventDocument> events, ISystemClock clock)
         {
             _events = events;
+            _clock = clock;
         }
 
         [HttpGet]
@@ -107,6 +110,52 @@ namespace Aggregail.MongoDB.Admin.Controllers
                 .ToArray();
 
             return new StreamResponse(events);
+        }
+
+        [HttpPost("{name}")]
+        public async Task<IActionResult> AppendEventAsync(
+            string name,
+            [FromBody] AppendEventRequest request,
+            CancellationToken cancellationToken
+        )
+        {
+            var latestEvent = await _events
+                .Find(e => e.Stream == name)
+                .SortByDescending(e => e.EventNumber)
+                .FirstOrDefaultAsync(cancellationToken);
+            
+            var document = new RecordedEventDocument
+            {
+                Stream = name,
+                EventId = request.EventId,
+                EventType = request.EventType,
+                EventNumber = (latestEvent?.EventNumber ?? -1L) + 1L,
+                Created = _clock.UtcNow.UtcDateTime,
+                Data = request.Data,
+            };
+
+            try
+            {
+                await _events.InsertOneAsync(document, null, cancellationToken);
+            }
+            catch (MongoWriteException ex)
+            {
+                if (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+                {
+                    return Conflict();
+                }
+
+                throw;
+            }
+
+            return Ok();
+        }
+
+        [HttpDelete("{name}")]
+        public async Task<IActionResult> DeleteStreamAsync(string name, CancellationToken cancellationToken)
+        {
+            await _events.DeleteManyAsync(e => e.Stream == name, cancellationToken);
+            return Ok();
         }
     }
 }

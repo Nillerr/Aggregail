@@ -16,6 +16,8 @@ import Axios from "axios";
 import querystring from 'querystring';
 import UserPage from "./components/UserPage";
 import {AppTheme} from "./components/ThemeSelector";
+import {AddEventPage, AddEventLikePage} from "./components/AddEventPage";
+import DeleteStreamPage from "./components/DeleteStreamPage";
 
 interface ThemeableProps {
   // `theme` is not actually used, but is here to trigger re-rendering when changed.
@@ -36,18 +38,12 @@ const RoutedStreamPage = (props: RoutedStreamPageProps) => {
     from={props.from}
     name={props.name}
     limit={props.limit}
-    onReset={() => {
-      props.navigate(`/streams/${props.name}`);
-    }}
-    onFirst={() => {
-      props.navigate(`/streams/${props.name}/0/forward/${props.limit}`);
-    }}
-    onPrevious={() => {
-      props.navigate(`/streams/${props.name}/${Math.max(0, props.from - props.limit)}/forward/${props.limit}`);
-    }}
-    onNext={() => {
-      props.navigate(`/streams/${props.name}/${props.from + props.limit}/forward/${props.limit}`);
-    }}
+    onAddEvent={(stream) => props.navigate(`/streams/${stream}/addEvent`)}
+    onDelete={(stream) => props.navigate(`/streams/${stream}/delete`)}
+    onReset={() => props.navigate(`/streams/${props.name}`)}
+    onFirst={() => props.navigate(`/streams/${props.name}/0/forward/${props.limit}`)}
+    onPrevious={() => props.navigate(`/streams/${props.name}/${Math.max(0, props.from - props.limit)}/forward/${props.limit}`)}
+    onNext={() => props.navigate(`/streams/${props.name}/${props.from + props.limit}/forward/${props.limit}`)}
   />;
 }
 
@@ -86,8 +82,18 @@ const Session = (props: SessionProps) => {
             onBack={() => props.history.push(`/users`)}
           />
         }/>
-        <Route exact path='/streams' render={route =>
-          <StreamBrowserPage key="/streams" onStreamBrowse={stream => route.history.push(`/streams/${stream}`)}/>
+        <Route exact path='/streams' render={props =>
+          <StreamBrowserPage
+            key="/streams"
+            onStreamBrowse={stream => props.history.push(`/streams/${stream}`)}
+            onAddEvent={() => props.history.push(`/streams/addEvent`)}
+          />
+        }/>
+        <Route exact path='/streams/addEvent' render={props =>
+          <AddEventPage
+            key={`/streams/${props.match.params.name}/addEvent/${props.match.params.likeEventNumber ?? ''}`}
+            onEventAdded={(stream) => props.history.push(`/streams/${stream}`)}
+          />
         }/>
         <Route exact path='/streams/:name' render={props =>
           <RoutedStreamPage
@@ -95,6 +101,29 @@ const Session = (props: SessionProps) => {
             from={0}
             limit={20}
             navigate={props.history.push}
+          />
+        }/>
+        <Route exact path='/streams/:name/addEvent' render={props =>
+          <AddEventPage
+            key={`/streams/${props.match.params.name}/addEvent`}
+            stream={props.match.params.name}
+            onEventAdded={(stream) => props.history.push(`/streams/${stream}`)}
+          />
+        }/>
+        <Route exact path='/streams/:name/delete' render={props =>
+          <DeleteStreamPage
+            key={`/streams/${props.match.params.name}/delete`}
+            stream={props.match.params.name}
+            onCancel={(stream) => props.history.push(`/streams/${stream}`)}
+            onDelete={(stream) => props.history.push('/streams')}
+          />
+        }/>
+        <Route exact path='/streams/:name/addEvent/:eventNumber' render={props =>
+          <AddEventLikePage
+            key={`/streams/${props.match.params.name}/addEvent/${props.match.params.eventNumber}`}
+            stream={props.match.params.name}
+            eventNumber={parseInt(props.match.params.eventNumber)}
+            onEventAdded={(stream) => props.history.push(`/streams/${stream}`)}
           />
         }/>
         <Route exact path='/streams/:name/:from/forward/:limit' render={props =>
@@ -107,9 +136,10 @@ const Session = (props: SessionProps) => {
         }/>
         <Route exact path='/streams/:name/:eventNumber' render={props =>
           <EventPage
-            key={`/streams/${props.match.params.eventNumber}/${props.match.params.name}`}
+            key={`/streams/${props.match.params.name}/${props.match.params.eventNumber}`}
             stream={props.match.params.name}
             eventNumber={parseInt(props.match.params.eventNumber)}
+            onAddEventLike={(name, eventNumber) => props.history.push(`/streams/${name}/addEvent/${eventNumber}`)}
           />
         }/>
         <Route render={() => <Redirect to="/"/>}/>

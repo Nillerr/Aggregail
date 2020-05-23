@@ -31,7 +31,7 @@ const UserPage = (props: { id: string, onDelete: () => void, onBack: () => void 
         <ButtonGroup className="flex-grow-1 flex-sm-grow-0">
           <Button type="button" color="secondary" disabled={true}>Edit</Button>
           <Button type="button" color="secondary" disabled={true}>Change Password</Button>
-          <Button type="button" color="danger" onClick={deleteUser}>Delete</Button>
+          <Button type="button" color="danger" onClick={() => deleteUser()}>Delete</Button>
           <Button type="button" color="secondary" onClick={props.onBack}>Back</Button>
         </ButtonGroup>
       </div>

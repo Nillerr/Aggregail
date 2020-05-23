@@ -31,7 +31,7 @@ const NavMenu = (props: { onSignOut: () => void, onChangeTheme?: (theme: AppThem
                 <NavLink tag={Link} to="/users">Users</NavLink>
               </NavItem>
               <NavItem>
-                <NavLink tag={Button} color="link" onClick={signOut}>Sign out</NavLink>
+                <NavLink tag={Button} color="link" onClick={() => signOut()}>Sign out</NavLink>
               </NavItem>
             </ul>
           </Collapse>

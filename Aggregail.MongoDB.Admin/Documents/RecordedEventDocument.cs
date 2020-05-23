@@ -8,7 +8,7 @@ namespace Aggregail.MongoDB.Admin.Documents
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
+        public string Id { get; set; } = null!;
 
         [BsonElement("stream")]
         public string Stream { get; set; } = null!;

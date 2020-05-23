@@ -30,7 +30,7 @@ const StreamsTable = (props: { legend: string, state: LoadableState<{ streams: R
   </Table>
 );
 
-const StreamBrowserPage = (props: { onStreamBrowse: (stream: string) => void }) => {
+const StreamBrowserPage = (props: { onStreamBrowse: (stream: string) => void, onAddEvent: () => void }) => {
 
   const recentStreams = usePolling<RecentStreams>('/api/streams');
 
@@ -60,7 +60,7 @@ const StreamBrowserPage = (props: { onStreamBrowse: (stream: string) => void }) 
           </Form>
         </div>
         <div>
-          <Button className="ml-2 flex-shrink-0 text-nowrap" color="secondary" disabled={true}>
+          <Button className="ml-2 flex-shrink-0 text-nowrap" color="secondary" onClick={props.onAddEvent}>
             Add Event
           </Button>
         </div>

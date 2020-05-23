@@ -10,3 +10,9 @@ html, body {
 html.theme-transition * {
   transition: background-color 1s;
 }
+
+textarea.input-code {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 1em;
+  min-height: 350px;
+}

@@ -4,8 +4,7 @@ import Axios, {CancelTokenSource, Method} from "axios";
 export const useFormPostAction = <T extends { [key: string]: any }>(
   url: string,
   onSuccess: () => void,
-  onError?: (reason: any) => void,
-  deps?: ReadonlyArray<any>
+  onError?: (reason: any) => void
 ) => {
   const ctsRef = useRef<CancelTokenSource>(Axios.CancelToken.source());
 
@@ -20,11 +19,11 @@ export const useFormPostAction = <T extends { [key: string]: any }>(
       .catch(reason => Axios.isCancel(reason) ? null : onError ? onError(reason) : console.error(reason));
   };
 
-  useEffect(() => () => ctsRef.current.cancel(), deps);
+  useEffect(() => () => ctsRef.current.cancel(), []);
   return submit;
 }
 
-export const useAction = (
+export const useAction = <T extends any>(
   method: Method,
   url: string,
   onSuccess: () => void,
@@ -32,10 +31,12 @@ export const useAction = (
 ) => {
   const ctsRef = useRef<CancelTokenSource>(Axios.CancelToken.source());
 
-  const submit = () => {
+  const submit = (data?: T) => {
+    console.log('submit', { method, url, data, iof: (data instanceof Event) });
     Axios
       .request({
         url: url,
+        data: (data instanceof Event) ? null : data,
         method: method,
         cancelToken: ctsRef.current.token
       })
