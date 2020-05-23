@@ -62,7 +62,9 @@ namespace Aggregail.MongoDB.Admin
             
             services.AddSingleton<UserDocumentPasswordHasher>();
 
-            services.AddHostedService<StreamService>();
+            // TODO @nije: SignalR evaluation
+            // services.AddHostedService<StreamService>();
+            
             services.AddHostedService<UserBackgroundService>();
 
             services.AddSingleton<UserValidationEvents>();
