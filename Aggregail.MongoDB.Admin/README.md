@@ -84,15 +84,16 @@ a new password.
 
 ### All users have been deleted
 
-Restarting the application, while there are no users in the `users` MongoDB collection, will 
-re-create the default `admin` user, with the password `changeit`.
+Restarting the application, while there are no users in the `_aggregail_users`  
+(or the one you configured) MongoDB collection, will re-create the default `admin` user, 
+with the password `changeit`.
 
 
 ### I have been locked out
 
  1. Connect to your MongoDB server
  2. Open the database specified when launching the application
- 3. Delete the `users` collection
+ 3. Delete the `_aggregail_users` collection (or the one you configured)
  4. See [All users have been deleted](#all-users-have-been-deleted)
 
 
