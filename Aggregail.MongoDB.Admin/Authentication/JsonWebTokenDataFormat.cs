@@ -8,7 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Aggregail.MongoDB.Admin.Authentication
 {
-    public sealed class JsonWebTokenDataFormat : ISecureDataFormat<AuthenticationTicket>
+    public sealed class JsonWebTokenDataFormat : ISecureDataFormat<AuthenticationTicket?>
     {
         private const string Issuer = "https://localhost:5001";
         private const string Audience = "32a507e56d374cd6818d2f7fe8483a1b";
