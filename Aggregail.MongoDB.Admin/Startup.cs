@@ -129,8 +129,9 @@ namespace Aggregail.MongoDB.Admin
                         name: "default",
                         pattern: "{controller}/{action=Index}/{id?}"
                     );
-                    
-                    endpoints.MapHub<StreamHub>("hubs/stream");
+                 
+                    // TODO @nije: Evaluate whether adding SignalR is fun or not
+                    // endpoints.MapHub<StreamHub>("hubs/stream");
                 }
             );
 
