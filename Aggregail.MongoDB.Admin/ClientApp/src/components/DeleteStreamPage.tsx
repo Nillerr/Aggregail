@@ -12,13 +12,13 @@ const DeleteStreamPage = (props: ({ stream: string, onCancel: (stream: string) =
         <h5>Delete Stream `{props.stream}`</h5>
       </div>
       <div className="mt-2 mb-2">
-        <Alert color="warning">
+        <div className="alert alert-warning">
           <h4 className="alert-heading">Warning</h4>
           <p>Deleting a stream is an irrecoverable operation. Aggregail does not implement any logic to inform other 
             applications of deleted streams, and as such the read models built from the event store can contain 
             information which is no longer present.</p>
           <p>Are you sure you want to delete the stream?</p>
-        </Alert>
+        </div>
       </div>
       <div className="mt-2 mb-2">
         <Button
