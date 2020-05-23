@@ -47,11 +47,11 @@ The application can also be configured using these environment variables:
 ```sh
 AGGREGAIL__ConnectionString
 AGGREGAIL__Database
-AGGREGAIL__Collection
+AGGREGAIL__Collection (Defaults to `streams`)
 
-AGGREGAIL__Users__ConnectionString (defaults to value of ConnectionString)
-AGGREGAIL__Users__Database (defaults to value of Database)
-AGGREGAIL__Users__Collection
+AGGREGAIL__Users__ConnectionString (Defaults to value of ConnectionString)
+AGGREGAIL__Users__Database (Defaults to value of Database)
+AGGREGAIL__Users__Collection (Defaults to `_aggregail_users`)
 
 ASPNETCORE__Urls
 ```
