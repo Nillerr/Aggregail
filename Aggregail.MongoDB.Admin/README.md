@@ -26,19 +26,34 @@ An administration UI for event stores built using [Aggregail.MongoDB](../Aggrega
       --urls=http://localhost:3014
     ``` 
     
-The application will create a new collection called `users` in the database specified when 
-launching the application, containing a single user `admin` with the password `changeit`.
+The application will create a new collection called `_aggregail_users` in the database specified 
+when launching the application, containing a single user `admin` with the password `changeit`. The 
+users collection, database and event MongoDB server can be changed using configurations:
+
+```sh
+--Users:ConnectionString="..." \
+--Users:Database="..." \
+--Users:Collection="..."
+``` 
+
+Furthermore, specifying `--QuietStartup=true` will disable printing the launch configuration to 
+`stdout`. The password will automatically be removed from the connection string before printing 
+the launch configuration.
  
 ### Environment Variables
 
 The application can also be configured using these environment variables:
 
 ```sh
-AGGREGAIL__ConnectionString=<Your MongoDB Connection String>
-AGGREGAIL__Database=<Your Database>
-AGGREGAIL__Collection=<Your Streams Collection>
+AGGREGAIL__ConnectionString
+AGGREGAIL__Database
+AGGREGAIL__Collection
 
-ASPNETCORE__Urls=<Your launch urls>
+AGGREGAIL__Users__ConnectionString (defaults to value of ConnectionString)
+AGGREGAIL__Users__Database (defaults to value of Database)
+AGGREGAIL__Users__Collection
+
+ASPNETCORE__Urls
 ```
 
 ## Troubleshooting and FAQ

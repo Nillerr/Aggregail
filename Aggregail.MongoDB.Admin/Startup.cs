@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Aggregail.MongoDB.Admin.Authentication;
 using Aggregail.MongoDB.Admin.Controllers;
 using Aggregail.MongoDB.Admin.Documents;
@@ -34,24 +33,32 @@ namespace Aggregail.MongoDB.Admin
         {
             Console.WriteLine(string.Empty);
             Console.WriteLine("Starting Aggregail MongoDB Admin UI...");
+
+            var settings = new AggregailMongoDBSettings();
+            Configuration.Bind(settings);
+            
+            settings.Validate();
+            services.AddSingleton(settings);
             
             services.AddControllersWithViews();
             services.AddSignalR();
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
-
-            var aggregailSettings = new AggregailMongoDBSettings();
-            Configuration.Bind(aggregailSettings);
             
-            services.AddSingleton(aggregailSettings);
-
-            services.AddSingleton<MongoDatabaseFactory>();
-            services.AddSingleton<MongoCollectionFactory>();
-
-            services.AddSingleton<RecordedEventCollectionFactory>();
-            services.AddSingleton(s => s.GetRequiredService<RecordedEventCollectionFactory>().Collection);
-            services.AddSingleton(s => s.GetRequiredService<MongoCollectionFactory>().Collection<UserDocument>("users"));
+            services.AddSingleton(s =>
+            {
+                var client = new MongoClient(settings.ConnectionString);
+                var database = client.GetDatabase(settings.Database);
+                return database.GetCollection<RecordedEventDocument>(settings.Collection);
+            });
+            
+            services.AddSingleton(s =>
+            {
+                var client = new MongoClient(settings.Users.ConnectionString ?? settings.ConnectionString);
+                var database = client.GetDatabase(settings.Users.Database ?? settings.Database);
+                return database.GetCollection<UserDocument>(settings.Users.Collection);
+            });
             
             services.AddSingleton<UserDocumentPasswordHasher>();
 
@@ -69,11 +76,23 @@ namespace Aggregail.MongoDB.Admin
                     options.TicketDataFormat = new JsonWebTokenDataFormat(new Microsoft.AspNetCore.Authentication.SystemClock());
                 });
 
-            var connectionString = MongoConnectionString.Censored(aggregailSettings.ConnectionString);
-            Console.WriteLine($" - MongoDB ConnectionString: {connectionString}");
-            Console.WriteLine($"   - Database: {aggregailSettings.Database}");
-            Console.WriteLine($"   - Collection: {aggregailSettings.Collection}");
-            Console.WriteLine(string.Empty);
+            if (!settings.QuietStartup)
+            {
+                var connectionString = MongoConnectionString.Censored(settings.ConnectionString);
+                Console.WriteLine($"[Streams Configuration]");
+                Console.WriteLine($" - MongoDB ConnectionString: {connectionString}");
+                Console.WriteLine($"   - Database: {settings.Database}");
+                Console.WriteLine($"   - Collection: {settings.Collection}");
+                Console.WriteLine(string.Empty);
+
+                var usersConnectionString =
+                    MongoConnectionString.Censored(settings.Users.ConnectionString ?? settings.ConnectionString);
+                Console.WriteLine($"[Users Configuration]");
+                Console.WriteLine($" - MongoDB ConnectionString: {usersConnectionString}");
+                Console.WriteLine($"   - Database: {settings.Users.Database ?? settings.Database}");
+                Console.WriteLine($"   - Collection: {settings.Users.Collection}");
+                Console.WriteLine(string.Empty);
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

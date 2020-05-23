@@ -8,6 +8,14 @@
         <SpaRoot>ClientApp\</SpaRoot>
         <DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
         <Nullable>enable</Nullable>
+        <PackageId>Aggregail.MongoDB.Admin</PackageId>
+        <Version>1.0.0-alpha.2</Version>
+        <Authors>Nicklas Jensen</Authors>
+        <Description>A microframework for working with Aggregate Roots in an Event Sourced system, backed by an Event Store.</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/nillerr/Aggregail</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/nillerr/Aggregail.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,6 +29,9 @@
         <Content Remove="$(SpaRoot)**" />
         <None Remove="$(SpaRoot)**" />
         <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
+        <None Update="aggregail">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>

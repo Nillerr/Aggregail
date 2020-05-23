@@ -49,9 +49,11 @@ const ThemeSelector = (props: { fill?: boolean, color?: string, onChange?: (them
     }
   };
   
+  const color = props.color ?? 'primary';
+  
   return (
     <Dropdown className={props.fill ? 'd-flex' : ''} isOpen={isOpen} toggle={toggle}>
-      <DropdownToggle className={props.fill ? 'flex-grow-1' : ''} caret color={props.color}>Theme</DropdownToggle>
+      <DropdownToggle className={props.fill ? 'flex-grow-1' : ''} caret color={color}>Theme</DropdownToggle>
       <DropdownMenu>
         {themes.map(theme => 
           <DropdownItem key={theme.name} onClick={() => setTheme(theme)} disabled={currentThemeName === theme.name}>

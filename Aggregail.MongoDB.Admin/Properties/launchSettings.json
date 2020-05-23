@@ -23,7 +23,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "AGGREGAIL_ConnectionString": "mongodb://root:example@mongodb-primary:27017,mongodb-secondary:27018,mongodb-arbiter:27019/aggregail_demo?authSource=admin&replicaSet=rs0"
       },
-      "commandLineArgs": " --Database=aggregail_demo"
+      "commandLineArgs": " --Database=aggregail_demo --Users:Collection=users"
     }
   }
 }
