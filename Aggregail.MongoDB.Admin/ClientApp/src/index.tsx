@@ -4,7 +4,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {createBrowserHistory} from 'history';
 import App from './App';
-import registerServiceWorker from './registerServiceWorker';
+import * as serviceWorker from './registerServiceWorker';
 import {Router} from "react-router";
 
 // Create browser history to use in the Redux store
@@ -18,4 +18,4 @@ ReactDOM.render(
   document.getElementById('root')
 );
 
-registerServiceWorker();
+serviceWorker.unregister();

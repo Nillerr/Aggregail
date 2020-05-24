@@ -3,7 +3,6 @@ using Aggregail.MongoDB.Admin.Authentication;
 using Aggregail.MongoDB.Admin.Controllers;
 using Aggregail.MongoDB.Admin.Documents;
 using Aggregail.MongoDB.Admin.Helpers;
-using Aggregail.MongoDB.Admin.Hubs;
 using Aggregail.MongoDB.Admin.Services;
 using Aggregail.MongoDB.Admin.Settings;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -15,7 +14,9 @@ using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Net.Http.Headers;
 using MongoDB.Driver;
+using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 
 namespace Aggregail.MongoDB.Admin
 {
@@ -80,15 +81,18 @@ namespace Aggregail.MongoDB.Admin
 
             if (!settings.QuietStartup)
             {
-                var connectionString = MongoConnectionString.Censored(settings.ConnectionString);
+                var connectionString = MongoConnectionString
+                    .Censored(settings.ConnectionString);
+                
                 Console.WriteLine($"[Streams Configuration]");
                 Console.WriteLine($" - MongoDB ConnectionString: {connectionString}");
                 Console.WriteLine($"   - Database: {settings.Database}");
                 Console.WriteLine($"   - Collection: {settings.Collection}");
                 Console.WriteLine(string.Empty);
 
-                var usersConnectionString =
-                    MongoConnectionString.Censored(settings.Users.ConnectionString ?? settings.ConnectionString);
+                var usersConnectionString = MongoConnectionString
+                    .Censored(settings.Users.ConnectionString ?? settings.ConnectionString);
+                
                 Console.WriteLine($"[Users Configuration]");
                 Console.WriteLine($" - MongoDB ConnectionString: {usersConnectionString}");
                 Console.WriteLine($"   - Database: {settings.Users.Database ?? settings.Database}");
@@ -136,10 +140,50 @@ namespace Aggregail.MongoDB.Admin
                     // endpoints.MapHub<StreamHub>("hubs/stream");
                 }
             );
-
+            
+            // Disables caching of `/index.html` file, and caches `/static` files for a year
+            app.UseSpaStaticFiles(new StaticFileOptions
+            {
+                OnPrepareResponse = ctx =>
+                {
+                    if (ctx.Context.Request.Path.StartsWithSegments("/static"))
+                    {
+                        // Cache all static resources for 1 year (versioned filenames)
+                        var headers = ctx.Context.Response.GetTypedHeaders();
+                        headers.CacheControl = new CacheControlHeaderValue
+                        {
+                            Public = true,
+                            MaxAge = TimeSpan.FromDays(365)
+                        };
+                    }
+                    else
+                    {
+                        // Do not cache explicit `/index.html` or any other files.  See also: `DefaultPageStaticFileOptions` below for implicit "/index.html"
+                        var headers = ctx.Context.Response.GetTypedHeaders();
+                        headers.CacheControl = new CacheControlHeaderValue
+                        {
+                            Public = true,
+                            MaxAge = TimeSpan.FromDays(0)
+                        };
+                    }
+                }
+            });
+            
             app.UseSpa(spa =>
                 {
                     spa.Options.SourcePath = "ClientApp";
+                    spa.Options.DefaultPageStaticFileOptions = new StaticFileOptions
+                    {
+                         OnPrepareResponse = ctx =>
+                         {
+                             var headers = ctx.Context.Response.GetTypedHeaders();
+                             headers.CacheControl = new CacheControlHeaderValue
+                             {
+                                 Public = true,
+                                 MaxAge = TimeSpan.FromDays(0)
+                             };
+                         }
+                    };
 
                     if (env.IsDevelopment())
                     {

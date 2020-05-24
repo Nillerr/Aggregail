@@ -4,7 +4,7 @@ bootstrap_dist_dir=./node_modules/bootstrap/dist/css
 bootswatch_dist_dir=./node_modules/bootswatch/dist
 
 bootstrap_file=bootstrap.min.css
-public_dir=./public/themes
+public_dir=./public/static/themes/4.5.0
 
 mkdir -p "$public_dir/bootstrap"
 cp "$bootstrap_dist_dir/$bootstrap_file" "$public_dir/bootstrap/$bootstrap_file";

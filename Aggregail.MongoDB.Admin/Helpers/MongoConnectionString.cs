@@ -1,4 +1,3 @@
-using System;
 using MongoDB.Driver;
 
 namespace Aggregail.MongoDB.Admin.Helpers
@@ -11,8 +10,8 @@ namespace Aggregail.MongoDB.Admin.Helpers
 
             if (!string.IsNullOrEmpty(connectionStringUrl.Password))
             {
-                var prefix = $"{connectionStringUrl.Username}:";
-                connectionString = connectionString.Replace($"{prefix}{connectionStringUrl.Password}", $"{prefix}<redacted>");
+                connectionString = connectionString
+                    .Replace($"{connectionStringUrl.Username}:{connectionStringUrl.Password}", "<hidden>");
             }
 
             return connectionString;

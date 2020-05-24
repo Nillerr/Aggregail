@@ -1,0 +1,22 @@
+# IDE Build output
+bin/
+obj/
+
+# Configuration
+appsettings.Development.json
+Properties/launchSettings.json
+
+# Documentation
+README.md
+Documentation/
+
+# Scripts
+scripts/
+publish
+release
+aggregail
+docker
+docker.env
+.env
+docker-compose.yml
+Dockerfile
