@@ -1,4 +1,4 @@
-import {useAction, useFormPostAction, useRequest} from "../hooks";
+import {useAction, useRequest} from "../hooks";
 import {Alert, Button, Form, Input, Spinner, Table} from "reactstrap";
 import React, {useState} from "react";
 import {RecordedEvent} from "./StreamHub";

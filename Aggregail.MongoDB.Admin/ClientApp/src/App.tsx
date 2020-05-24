@@ -16,7 +16,7 @@ import Axios from "axios";
 import querystring from 'querystring';
 import UserPage from "./components/UserPage";
 import {AppTheme} from "./components/ThemeSelector";
-import {AddEventPage, AddEventLikePage} from "./components/AddEventPage";
+import {AddEventLikePage, AddEventPage} from "./components/AddEventPage";
 import DeleteStreamPage from "./components/DeleteStreamPage";
 
 interface ThemeableProps {

@@ -3,6 +3,7 @@ using Aggregail.MongoDB.Admin.Authentication;
 using Aggregail.MongoDB.Admin.Controllers;
 using Aggregail.MongoDB.Admin.Documents;
 using Aggregail.MongoDB.Admin.Helpers;
+using Aggregail.MongoDB.Admin.Hubs;
 using Aggregail.MongoDB.Admin.Services;
 using Aggregail.MongoDB.Admin.Settings;
 using Microsoft.AspNetCore.Authentication.Cookies;

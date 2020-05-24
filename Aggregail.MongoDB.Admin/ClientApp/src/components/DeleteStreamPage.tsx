@@ -1,5 +1,5 @@
 import React from "react";
-import {Alert, Button} from "reactstrap";
+import {Button} from "reactstrap";
 import {useAction} from "../hooks";
 
 const DeleteStreamPage = (props: ({ stream: string, onCancel: (stream: string) => void, onDelete: (stream: string) => void })) => {

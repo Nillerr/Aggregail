@@ -4,6 +4,6 @@ namespace Aggregail.MongoDB.Admin.Hubs
 {
     public interface IStreamClient
     {
-        Task EventRecorded(RecordedEvent e);
+        Task EventRecorded(object e);
     }
 }
