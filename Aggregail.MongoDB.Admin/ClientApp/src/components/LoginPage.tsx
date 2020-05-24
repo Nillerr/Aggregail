@@ -1,6 +1,5 @@
 import React, {useState} from "react";
 import {Alert, Button, Form, Input} from "reactstrap";
-import logo from '../assets/logo.svg';
 import ThemeSelector from "./ThemeSelector";
 import {useFormPostAction} from "../hooks";
 
@@ -36,7 +35,8 @@ const LoginPage = (props: { onSignIn: () => void }) => {
         style={{width: '22rem', padding: '2.25rem'}}
         onSubmit={signIn}
       >
-        <img className="mb-4" src={logo} alt="Placeholder"/>
+        <h2 className="text-light">Aggregail</h2>
+        <p className="mb-4 lead text-light"><small>MongoDB Admin</small></p>
         <ThemeSelector fill={true}/>
         <Input
           type="text"
