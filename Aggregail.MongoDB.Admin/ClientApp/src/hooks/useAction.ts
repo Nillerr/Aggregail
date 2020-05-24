@@ -32,7 +32,6 @@ export const useAction = <T extends any>(
   const ctsRef = useRef<CancelTokenSource>(Axios.CancelToken.source());
 
   const submit = (data?: T) => {
-    console.log('submit', { method, url, data, iof: (data instanceof Event) });
     Axios
       .request({
         url: url,
