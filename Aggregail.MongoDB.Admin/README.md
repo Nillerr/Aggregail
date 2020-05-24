@@ -6,6 +6,15 @@ An administration UI for event stores built using [Aggregail.MongoDB](../Aggrega
 
 ## Getting started
 
+```sh
+docker run \
+  -p 5000:80 \
+  -e AGGREGAIL_ConnectionString="mongodb://username:password@mongodb-server:27017/aggregail_demo?authSource=admin&replicaSet=rs0" \
+  -e AGGREGAIL_Database=aggregail \
+  -e AGGREGAIL_Collection=streams \
+  aggregail/mongodb-admin
+```
+
  1. Download the latest [Release](https://github.com/Nillerr/EventSourcing.Demo/releases).
  2. Unzip
  3. Start the application:
@@ -25,7 +34,7 @@ An administration UI for event stores built using [Aggregail.MongoDB](../Aggrega
     dotnet Aggregail.MongoDB.Admin.dll \
       --urls=http://localhost:3014
     ``` 
-    
+
 The application will create a new collection called `_aggregail_users` in the database specified 
 when launching the application, containing a single user `admin` with the password `changeit`. The 
 users collection, database and event MongoDB server can be changed using configurations:
