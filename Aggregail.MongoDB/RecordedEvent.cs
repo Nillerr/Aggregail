@@ -26,5 +26,8 @@ namespace Aggregail.MongoDB
         
         [BsonElement("data")]
         public byte[]? Data { get; set; }
+        
+        [BsonElement("metadata")]
+        public byte[]? Metadata { get; set; }
     }
 }

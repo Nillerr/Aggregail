@@ -23,5 +23,7 @@ namespace Aggregail
         /// <param name="serializer">The JSON serializer to serialize the event data with.</param>
         /// <returns>JSON of the event data, encoded as an UTF-8 string.</returns>
         byte[] Data(IJsonEventSerializer serializer);
+
+        byte[]? Metadata(IMetadataFactory factory, IJsonEventSerializer serializer);
     }
 }

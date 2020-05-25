@@ -61,5 +61,13 @@ namespace Aggregail.MongoDB
             readPreference: ReadPreference.Primary,
             writeConcern: WriteConcern.WMajority
         );
+
+        /// <summary>
+        /// The service responsible for creating metadata for a given event.
+        /// </summary>
+        /// <remarks>
+        /// Defaults to <see cref="NoMetadataFactory"/>.
+        /// </remarks>
+        public IMetadataFactory MetadataFactory { get; set; } = NoMetadataFactory.Instance;
     }
 }

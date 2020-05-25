@@ -25,6 +25,7 @@ namespace Aggregail.MongoDB
         private readonly ILogger<MongoEventStore>? _logger;
         private readonly TransactionOptions _transactionOptions;
         private readonly IClock _clock;
+        private readonly IMetadataFactory _metadataFactory;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MongoEventStore"/> class.
@@ -98,6 +99,7 @@ namespace Aggregail.MongoDB
             e.EventNumber = eventNumber;
             e.Created = UtcNow;
             e.Data = pendingEvent.Data(_serializer);
+            e.Metadata = pendingEvent.Metadata(_metadataFactory, _serializer);
             return e;
         }
 
