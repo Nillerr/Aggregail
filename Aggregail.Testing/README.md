@@ -3,16 +3,17 @@
 Adds the `VerifiableEventStore`, which allows verification of events appended to an aggregate stream.
 
 ```c#
-var eventStore = new VerifiableEventStore();
+var serializer = new JsonEventSerializer(JsonSerializer.CreateDefault());
+var eventStore = new VerifiableEventStore(serializer);
 
 var aggregate = Goat.Create("g047");
 aggregate.Rename("goatl");
 
 var streamVersion = eventStore.CurrentVersion(aggregate);
 
-var retrieved = await Goat.FromAsync(eventStore.Object, aggregate.Id);
+var retrieved = await Goat.FromAsync(eventStore, aggregate.Id);
 retrieved.Rename("meh");
-await retrieved.CommitAsync(eventStore.Object);
+await retrieved.CommitAsync(eventStore);
 
 eventStore.VerifyAppendToStream(aggregate, streamVersion, verify => verify
     .Event(GoatRenamed.EventType, e =>
