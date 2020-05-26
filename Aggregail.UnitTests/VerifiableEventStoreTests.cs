@@ -1,22 +1,24 @@
 using System;
 using System.Threading.Tasks;
+using Aggregail.Newtonsoft.Json;
 using Aggregail.Testing;
-using Moq;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Aggregail.UnitTests
 {
-    public class MockEventStore
+    public class VerifiableEventStoreTests
     {
         [Fact]
         public async Task CreateWithNoStream()
         {
-            var eventStore = new Mock<IEventStore>();
+            var serializer = new JsonEventSerializer(JsonSerializer.CreateDefault());
+            var eventStore = new VerifiableEventStore(serializer);
             
             var aggregate = Goat.Create("g047");
-            await aggregate.CommitAsync(eventStore.Object);
+            await aggregate.CommitAsync(eventStore);
             
-            eventStore.VerifyAppendToStream(aggregate.Id, ExpectedVersion.NoStream, verify => verify
+            eventStore.VerifyAppendToStream(aggregate, ExpectedVersion.NoStream, verify => verify
                 .Event(GoatCreated.EventType, e =>
                 {
                     Assert.Equal("g047", e.Name);
@@ -25,35 +27,33 @@ namespace Aggregail.UnitTests
         }
         
         [Fact]
-        public async Task SetupAggregate()
-        {
-            var eventStore = new Mock<IEventStore>();
-            
-            var aggregate = Goat.Create("g047");
-            aggregate.Rename("goatl");
-
-            eventStore.SetupAggregate(aggregate);
-            
-            var actual = await Goat.FromAsync(eventStore.Object, aggregate.Id);
-            Assert.Equal(aggregate.Id, actual.Id);
-            Assert.Equal(aggregate.Name, actual.Name);
-        }
-        
-        [Fact]
         public async Task SetupAggregate_VerifyAppendToStream()
         {
-            var eventStore = new Mock<IEventStore>();
+            var serializer = new JsonEventSerializer(JsonSerializer.CreateDefault());
+            var eventStore = new VerifiableEventStore(serializer);
             
             var aggregate = Goat.Create("g047");
             aggregate.Rename("goatl");
+            await aggregate.CommitAsync(eventStore);
+            
+            eventStore.VerifyAppendToStream(aggregate, ExpectedVersion.NoStream, verify => verify
+                .Event(GoatCreated.EventType, e =>
+                {
+                    Assert.Equal("g047", e.Name);
+                })
+                .Event(GoatRenamed.EventType, e =>
+                {
+                    Assert.Equal("goatl", e.Name);
+                })
+            );
 
-            var streamVersion = eventStore.SetupAggregate(aggregate);
+            var streamVersion = eventStore.CurrentVersion(aggregate);
             
-            var retrieved = await Goat.FromAsync(eventStore.Object, aggregate.Id);
+            var retrieved = await Goat.FromAsync(eventStore, aggregate.Id);
             retrieved.Rename("meh");
-            await retrieved.CommitAsync(eventStore.Object);
+            await retrieved.CommitAsync(eventStore);
             
-            eventStore.VerifyAppendToStream(aggregate.Id, streamVersion, verify => verify
+            eventStore.VerifyAppendToStream(aggregate, streamVersion, verify => verify
                 .Event(GoatRenamed.EventType, e =>
                 {
                     Assert.Equal("meh", e.Name);

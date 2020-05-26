@@ -114,11 +114,10 @@ namespace Aggregail
             return this;
         }
 
-        /// <summary>
-        /// Returns the name of a stream for the given <paramref name="id"/>.
-        /// </summary>
-        /// <param name="id">Id of the aggregate</param>
-        /// <returns>The name of the stream for the given id.</returns>
+        /// <inheritdoc />
+        public Type AggregateType { get; } = typeof(TAggregate);
+
+        /// <inheritdoc />
         public string Stream(TIdentity id) => Name.Stream(id);
     }
 }
