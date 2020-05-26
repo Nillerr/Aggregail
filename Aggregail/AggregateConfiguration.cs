@@ -3,11 +3,6 @@ using System.Collections.Generic;
 
 namespace Aggregail
 {
-    public interface IAggregateConfiguration<in TIdentity>
-    {
-        string Stream(TIdentity id);
-    }
-    
     /// <summary>
     /// Configuration of an aggregate, containing information on how to construct instance of the aggregate from
     /// recorded events, and how to apply recorded events to an aggregate instance. 

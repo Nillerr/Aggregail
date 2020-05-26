@@ -17,10 +17,10 @@
     <UserSecretsId>8e8f318f-53ab-4dfb-a326-d03695241e09</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-<!--    <PackageReference Include="Aggregail" Version="1.0.0-alpha.4" />-->
+    <PackageReference Include="Aggregail" Version="1.0.0-alpha.4" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Aggregail/Aggregail.csproj" />
+<!--    <ProjectReference Include="../Aggregail/Aggregail.csproj" />-->
   </ItemGroup>
 </Project>
