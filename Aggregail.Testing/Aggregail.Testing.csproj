@@ -2,17 +2,29 @@
 
     <PropertyGroup>
         <TargetFramework>netcoreapp3.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <PackageId>Aggregail.Testing</PackageId>
+        <Version>1.0.0-alpha.1</Version>
+        <Authors>Nicklas Jensen</Authors>
+        <Description>A microframework for working with Aggregate Roots in an Event Sourced system, backed by an Event Store.</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/nillerr/Aggregail</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/nillerr/Aggregail.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
-<!--      <PackageReference Include="Aggregail" Version="1.0.0-alpha.6" />-->
-      <PackageReference Include="Moq" Version="4.14.1" />
+        <!--      <PackageReference Include="Aggregail" Version="1.0.0-alpha.6" />-->
+        <PackageReference Include="Moq" Version="4.14.1"/>
     </ItemGroup>
 
     <ItemGroup>
-                        <ProjectReference Include="../Aggregail/Aggregail.csproj" />
-                        <ProjectReference Include="../Aggregail.System.Text.Json/Aggregail.System.Text.Json.csproj" />
-                        <ProjectReference Include="..\Aggregail.Newtonsoft.Json\Aggregail.Newtonsoft.Json.csproj" />
+        <ProjectReference Include="../Aggregail/Aggregail.csproj"/>
+        <ProjectReference Include="../Aggregail.System.Text.Json/Aggregail.System.Text.Json.csproj"/>
+        <ProjectReference Include="..\Aggregail.Newtonsoft.Json\Aggregail.Newtonsoft.Json.csproj"/>
     </ItemGroup>
 
 </Project>
