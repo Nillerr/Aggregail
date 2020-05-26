@@ -104,7 +104,7 @@ namespace Aggregail
                 throw new InvalidOperationException("There are no pending events to commit");
             }
 
-            await store.AppendToStreamAsync(Id, configuration, _versionNumber, _pendingEvents);
+            await store.AppendToStreamAsync(Id, configuration, _versionNumber, _pendingEvents.ToArray());
             _versionNumber += _pendingEvents.Count;
             _pendingEvents.Clear();
         }

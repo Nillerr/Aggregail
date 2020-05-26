@@ -12,6 +12,7 @@
     <ItemGroup>
                         <ProjectReference Include="../Aggregail/Aggregail.csproj" />
                         <ProjectReference Include="../Aggregail.System.Text.Json/Aggregail.System.Text.Json.csproj" />
+                        <ProjectReference Include="..\Aggregail.Newtonsoft.Json\Aggregail.Newtonsoft.Json.csproj" />
     </ItemGroup>
 
 </Project>

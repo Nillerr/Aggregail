@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Aggregail.System.Text.Json;
+using Aggregail.Newtonsoft.Json;
 using Moq;
+using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 
 namespace Aggregail.Testing
 {
@@ -21,13 +22,13 @@ namespace Aggregail.Testing
             var evb = new EventVerificationBuilder();
             verification(evb);
             
-            var actualSerializer = serializer ?? new JsonEventSerializer(new JsonSerializerOptions());
+            var actualSerializer = serializer ?? new JsonEventSerializer(JsonSerializer.Create());
             evb.Verify(id, eventStore, expectedVersion, actualSerializer);
         }
 
         public static long SetupAggregate<TIdentity, TAggregate>(
             this Mock<IEventStore> eventStore,
-            TAggregate aggregate
+            Aggregate<TIdentity, TAggregate> aggregate
         )
             where TAggregate : Aggregate<TIdentity, TAggregate>
         {
@@ -69,7 +70,7 @@ namespace Aggregail.Testing
             // Once the aggregate is "committed", we can mock retrieval of it.
             eventStore
                 .Setup(e => e.AggregateAsync(aggregate.Id, It.IsAny<AggregateConfiguration<TIdentity, TAggregate>>()))
-                .ReturnsAsync(aggregate);
+                .ReturnsAsync((TAggregate) aggregate);
 
             return ExpectedVersion.NoStream + numberOfPendingEvents;
         }
