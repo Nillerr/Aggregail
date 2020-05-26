@@ -85,6 +85,13 @@ namespace Aggregail.Testing
         )
         {
             var pendingEventList = pendingEvents.ToList();
+            
+            if (pendingEventList.Count != _assertions.Count)
+            {
+                throw new InvalidOperationException(
+                    $"Expected {_assertions.Count} events, but {pendingEventList.Count} events were appended."
+                );
+            }
 
             for (var i = 0; i < pendingEventList.Count; i++)
             {
@@ -101,13 +108,6 @@ namespace Aggregail.Testing
                         $"`{eventType}`, but was `{pendingEvent.Type}`."
                     );
                 }
-            }
-            
-            if (pendingEventList.Count != _assertions.Count)
-            {
-                throw new InvalidOperationException(
-                    $"Expected {_assertions.Count} events, but {pendingEventList.Count} events were appended."
-                );
             }
         }
     }
