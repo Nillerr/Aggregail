@@ -37,11 +37,13 @@ namespace EventSourcing.Demo
             // await connection.ConnectAsync();
             // var eventStore = new EventStore(connection, serializer);
 
-            // var mongoClient = new MongoClient("mongodb://root:example@mongodb-primary:27017,mongodb-secondary:27018,mongodb-arbiter:27019/aggregail_demo?authSource=admin&replicaSet=rs0");
-            var mongoClient = new MongoClient("mongodb://root:example@mongodb:27017/aggregail_demo?authSource=admin&replicaSet=rs0");
+            var mongoClient = new MongoClient("mongodb://root:example@mongodb-primary:27017,mongodb-secondary:27018,mongodb-arbiter:27019/aggregail_demo?authSource=admin&replicaSet=rs0");
+            // var mongoClient = new MongoClient("mongodb://root:example@mongodb:27017/aggregail_demo?authSource=admin&replicaSet=rs0");
             var mongoDatabase = mongoClient.GetDatabase("aggregail_demo");
             var mongoSettings = new MongoEventStoreSettings(mongoDatabase, "streams", serializer);
             var mongoStore = new MongoEventStore(mongoSettings);
+
+            await mongoStore.InitializeAsync();
 
             var sw = new Stopwatch();
             sw.Start();

@@ -4,7 +4,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
+ using MongoDB.Bson;
+ using MongoDB.Driver;
 
 namespace Aggregail.MongoDB
 {
@@ -18,8 +19,9 @@ namespace Aggregail.MongoDB
     /// </remarks>
     public sealed class MongoEventStore : IEventStore
     {
-        private static int _isInitialized;
-
+        private readonly IMongoDatabase _database;
+        private readonly string _collection;
+        
         private readonly IMongoCollection<RecordedEvent> _events;
         private readonly IJsonEventSerializer _serializer;
         private readonly ILogger<MongoEventStore>? _logger;
@@ -32,6 +34,9 @@ namespace Aggregail.MongoDB
         /// <param name="settings">The settings to configure behaviour of the instance.</param>
         public MongoEventStore(MongoEventStoreSettings settings)
         {
+            _database = settings.Database;
+            _collection = settings.Collection;
+            
             _events = settings.Database.GetCollection<RecordedEvent>(settings.Collection);
             _serializer = settings.EventSerializer;
             _logger = settings.Logger;
@@ -47,8 +52,6 @@ namespace Aggregail.MongoDB
             IEnumerable<IPendingEvent> pendingEvents
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            await InitializeIndexesAsync();
-            
             using var session = await _events.Database.Client.StartSessionAsync();
             
             session.StartTransaction(_transactionOptions);
@@ -121,8 +124,6 @@ namespace Aggregail.MongoDB
             AggregateConfiguration<TIdentity, TAggregate> configuration
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            await InitializeIndexesAsync();
-
             using var session = await _events.Database.Client.StartSessionAsync();
 
             var stream = configuration.Name.Stream(id);
@@ -217,34 +218,52 @@ namespace Aggregail.MongoDB
             }
         }
 
-        private async Task InitializeIndexesAsync()
+        /// <summary>
+        /// Initializes the event store, creating the collection in case it's missing, and sets up indexes on the
+        /// collection.
+        /// </summary>
+        /// <param name="cancellationToken">A cancellation token</param>
+        /// <returns>The task of the async operation</returns>
+        public async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
-            var isInitialized = Interlocked.Exchange(ref _isInitialized, 1);
-            if (isInitialized == 1)
-            {
-                return;
-            }
-            
-            _logger?.LogDebug("Initializing index...");
+            _logger?.LogDebug($"Initializing collection `{_collection}`...");
 
-            try
-            {
-                await CreateStreamEventNumberIndexAsync();
-                await CreateEventTypeIndexAsync();
-                await CreateEventNumberCreatedIndexAsync();
-                await CreateCreatedIndexAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogCritical(ex, "Index initialization failed");
-                Interlocked.Exchange(ref _isInitialized, 0);
-                throw;
-            }
+            await InitializeCollection(cancellationToken);
+
+            _logger?.LogDebug("Initializing indexes...");
             
-            _logger?.LogDebug("Index initialized");
+            await CreateStreamEventNumberIndexAsync(cancellationToken);
+            await CreateEventTypeIndexAsync(cancellationToken);
+            await CreateEventNumberCreatedIndexAsync(cancellationToken);
+            await CreateCreatedIndexAsync(cancellationToken);
+            
+            _logger?.LogDebug("Indexes initialized successfully");
+            
+            _logger?.LogDebug($"Collection `{_collection}` initialized successfully");
         }
 
-        private async Task CreateStreamEventNumberIndexAsync()
+        private async Task InitializeCollection(CancellationToken cancellationToken)
+        {
+            var options = new ListCollectionNamesOptions();
+
+            options.Filter = Builders<BsonDocument>.Filter
+                .Where(e => e["name"] == _collection);
+
+            var collectionNamesCursor = await _database.ListCollectionNamesAsync(options, cancellationToken);
+            var collectionName = await collectionNamesCursor.FirstOrDefaultAsync(cancellationToken);
+            if (collectionName == null)
+            {
+                _logger?.LogDebug($"Creating collection `{_collection}`...");
+                await _database.CreateCollectionAsync(_collection, cancellationToken: cancellationToken);
+                _logger?.LogDebug($"Collection `{_collection}` created successfully");
+            }
+            else
+            {
+                _logger?.LogTrace($"Collection `{_collection}` already exists");
+            }
+        }
+
+        private async Task CreateStreamEventNumberIndexAsync(CancellationToken cancellationToken)
         {
             var keyBuilder = Builders<RecordedEvent>.IndexKeys;
 
@@ -258,10 +277,10 @@ namespace Aggregail.MongoDB
             options.Unique = true;
 
             var model = new CreateIndexModel<RecordedEvent>(keys, options);
-            await _events.Indexes.CreateOneAsync(model);
+            await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
         }
 
-        private async Task CreateEventTypeIndexAsync()
+        private async Task CreateEventTypeIndexAsync(CancellationToken cancellationToken)
         {
             var keyBuilder = Builders<RecordedEvent>.IndexKeys;
 
@@ -275,10 +294,10 @@ namespace Aggregail.MongoDB
             options.Unique = false;
 
             var model = new CreateIndexModel<RecordedEvent>(keys, options);
-            await _events.Indexes.CreateOneAsync(model);
+            await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
         }
 
-        private async Task CreateEventNumberCreatedIndexAsync()
+        private async Task CreateEventNumberCreatedIndexAsync(CancellationToken cancellationToken)
         {
             var keyBuilder = Builders<RecordedEvent>.IndexKeys;
 
@@ -291,10 +310,10 @@ namespace Aggregail.MongoDB
             options.Background = true;
 
             var model = new CreateIndexModel<RecordedEvent>(keys, options);
-            await _events.Indexes.CreateOneAsync(model);
+            await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
         }
 
-        private async Task CreateCreatedIndexAsync()
+        private async Task CreateCreatedIndexAsync(CancellationToken cancellationToken)
         {
             var keyBuilder = Builders<RecordedEvent>.IndexKeys;
 
@@ -304,7 +323,7 @@ namespace Aggregail.MongoDB
             options.Background = true;
 
             var model = new CreateIndexModel<RecordedEvent>(keys, options);
-            await _events.Indexes.CreateOneAsync(model);
+            await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
         }
     }
 }
