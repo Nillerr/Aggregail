@@ -8,6 +8,7 @@ var eventStore = new VerifiableEventStore(serializer);
 
 var aggregate = Goat.Create("g047");
 aggregate.Rename("goatl");
+await aggregate.CommitAsync(eventStore);
 
 var streamVersion = eventStore.CurrentVersion(aggregate);
 
