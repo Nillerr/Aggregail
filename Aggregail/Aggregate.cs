@@ -97,7 +97,7 @@ namespace Aggregail
         /// }
         /// </code>
         /// </remarks>
-        protected async Task CommitAsync(IEventStore store, AggregateConfiguration<TIdentity, TAggregate> configuration)
+        public async Task CommitAsync(IEventStore store, AggregateConfiguration<TIdentity, TAggregate> configuration)
         {
             if (_pendingEvents.Count == 0)
             {
