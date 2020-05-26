@@ -102,6 +102,13 @@ namespace Aggregail.Testing
                     );
                 }
             }
+            
+            if (pendingEventList.Count != _assertions.Count)
+            {
+                throw new InvalidOperationException(
+                    $"Expected {_assertions.Count} events, but {pendingEventList.Count} events were appended."
+                );
+            }
         }
     }
 }
