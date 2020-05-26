@@ -4,7 +4,7 @@
         <TargetFramework>netstandard2.1</TargetFramework>
         <Nullable>enable</Nullable>
         <PackageId>Aggregail</PackageId>
-        <Version>1.0.0-alpha.6</Version>
+        <Version>1.0.0-alpha.7</Version>
         <Authors>Nicklas Jensen</Authors>
         <Description>A microframework for working with Aggregate Roots in an Event Sourced system, backed by an Event Store.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
