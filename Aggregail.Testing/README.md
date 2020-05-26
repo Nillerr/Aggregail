@@ -10,6 +10,7 @@ var aggregate = Goat.Create("g047");
 aggregate.Rename("goatl");
 await aggregate.CommitAsync(eventStore);
 
+// streamVersion = 1: Create (#0), Rename (#1)
 var streamVersion = eventStore.CurrentVersion(aggregate);
 
 var retrieved = await Goat.FromAsync(eventStore, aggregate.Id);
