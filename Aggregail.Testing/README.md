@@ -1,6 +1,6 @@
 # Aggregail.Testing
 
-Adds Moq extensions for testing using `Mock<IEventStore>`.
+Adds the `VerifiableEventStore`, which allows verification of events appended to an aggregate stream.
 
 ```c#
 var eventStore = new VerifiableEventStore();
