@@ -1,12 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
+        <TargetFramework>netcoreapp3.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Aggregail" Version="1.0.0-alpha.6" />
+<!--      <PackageReference Include="Aggregail" Version="1.0.0-alpha.6" />-->
       <PackageReference Include="Moq" Version="4.14.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+                        <ProjectReference Include="../Aggregail/Aggregail.csproj" />
+                        <ProjectReference Include="../Aggregail.System.Text.Json/Aggregail.System.Text.Json.csproj" />
     </ItemGroup>
 
 </Project>

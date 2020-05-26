@@ -45,18 +45,18 @@ namespace Aggregail.MongoDB
         }
 
         /// <inheritdoc />
-        public async Task AppendToStreamAsync<TIdentity, TAggregate>(
+        public async Task AppendToStreamAsync<TIdentity>(
             TIdentity id,
-            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            IAggregateConfiguration<TIdentity> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
-        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        )
         {
             using var session = await _events.Database.Client.StartSessionAsync();
             
             session.StartTransaction(_transactionOptions);
 
-            var stream = configuration.Name.Stream(id);
+            var stream = configuration.Stream(id);
 
             var latestEvent = await _events
                 .Find(session, e => e.Stream == stream)

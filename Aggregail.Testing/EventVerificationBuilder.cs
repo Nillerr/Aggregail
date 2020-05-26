@@ -24,7 +24,7 @@ namespace Aggregail.Testing
             return this;
         }
 
-        internal bool MatchingEvents(IEnumerable<IPendingEvent> pendingEvents, IJsonEventSerializer serializer)
+        private bool MatchingEvents(IEnumerable<IPendingEvent> pendingEvents, IJsonEventSerializer serializer)
         {
             foreach (var (pendingEvent, index) in pendingEvents.Select((e, i) => (e, i)))
             {
@@ -38,26 +38,20 @@ namespace Aggregail.Testing
             return true;
         }
 
-        internal void Verify<TIdentity, TAggregate>(
+        internal void Verify<TIdentity>(
             TIdentity id,
             Mock<IEventStore> target,
             long expectedVersion,
             IJsonEventSerializer serializer,
             Times? times = default
         )
-            where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            target.Verify(e => e.AppendToStreamAsync(
+            target.Verify(es => es.AppendToStreamAsync(
                 id,
-                It.IsAny<AggregateConfiguration<TIdentity, TAggregate>>(),
+                It.IsAny<IAggregateConfiguration<TIdentity>>(),
                 expectedVersion,
-                It.Is<IEnumerable<IPendingEvent>>(e => MatchingEvents(e, serializer))
+                It.Is<IEnumerable<IPendingEvent>>(pendingEvents => MatchingEvents(pendingEvents, serializer))
             ), times ?? Times.Once());
         }
-    }
-
-    public static class MockExtensions
-    {
-        public static void VerifyEvents(this Mock<IEventStore> eventStore, Func<>)
     }
 }

@@ -3,13 +3,18 @@ using System.Collections.Generic;
 
 namespace Aggregail
 {
+    public interface IAggregateConfiguration<in TIdentity>
+    {
+        string Stream(TIdentity id);
+    }
+    
     /// <summary>
     /// Configuration of an aggregate, containing information on how to construct instance of the aggregate from
     /// recorded events, and how to apply recorded events to an aggregate instance. 
     /// </summary>
     /// <typeparam name="TIdentity">Type of ID of the aggregate.</typeparam>
     /// <typeparam name="TAggregate">Type of aggregate.</typeparam>
-    public sealed class AggregateConfiguration<TIdentity, TAggregate>
+    public sealed class AggregateConfiguration<TIdentity, TAggregate> : IAggregateConfiguration<TIdentity>
         where TAggregate : Aggregate<TIdentity, TAggregate>
     {
         /// <summary>
@@ -113,5 +118,12 @@ namespace Aggregail
             Applicators.Add(type.Value, (a, d, c) => { });
             return this;
         }
+
+        /// <summary>
+        /// Returns the name of a stream for the given <paramref name="id"/>.
+        /// </summary>
+        /// <param name="id">Id of the aggregate</param>
+        /// <returns>The name of the stream for the given id.</returns>
+        public string Stream(TIdentity id) => Name.Stream(id);
     }
 }
