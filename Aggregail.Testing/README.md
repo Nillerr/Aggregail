@@ -4,7 +4,8 @@ Adds the `VerifiableEventStore`, which allows verification of events appended to
 
 ```c#
 var serializer = new JsonEventSerializer(JsonSerializer.CreateDefault());
-var eventStore = new VerifiableEventStore(serializer);
+var settings = new VerifiableEventStoreSettings(serializer);
+var eventStore = new VerifiableEventStore(settings);
 
 var aggregate = Goat.Create("g047");
 aggregate.Rename("goatl");
