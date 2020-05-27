@@ -24,6 +24,7 @@ export interface RecordedEvent {
   eventNumber: number;
   created: string;
   data: any;
+  metadata: any | null;
 }
 
 const StreamHub = (props: { onEventRecorded: (event: RecordedEvent) => void }) => {

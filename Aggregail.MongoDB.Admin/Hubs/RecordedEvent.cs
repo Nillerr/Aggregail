@@ -15,6 +15,9 @@ namespace Aggregail.MongoDB.Admin.Hubs
 
         [JsonConverter(typeof(RawJsonConverter))]
         public byte[] Data { get; }
+        
+        [JsonConverter(typeof(RawJsonConverter))]
+        public byte[]? Metadata { get; }
 
         public RecordedEvent(
             string id,
@@ -23,7 +26,8 @@ namespace Aggregail.MongoDB.Admin.Hubs
             string eventType,
             long eventNumber,
             DateTime created,
-            byte[] data
+            byte[] data,
+            byte[]? metadata
         )
         {
             Id = id;
@@ -33,6 +37,7 @@ namespace Aggregail.MongoDB.Admin.Hubs
             EventNumber = eventNumber;
             Created = created;
             Data = data;
+            Metadata = metadata;
         }
 
         public static RecordedEvent FromDocument(RecordedEventDocument document)
@@ -44,7 +49,8 @@ namespace Aggregail.MongoDB.Admin.Hubs
                 document.EventType,
                 document.EventNumber,
                 document.Created,
-                document.Data
+                document.Data,
+                document.Metadata
             );
 
             return recordedEvent;
