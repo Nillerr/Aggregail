@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
@@ -74,7 +76,8 @@ namespace Aggregail.Testing
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
-            IEnumerable<IPendingEvent> pendingEvents
+            IEnumerable<IPendingEvent> pendingEvents,
+            CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var events = pendingEvents.ToList();
@@ -82,24 +85,26 @@ namespace Aggregail.Testing
             var append = new Append(id!, configuration.AggregateType, expectedVersion, events);
             _appends.Add(append);
 
-            return _store.AppendToStreamAsync(id, configuration, expectedVersion, events);
+            return _store.AppendToStreamAsync(id, configuration, expectedVersion, events, cancellationToken);
         }
 
         /// <inheritdoc />
         public Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
-            AggregateConfiguration<TIdentity, TAggregate> configuration
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            return _store.AggregateAsync(id, configuration);
+            return _store.AggregateAsync(id, configuration, cancellationToken);
         }
 
         /// <inheritdoc />
         public IAsyncEnumerable<TIdentity> AggregateIdsAsync<TIdentity, TAggregate>(
-            AggregateConfiguration<TIdentity, TAggregate> configuration
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            return _store.AggregateIdsAsync(configuration);
+            return _store.AggregateIdsAsync(configuration, cancellationToken);
         }
 
         /// <summary>
