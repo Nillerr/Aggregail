@@ -42,12 +42,5 @@ namespace Aggregail
         /// <returns>An <see cref="AggregateName{TIdentity,TAggregate}"/> containing the string value.</returns>
         public static implicit operator AggregateName<TIdentity, TAggregate>(string value) =>
             new AggregateName<TIdentity, TAggregate>(value);
-
-        /// <summary>
-        /// Returns the name of an aggregate stream.
-        /// </summary>
-        /// <param name="id">Id of the aggregate</param>
-        /// <returns>The name of the stream for the given <paramref name="id"/></returns>
-        public string Stream(TIdentity id) => $"{Value}-{id}";
     }
 }

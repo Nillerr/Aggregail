@@ -21,14 +21,16 @@ namespace Aggregail
         /// <param name="expectedVersion">Version the stream is expected to be at</param>
         /// <param name="pendingEvents">Events to store</param>
         /// <typeparam name="TIdentity">Type of <paramref name="id"/></typeparam>
+        /// <typeparam name="TAggregate">Type of aggregate</typeparam>
         /// <exception cref="WrongExpectedVersionException">The <paramref name="expectedVersion"/> did not match the current version of the stream.</exception>
         /// <returns>A <see cref="Task"/></returns>
-        Task AppendToStreamAsync<TIdentity>(
+        Task AppendToStreamAsync<TIdentity, TAggregate>(
             TIdentity id,
-            IAggregateConfiguration<TIdentity> configuration,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
-        );
+        )
+            where TAggregate : Aggregate<TIdentity, TAggregate>;
 
         /// <summary>
         /// Asynchronously constructs an aggregate from an event stream, by replaying every event in the stream in

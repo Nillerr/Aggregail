@@ -4,7 +4,7 @@
         <TargetFramework>netcoreapp3.0</TargetFramework>
         <Nullable>enable</Nullable>
         <PackageId>Aggregail.Testing</PackageId>
-        <Version>1.0.0-alpha.4</Version>
+        <Version>1.0.0-alpha.5</Version>
         <Authors>Nicklas Jensen</Authors>
         <Description>A microframework for working with Aggregate Roots in an Event Sourced system, backed by an Event Store.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -17,7 +17,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aggregail" Version="1.0.0-alpha.8" />
+        <PackageReference Include="Aggregail" Version="1.0.0-alpha.10" />
         <PackageReference Include="Aggregail.Newtonsoft.Json" Version="1.0.0-alpha.3" />
     </ItemGroup>
 

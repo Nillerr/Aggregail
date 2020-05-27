@@ -7,8 +7,8 @@ using Newtonsoft.Json;
 namespace Aggregail.Testing
 {
     /// <summary>
-    /// An event store which records calls to <see cref="AppendToStreamAsync{TIdentity}"/>, for later verification
-    /// using <see cref="VerifyAppendToStream{TIdentity,TAggregate}"/>.
+    /// An event store which records calls to <see cref="AppendToStreamAsync{TIdentity,TAggregate}"/>, for later
+    /// verification using <see cref="VerifyAppendToStream{TIdentity,TAggregate}"/>.
     /// </summary>
     /// <remarks>
     /// This class uses an instance of <see cref="InMemoryEventStore"/> as the underlying event store, meaning event
@@ -58,20 +58,24 @@ namespace Aggregail.Testing
         /// <summary>
         /// Creates a new instance of the <see cref="VerifiableEventStore"/> class.
         /// </summary>
-        /// <param name="serializer">Serializer for serializing events</param>
-        public VerifiableEventStore(IJsonEventSerializer serializer)
+        /// <param name="settings">Settings</param>
+        public VerifiableEventStore(VerifiableEventStoreSettings settings)
         {
-            _serializer = serializer;
-            _store = new InMemoryEventStore(serializer);
+            _serializer = settings.EventSerializer;
+            
+            var inMemorySettings = new InMemoryEventStoreSettings(settings.EventSerializer);
+            inMemorySettings.StreamNameResolver = settings.StreamNameResolver;
+            
+            _store = new InMemoryEventStore(inMemorySettings);
         }
 
         /// <inheritdoc />
-        public Task AppendToStreamAsync<TIdentity>(
+        public Task AppendToStreamAsync<TIdentity, TAggregate>(
             TIdentity id,
-            IAggregateConfiguration<TIdentity> configuration,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
-        )
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var events = pendingEvents.ToList();
 
@@ -105,12 +109,9 @@ namespace Aggregail.Testing
         /// <typeparam name="TIdentity">Type of ID of the aggregate.</typeparam>
         /// <typeparam name="TAggregate">Type of aggregate.</typeparam>
         /// <returns>
-        /// The current version of the aggregate, as recorded by calls to <see cref="AppendToStreamAsync{TIdentity}"/>.
+        /// The current version of the aggregate, as recorded by calls to
+        /// <see cref="AppendToStreamAsync{TIdentity,TAggregate}"/>.
         /// </returns>
-        /// <remarks>
-        /// Due to the nature of how event append recording works, the <paramref name="id"/> must be unique across
-        /// streams of different aggregates. 
-        /// </remarks>
         public long CurrentVersion<TIdentity, TAggregate>(Aggregate<TIdentity, TAggregate> aggregate)
             where TAggregate : Aggregate<TIdentity, TAggregate>
         {
@@ -125,18 +126,18 @@ namespace Aggregail.Testing
         /// </summary>
         /// <param name="aggregate">Aggregate to verify events appended to it's stream for.</param>
         /// <param name="expectedVersion">
-        /// The expected version used when calling <see cref="AppendToStreamAsync{TIdentity}"/>. See
+        /// The expected version used when calling <see cref="AppendToStreamAsync{TIdentity,TAggregate}"/>. See
         /// <see cref="CurrentVersion{TIdentity,TAggregate}"/> for obtaining the current version of a stream.
         /// </param>
         /// <param name="verification">The events to verify and assert.</param>
         /// <typeparam name="TIdentity">Type of ID of the aggregate.</typeparam>
         /// <typeparam name="TAggregate">Type of aggregate.</typeparam>
         /// <exception cref="InvalidOperationException">
-        /// No calls to <see cref="AppendToStreamAsync{TIdentity}"/> matching the expected was found.
+        /// No calls to <see cref="AppendToStreamAsync{TIdentity,TAggregate}"/> matching the expected was found.
         /// </exception>
         /// <remarks>
         /// The order of events configured in the <paramref name="verification"/>, must match the expected order of the
-        /// events appended by a previous call to <see cref="AppendToStreamAsync{TIdentity}"/>.
+        /// events appended by a previous call to <see cref="AppendToStreamAsync{TIdentity,TAggregate}"/>.
         /// </remarks>
         public void VerifyAppendToStream<TIdentity, TAggregate>(
             Aggregate<TIdentity, TAggregate> aggregate,

@@ -5,13 +5,29 @@ using System.Threading.Tasks;
 namespace Aggregail
 {
     /// <summary>
-    /// An extension upon <see cref="Aggregate{TIdentity,TAggregate}"/>, which adds additional 
+    /// An extension upon <see cref="Aggregate{TIdentity,TAggregate}"/>, which implements a lot of the boilerplate that
+    /// would otherwise commonly be implemented.
     /// </summary>
-    /// <typeparam name="TIdentity"></typeparam>
-    /// <typeparam name="TAggregate"></typeparam>
+    /// <typeparam name="TIdentity">Type of ID for the Aggregate</typeparam>
+    /// <typeparam name="TAggregate">Type of Aggregate, referring to the subclass itself.</typeparam>
+    /// <remarks>
+    /// Intended to be subclassed like so:
+    /// <code>
+    /// public sealed class Goat : AbstractAggregate&lt;GoatId, Goat&gt;
+    /// {
+    ///     static Goat()
+    ///     {
+    ///         Configuration = new AggregateConfiguration&lt;GoatId, Goat&gt;("Goat", GoatId.Parse);
+    ///     }
+    /// }
+    /// </code>
+    /// </remarks>
     public abstract class AbstractAggregate<TIdentity, TAggregate> : Aggregate<TIdentity, TAggregate>
         where TAggregate : AbstractAggregate<TIdentity, TAggregate>
     {
+        /// <summary>
+        /// The configuration of this aggregate
+        /// </summary>
         protected static AggregateConfiguration<TIdentity, TAggregate> Configuration { get; set; } = null!;
         
         private static AggregateConfiguration<TIdentity, TAggregate> GetConfiguration() =>
@@ -19,9 +35,22 @@ namespace Aggregail
                 $"The static property {nameof(Configuration)} must be set by the subclass"
             );
 
+        /// <summary>
+        /// Locates the aggregate stored in <paramref name="store"/>, identified by <paramref name="id"/>.
+        /// </summary>
+        /// <param name="id">Id of the aggregate.</param>
+        /// <param name="store">Event store to query.</param>
+        /// <returns>
+        /// The constructed aggregate, or <c>null</c> if the stream does not exist in <paramref name="store"/>.
+        /// </returns>
         public static Task<TAggregate?> FromAsync(TIdentity id, IEventStore store) =>
             store.AggregateAsync(id, GetConfiguration());
 
+        /// <summary>
+        /// Resolves the ids of all aggregates of this type, stored in <paramref name="store"/>.
+        /// </summary>
+        /// <param name="store">Event store to query.</param>
+        /// <returns>The ids of all aggregates of this type.</returns>
         public static IAsyncEnumerable<TIdentity> IdsAsync(IEventStore store) =>
             store.AggregateIdsAsync(GetConfiguration());
 
@@ -124,13 +153,13 @@ namespace Aggregail
         }
 
         /// <summary>
-        /// Commits any pending events previously appended with <see cref="Append{T}"/> to the
+        /// Commits any pending events previously appended with one of the <c>Append</c> methods, to the
         /// <see cref="IEventStore"/> specified by <paramref name="store"/>, and clears the queue of pending events.
         /// </summary>
         /// <param name="store">The <see cref="IEventStore"/> to store events in.</param>
         /// <returns>A <see cref="Task{TResult}"/></returns>
         /// <exception cref="InvalidOperationException">
-        /// If there are no pending events, previously appended with <see cref="Append{T}"/>, to commit.
+        /// If there are no pending events, previously appended with <c>Append</c>, to commit.
         /// </exception>
         public Task CommitAsync(IEventStore store) => CommitAsync(store, GetConfiguration());
     }

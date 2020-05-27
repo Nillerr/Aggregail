@@ -13,7 +13,8 @@ namespace Aggregail.UnitTests
         public async Task CreateWithNoStream()
         {
             var serializer = new JsonEventSerializer(JsonSerializer.CreateDefault());
-            var eventStore = new VerifiableEventStore(serializer);
+            var settings = new VerifiableEventStoreSettings(serializer);
+            var eventStore = new VerifiableEventStore(settings);
             
             var aggregate = Goat.Create("g047");
             await aggregate.CommitAsync(eventStore);
@@ -30,7 +31,8 @@ namespace Aggregail.UnitTests
         public async Task SetupAggregate_VerifyAppendToStream()
         {
             var serializer = new JsonEventSerializer(JsonSerializer.CreateDefault());
-            var eventStore = new VerifiableEventStore(serializer);
+            var settings = new VerifiableEventStoreSettings(serializer);
+            var eventStore = new VerifiableEventStore(settings);
             
             var aggregate = Goat.Create("g047");
             aggregate.Rename("goatl");

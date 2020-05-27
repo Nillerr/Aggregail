@@ -6,8 +6,7 @@ namespace Aggregail
     /// Configuration of an aggregate, containing information on how to construct instance of the aggregate from
     /// recorded events, and how to apply recorded events to an aggregate instance. 
     /// </summary>
-    /// <typeparam name="TIdentity">Type of ID of the aggregate.</typeparam>
-    public interface IAggregateConfiguration<in TIdentity>
+    public interface IAggregateConfiguration
     {
         /// <summary>
         /// The type of aggregate created by this configuration.
@@ -15,10 +14,17 @@ namespace Aggregail
         Type AggregateType { get; }
         
         /// <summary>
-        /// Returns the name of a stream for the given <paramref name="id"/>.
+        /// The name of the aggregate type.
         /// </summary>
-        /// <param name="id">Id of the aggregate</param>
-        /// <returns>The name of the stream for the given id.</returns>
-        string Stream(TIdentity id);
+        string Name { get; }
+    }
+
+    /// <inheritdoc />
+    public interface IAggregateConfiguration<out TIdentity> : IAggregateConfiguration
+    {
+        /// <summary>
+        /// Parses a string into an instance of <c>TIdentity</c>.
+        /// </summary>
+        Parser<TIdentity> IdentityParser { get; }
     }
 }

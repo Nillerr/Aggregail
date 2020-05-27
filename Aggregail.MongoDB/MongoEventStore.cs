@@ -27,6 +27,7 @@ namespace Aggregail.MongoDB
         private readonly ILogger<MongoEventStore>? _logger;
         private readonly TransactionOptions _transactionOptions;
         private readonly IClock _clock;
+        private readonly IStreamNameResolver _streamNameResolver; 
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MongoEventStore"/> class.
@@ -42,21 +43,22 @@ namespace Aggregail.MongoDB
             _logger = settings.Logger;
             _clock = settings.Clock;
             _transactionOptions = settings.TransactionOptions;
+            _streamNameResolver = settings.StreamNameResolver;
         }
 
         /// <inheritdoc />
-        public async Task AppendToStreamAsync<TIdentity>(
+        public async Task AppendToStreamAsync<TIdentity, TAggregate>(
             TIdentity id,
-            IAggregateConfiguration<TIdentity> configuration,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
-        )
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             using var session = await _events.Database.Client.StartSessionAsync();
             
             session.StartTransaction(_transactionOptions);
 
-            var stream = configuration.Stream(id);
+            var stream = _streamNameResolver.Stream(id, configuration);
 
             var latestEvent = await _events
                 .Find(session, e => e.Stream == stream)
@@ -65,12 +67,18 @@ namespace Aggregail.MongoDB
 
             if (expectedVersion == ExpectedVersion.NoStream && latestEvent != null)
             {
-                throw new WrongExpectedVersionException($"Expected stream `{stream}` to not exist, but did exist at version {latestEvent.EventNumber}.", expectedVersion, latestEvent.EventNumber);
+                throw new WrongExpectedVersionException(
+                    $"Expected stream `{stream}` to not exist, but did exist at version {latestEvent.EventNumber}.",
+                    expectedVersion, latestEvent.EventNumber
+                );
             }
 
             if (expectedVersion > ExpectedVersion.NoStream && latestEvent == null)
             {
-                throw new WrongExpectedVersionException($"Expected stream `{stream}` to be at version {expectedVersion}, but stream did not exist yet.", expectedVersion, null);
+                throw new WrongExpectedVersionException(
+                    $"Expected stream `{stream}` to be at version {expectedVersion}, but stream did not exist yet.",
+                    expectedVersion, null
+                );
             }
 
             var currentVersion = latestEvent?.EventNumber ?? -1L;
@@ -126,7 +134,7 @@ namespace Aggregail.MongoDB
         {
             using var session = await _events.Database.Client.StartSessionAsync();
 
-            var stream = configuration.Name.Stream(id);
+            var stream = _streamNameResolver.Stream(id, configuration);
     
             var cursor = await _events
                 .Find(e => e.Stream == stream)

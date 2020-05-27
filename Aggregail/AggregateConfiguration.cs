@@ -30,10 +30,16 @@ namespace Aggregail
         /// <param name="data">Data of the event.</param>
         public delegate void EventApplicator(TAggregate aggregate, IJsonEventSerializer serializer, byte[] data);
 
+        /// <inheritdoc />
+        public Type AggregateType { get; } = typeof(TAggregate);
+        
         /// <summary>
         /// Type-safe name of the aggregate type.
         /// </summary>
-        public AggregateName<TIdentity, TAggregate> Name { get; }
+        public AggregateName<TIdentity, TAggregate> AggregateName;
+
+        /// <inheritdoc />
+        public string Name => AggregateName.Value;
         
         /// <summary>
         /// Parses a string into an instance of <c>TIdentity</c>.
@@ -59,7 +65,7 @@ namespace Aggregail
         /// <param name="identityParser">The identity parser.</param>
         public AggregateConfiguration(AggregateName<TIdentity, TAggregate> name, Parser<TIdentity> identityParser)
         {
-            Name = name;
+            AggregateName = name;
             IdentityParser = identityParser;
         }
 
@@ -113,11 +119,5 @@ namespace Aggregail
             Applicators.Add(type.Value, (a, d, c) => { });
             return this;
         }
-
-        /// <inheritdoc />
-        public Type AggregateType { get; } = typeof(TAggregate);
-
-        /// <inheritdoc />
-        public string Stream(TIdentity id) => Name.Stream(id);
     }
 }

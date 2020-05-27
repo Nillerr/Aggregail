@@ -11,25 +11,27 @@ namespace EventSourcing.Demo
     {
         private readonly IEventStoreConnection _connection;
         private readonly IJsonEventSerializer _serializer;
+        private readonly IStreamNameResolver _streamNameResolver;
 
-        public EventStore(IEventStoreConnection connection, IJsonEventSerializer serializer)
+        public EventStore(IEventStoreConnection connection, IJsonEventSerializer serializer, IStreamNameResolver streamNameResolver)
         {
             _connection = connection;
             _serializer = serializer;
+            _streamNameResolver = streamNameResolver;
         }
 
-        public async Task AppendToStreamAsync<TIdentity>(
+        public async Task AppendToStreamAsync<TIdentity, TAggregate>(
             TIdentity id,
-            IAggregateConfiguration<TIdentity> configuration,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
-        )
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var events = pendingEvents
                 .Select(EventData)
                 .ToArray();
 
-            var stream = configuration.Stream(id);
+            var stream = _streamNameResolver.Stream(id, configuration);
             await _connection.AppendToStreamAsync(stream, expectedVersion, events);
         }
 
@@ -45,7 +47,7 @@ namespace EventSourcing.Demo
         )
             where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            var stream = configuration.Name.Stream(id);
+            var stream = _streamNameResolver.Stream(id, configuration);
 
             var createdResult = await _connection.ReadEventAsync(stream, StreamPosition.Start, false);
             if (createdResult.Event == null)

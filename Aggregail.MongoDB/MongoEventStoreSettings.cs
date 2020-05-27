@@ -61,5 +61,10 @@ namespace Aggregail.MongoDB
             readPreference: ReadPreference.Primary,
             writeConcern: WriteConcern.WMajority
         );
+        
+        /// <summary>
+        /// Resolves names of streams for aggregates.
+        /// </summary>
+        public IStreamNameResolver StreamNameResolver { get; set; } = TokenizedStreamNameResolver.Default;
     }
 }
