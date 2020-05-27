@@ -9,7 +9,7 @@ namespace Aggregail
     /// </summary>
     /// <typeparam name="TIdentity">Type of ID of the aggregate.</typeparam>
     /// <typeparam name="TAggregate">Type of aggregate.</typeparam>
-    public sealed class AggregateConfiguration<TIdentity, TAggregate>
+    public sealed class AggregateConfiguration<TIdentity, TAggregate> : IAggregateConfiguration<TIdentity>
         where TAggregate : Aggregate<TIdentity, TAggregate>
     {
         /// <summary>
@@ -113,5 +113,11 @@ namespace Aggregail
             Applicators.Add(type.Value, (a, d, c) => { });
             return this;
         }
+
+        /// <inheritdoc />
+        public Type AggregateType { get; } = typeof(TAggregate);
+
+        /// <inheritdoc />
+        public string Stream(TIdentity id) => Name.Stream(id);
     }
 }

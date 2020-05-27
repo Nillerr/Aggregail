@@ -18,19 +18,18 @@ namespace EventSourcing.Demo
             _serializer = serializer;
         }
 
-        public async Task AppendToStreamAsync<TIdentity, TAggregate>(
+        public async Task AppendToStreamAsync<TIdentity>(
             TIdentity id,
-            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            IAggregateConfiguration<TIdentity> configuration,
             long expectedVersion,
             IEnumerable<IPendingEvent> pendingEvents
         )
-            where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var events = pendingEvents
                 .Select(EventData)
                 .ToArray();
 
-            var stream = configuration.Name.Stream(id);
+            var stream = configuration.Stream(id);
             await _connection.AppendToStreamAsync(stream, expectedVersion, events);
         }
 
