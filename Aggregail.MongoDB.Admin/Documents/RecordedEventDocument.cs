@@ -4,6 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Aggregail.MongoDB.Admin.Documents
 {
+    [BsonIgnoreExtraElements]
     public sealed class RecordedEventDocument
     {
         [BsonId]

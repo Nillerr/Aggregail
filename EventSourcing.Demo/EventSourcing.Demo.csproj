@@ -7,17 +7,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aggregail.MongoDB" Version="1.0.0-alpha.12" />
-        <PackageReference Include="Aggregail.Newtonsoft.Json" Version="1.0.0-alpha.3" />
+<!--        <PackageReference Include="Aggregail.MongoDB" Version="1.0.0-alpha.12" />-->
+<!--        <PackageReference Include="Aggregail.Newtonsoft.Json" Version="1.0.0-alpha.3" />-->
         <PackageReference Include="EventStore.Client" Version="5.0.8" />
         <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.4" />
     </ItemGroup>
     
-<!--    <ItemGroup>-->
-<!--        <ProjectReference Include="../Aggregail.MongoDB/Aggregail.MongoDB.csproj" />-->
-<!--        <ProjectReference Include="../Aggregail.Newtonsoft.Json/Aggregail.Newtonsoft.Json.csproj" />-->
-<!--    </ItemGroup>-->
+    <ItemGroup>
+        <ProjectReference Include="../Aggregail.MongoDB/Aggregail.MongoDB.csproj" />
+        <ProjectReference Include="../Aggregail.Newtonsoft.Json/Aggregail.Newtonsoft.Json.csproj" />
+        <ProjectReference Include="..\Aggregail.System.Text.Json\Aggregail.System.Text.Json.csproj" />
+    </ItemGroup>
     
     <ItemGroup>
       <None Update="robots.json">

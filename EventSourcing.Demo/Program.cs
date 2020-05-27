@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using Aggregail;
 using Aggregail.MongoDB;
@@ -32,6 +31,7 @@ namespace EventSourcing.Demo
             
             var jsonSerializer = JsonSerializer.CreateDefault(jsonSerializerSettings);
             var serializer = new JsonEventSerializer(jsonSerializer);
+            // var serializer = new Aggregail.System.Text.Json.JsonEventSerializer(new JsonSerializerOptions());
 
             // using var connection = EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113");
             // await connection.ConnectAsync();

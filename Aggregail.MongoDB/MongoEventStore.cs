@@ -46,6 +46,7 @@ namespace Aggregail.MongoDB
             _clock = settings.Clock;
             _transactionOptions = settings.TransactionOptions;
             _streamNameResolver = settings.StreamNameResolver;
+            _metadataFactory = settings.MetadataFactory;
         }
 
         /// <inheritdoc />
