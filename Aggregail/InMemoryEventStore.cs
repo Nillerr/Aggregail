@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Aggregail
@@ -38,14 +40,16 @@ namespace Aggregail
             new Dictionary<string, List<StoredEvent>>();
 
         private readonly IJsonEventSerializer _serializer;
+        private readonly IStreamNameResolver _streamNameResolver;
 
         /// <summary>
         /// Creates an instance of the <see cref="InMemoryEventStore"/> class.
         /// </summary>
-        /// <param name="serializer">The event serializer.</param>
-        public InMemoryEventStore(IJsonEventSerializer serializer)
+        /// <param name="settings">Settings</param>
+        public InMemoryEventStore(InMemoryEventStoreSettings settings)
         {
-            _serializer = serializer;
+            _serializer = settings.EventSerializer;
+            _streamNameResolver = settings.StreamNameResolver;
         }
 
         /// <inheritdoc />
@@ -53,53 +57,61 @@ namespace Aggregail
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
-            IEnumerable<IPendingEvent> pendingEvents
+            IEnumerable<IPendingEvent> pendingEvents,
+            CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            var stream = configuration.Name.Stream(id);
+            var stream = _streamNameResolver.Stream(id, configuration);
 
             switch (expectedVersion)
             {
                 case ExpectedVersion.NoStream:
-                {
-                    if (_streams.TryGetValue(stream, out var eventStream) && eventStream.Count > 0)
-                    {
-                        var actualVersion = eventStream.LastOrDefault()?.EventNumber;
-                        throw new WrongExpectedVersionException("", ExpectedVersion.NoStream, actualVersion);
-                    }
-
-                    eventStream = new List<StoredEvent>();
-
-                    var storedEvents = ToStoredEvents(stream, pendingEvents, ExpectedVersion.NoStream);
-                    foreach (var storedEvent in storedEvents)
-                    {
-                        eventStream.Add(storedEvent);
-                        AddByEventType(storedEvent);
-                    }
-
-                    _streams[stream] = eventStream;
-
+                    CreateStream(stream, pendingEvents);
                     break;
-                }
                 default:
-                {
-                    if (_streams.TryGetValue(stream, out var eventStream) && eventStream.Count > 0)
-                    {
-                        var currentVersion = eventStream.Last().EventNumber;
-
-                        var storedEvents = ToStoredEvents(stream, pendingEvents, currentVersion);
-                        foreach (var storedEvent in storedEvents)
-                        {
-                            eventStream.Add(storedEvent);
-                            AddByEventType(storedEvent);
-                        }
-                    }
-
+                    AppendToStream(stream, pendingEvents);
                     break;
-                }
             }
 
             return Task.CompletedTask;
+        }
+
+        private void CreateStream(string stream, IEnumerable<IPendingEvent> pendingEvents)
+        {
+            if (_streams.TryGetValue(stream, out var eventStream) && eventStream.Count > 0)
+            {
+                var actualVersion = eventStream.Last().EventNumber;
+                throw new WrongExpectedVersionException(
+                    $"Expected stream `{stream}` to not exist, but did exist at version {actualVersion}.",
+                    ExpectedVersion.NoStream, actualVersion
+                );
+            }
+
+            eventStream = new List<StoredEvent>();
+
+            var storedEvents = ToStoredEvents(stream, pendingEvents, ExpectedVersion.NoStream);
+            foreach (var storedEvent in storedEvents)
+            {
+                eventStream.Add(storedEvent);
+                AddByEventType(storedEvent);
+            }
+
+            _streams[stream] = eventStream;
+        }
+
+        private void AppendToStream(string stream, IEnumerable<IPendingEvent> pendingEvents)
+        {
+            if (_streams.TryGetValue(stream, out var eventStream) && eventStream.Count > 0)
+            {
+                var currentVersion = eventStream.Last().EventNumber;
+
+                var storedEvents = ToStoredEvents(stream, pendingEvents, currentVersion);
+                foreach (var storedEvent in storedEvents)
+                {
+                    eventStream.Add(storedEvent);
+                    AddByEventType(storedEvent);
+                }
+            }
         }
 
         private IEnumerable<StoredEvent> ToStoredEvents(
@@ -143,10 +155,11 @@ namespace Aggregail
         /// <inheritdoc />
         public Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
-            AggregateConfiguration<TIdentity, TAggregate> configuration
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            var stream = configuration.Name.Stream(id);
+            var stream = _streamNameResolver.Stream(id, configuration);
 
             if (_streams.TryGetValue(stream, out var eventStream) && eventStream.Count > 0)
             {
@@ -182,7 +195,8 @@ namespace Aggregail
 
         /// <inheritdoc />
         public async IAsyncEnumerable<TIdentity> AggregateIdsAsync<TIdentity, TAggregate>(
-            AggregateConfiguration<TIdentity, TAggregate> configuration
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             await Task.Yield();

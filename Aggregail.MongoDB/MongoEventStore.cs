@@ -1,10 +1,12 @@
 ﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
+ using System.Runtime.CompilerServices;
+ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
+ using MongoDB.Bson;
+ using MongoDB.Driver;
 
 namespace Aggregail.MongoDB
 {
@@ -18,13 +20,15 @@ namespace Aggregail.MongoDB
     /// </remarks>
     public sealed class MongoEventStore : IEventStore
     {
-        private static int _isInitialized;
-
+        private readonly IMongoDatabase _database;
+        private readonly string _collection;
+        
         private readonly IMongoCollection<RecordedEvent> _events;
         private readonly IJsonEventSerializer _serializer;
         private readonly ILogger<MongoEventStore>? _logger;
         private readonly TransactionOptions _transactionOptions;
         private readonly IClock _clock;
+        private readonly IStreamNameResolver _streamNameResolver; 
         private readonly IMetadataFactory _metadataFactory;
 
         /// <summary>
@@ -33,11 +37,15 @@ namespace Aggregail.MongoDB
         /// <param name="settings">The settings to configure behaviour of the instance.</param>
         public MongoEventStore(MongoEventStoreSettings settings)
         {
+            _database = settings.Database;
+            _collection = settings.Collection;
+            
             _events = settings.Database.GetCollection<RecordedEvent>(settings.Collection);
             _serializer = settings.EventSerializer;
             _logger = settings.Logger;
             _clock = settings.Clock;
             _transactionOptions = settings.TransactionOptions;
+            _streamNameResolver = settings.StreamNameResolver;
         }
 
         /// <inheritdoc />
@@ -45,30 +53,35 @@ namespace Aggregail.MongoDB
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
-            IEnumerable<IPendingEvent> pendingEvents
+            IEnumerable<IPendingEvent> pendingEvents,
+            CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            await InitializeIndexesAsync();
-            
-            using var session = await _events.Database.Client.StartSessionAsync();
+            using var session = await _events.Database.Client.StartSessionAsync(null, cancellationToken);
             
             session.StartTransaction(_transactionOptions);
 
-            var stream = configuration.Name.Stream(id);
+            var stream = _streamNameResolver.Stream(id, configuration);
 
             var latestEvent = await _events
                 .Find(session, e => e.Stream == stream)
                 .SortByDescending(e => e.EventNumber)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (expectedVersion == ExpectedVersion.NoStream && latestEvent != null)
             {
-                throw new WrongExpectedVersionException($"Expected stream `{stream}` to not exist, but did exist at version {latestEvent.EventNumber}.", expectedVersion, latestEvent.EventNumber);
+                throw new WrongExpectedVersionException(
+                    $"Expected stream `{stream}` to not exist, but did exist at version {latestEvent.EventNumber}.",
+                    expectedVersion, latestEvent.EventNumber
+                );
             }
 
             if (expectedVersion > ExpectedVersion.NoStream && latestEvent == null)
             {
-                throw new WrongExpectedVersionException($"Expected stream `{stream}` to be at version {expectedVersion}, but stream did not exist yet.", expectedVersion, null);
+                throw new WrongExpectedVersionException(
+                    $"Expected stream `{stream}` to be at version {expectedVersion}, but stream did not exist yet.",
+                    expectedVersion, null
+                );
             }
 
             var currentVersion = latestEvent?.EventNumber ?? -1L;
@@ -79,15 +92,15 @@ namespace Aggregail.MongoDB
 
             try
             {
-                await _events.InsertManyAsync(session, recordedEvents);
+                await _events.InsertManyAsync(session, recordedEvents, null, cancellationToken);
             }
             catch (MongoWriteException)
             {
-                await session.AbortTransactionAsync();
+                await session.AbortTransactionAsync(cancellationToken);
                 throw;
             }
 
-            await session.CommitTransactionAsync();
+            await session.CommitTransactionAsync(cancellationToken);
         }
 
         private RecordedEvent RecordedEvent(string stream, IPendingEvent pendingEvent, long eventNumber)
@@ -120,23 +133,22 @@ namespace Aggregail.MongoDB
         /// <inheritdoc />
         public async Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
-            AggregateConfiguration<TIdentity, TAggregate> configuration
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            await InitializeIndexesAsync();
+            using var session = await _events.Database.Client.StartSessionAsync(null, cancellationToken);
 
-            using var session = await _events.Database.Client.StartSessionAsync();
-
-            var stream = configuration.Name.Stream(id);
+            var stream = _streamNameResolver.Stream(id, configuration);
     
             var cursor = await _events
                 .Find(e => e.Stream == stream)
                 .SortBy(e => e.EventNumber)
-                .ToCursorAsync();
+                .ToCursorAsync(cancellationToken);
 
             TAggregate? aggregate = null;
             
-            while (await cursor.MoveNextAsync())
+            while (await cursor.MoveNextAsync(cancellationToken))
             {
                 foreach (var recordedEvent in cursor.Current)
                 {
@@ -196,7 +208,8 @@ namespace Aggregail.MongoDB
 
         /// <inheritdoc />
         public async IAsyncEnumerable<TIdentity> AggregateIdsAsync<TIdentity, TAggregate>(
-            AggregateConfiguration<TIdentity, TAggregate> configuration
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var constructors = configuration.Constructors;
@@ -204,9 +217,9 @@ namespace Aggregail.MongoDB
             {
                 var cursor = await _events
                     .Find(e => e.EventType == eventType && e.EventNumber == 0)
-                    .ToCursorAsync();
+                    .ToCursorAsync(cancellationToken);
 
-                while (await cursor.MoveNextAsync())
+                while (await cursor.MoveNextAsync(cancellationToken))
                 {
                     foreach (var recordedEvent in cursor.Current)
                     {
@@ -219,34 +232,52 @@ namespace Aggregail.MongoDB
             }
         }
 
-        private async Task InitializeIndexesAsync()
+        /// <summary>
+        /// Initializes the event store, creating the collection in case it's missing, and sets up indexes on the
+        /// collection.
+        /// </summary>
+        /// <param name="cancellationToken">A cancellation token</param>
+        /// <returns>The task of the async operation</returns>
+        public async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
-            var isInitialized = Interlocked.Exchange(ref _isInitialized, 1);
-            if (isInitialized == 1)
-            {
-                return;
-            }
-            
-            _logger?.LogDebug("Initializing index...");
+            _logger?.LogDebug($"Initializing collection `{_collection}`...");
 
-            try
-            {
-                await CreateStreamEventNumberIndexAsync();
-                await CreateEventTypeIndexAsync();
-                await CreateEventNumberCreatedIndexAsync();
-                await CreateCreatedIndexAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogCritical(ex, "Index initialization failed");
-                Interlocked.Exchange(ref _isInitialized, 0);
-                throw;
-            }
+            await InitializeCollection(cancellationToken);
+
+            _logger?.LogDebug("Initializing indexes...");
             
-            _logger?.LogDebug("Index initialized");
+            await CreateStreamEventNumberIndexAsync(cancellationToken);
+            await CreateEventTypeIndexAsync(cancellationToken);
+            await CreateEventNumberCreatedIndexAsync(cancellationToken);
+            await CreateCreatedIndexAsync(cancellationToken);
+            
+            _logger?.LogDebug("Indexes initialized successfully");
+            
+            _logger?.LogDebug($"Collection `{_collection}` initialized successfully");
         }
 
-        private async Task CreateStreamEventNumberIndexAsync()
+        private async Task InitializeCollection(CancellationToken cancellationToken)
+        {
+            var options = new ListCollectionNamesOptions();
+
+            options.Filter = Builders<BsonDocument>.Filter
+                .Where(e => e["name"] == _collection);
+
+            var collectionNamesCursor = await _database.ListCollectionNamesAsync(options, cancellationToken);
+            var collectionName = await collectionNamesCursor.FirstOrDefaultAsync(cancellationToken);
+            if (collectionName == null)
+            {
+                _logger?.LogDebug($"Creating collection `{_collection}`...");
+                await _database.CreateCollectionAsync(_collection, cancellationToken: cancellationToken);
+                _logger?.LogDebug($"Collection `{_collection}` created successfully");
+            }
+            else
+            {
+                _logger?.LogTrace($"Collection `{_collection}` already exists");
+            }
+        }
+
+        private async Task CreateStreamEventNumberIndexAsync(CancellationToken cancellationToken)
         {
             var keyBuilder = Builders<RecordedEvent>.IndexKeys;
 
@@ -260,10 +291,10 @@ namespace Aggregail.MongoDB
             options.Unique = true;
 
             var model = new CreateIndexModel<RecordedEvent>(keys, options);
-            await _events.Indexes.CreateOneAsync(model);
+            await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
         }
 
-        private async Task CreateEventTypeIndexAsync()
+        private async Task CreateEventTypeIndexAsync(CancellationToken cancellationToken)
         {
             var keyBuilder = Builders<RecordedEvent>.IndexKeys;
 
@@ -277,10 +308,10 @@ namespace Aggregail.MongoDB
             options.Unique = false;
 
             var model = new CreateIndexModel<RecordedEvent>(keys, options);
-            await _events.Indexes.CreateOneAsync(model);
+            await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
         }
 
-        private async Task CreateEventNumberCreatedIndexAsync()
+        private async Task CreateEventNumberCreatedIndexAsync(CancellationToken cancellationToken)
         {
             var keyBuilder = Builders<RecordedEvent>.IndexKeys;
 
@@ -293,10 +324,10 @@ namespace Aggregail.MongoDB
             options.Background = true;
 
             var model = new CreateIndexModel<RecordedEvent>(keys, options);
-            await _events.Indexes.CreateOneAsync(model);
+            await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
         }
 
-        private async Task CreateCreatedIndexAsync()
+        private async Task CreateCreatedIndexAsync(CancellationToken cancellationToken)
         {
             var keyBuilder = Builders<RecordedEvent>.IndexKeys;
 
@@ -306,7 +337,7 @@ namespace Aggregail.MongoDB
             options.Background = true;
 
             var model = new CreateIndexModel<RecordedEvent>(keys, options);
-            await _events.Indexes.CreateOneAsync(model);
+            await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
         }
     }
 }

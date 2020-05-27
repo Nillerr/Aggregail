@@ -2,7 +2,7 @@
 
 An administration UI for event stores built using [Aggregail.MongoDB](../Aggregail.MongoDB).
 
-![Preview](Documentation/preview.gif)
+![Preview](https://github.com/Nillerr/EventSourcing.Demo/blob/master/Aggregail.MongoDB.Admin/Documentation/preview.gif?raw=true)
 
 ## Getting started
 

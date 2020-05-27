@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Aggregail;
 using EventStore.ClientAPI;
@@ -11,26 +13,32 @@ namespace EventSourcing.Demo
     {
         private readonly IEventStoreConnection _connection;
         private readonly IJsonEventSerializer _serializer;
+        private readonly IStreamNameResolver _streamNameResolver;
 
-        public EventStore(IEventStoreConnection connection, IJsonEventSerializer serializer)
+        public EventStore(
+            IEventStoreConnection connection,
+            IJsonEventSerializer serializer,
+            IStreamNameResolver streamNameResolver
+        )
         {
             _connection = connection;
             _serializer = serializer;
+            _streamNameResolver = streamNameResolver;
         }
 
         public async Task AppendToStreamAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
-            IEnumerable<IPendingEvent> pendingEvents
-        )
-            where TAggregate : Aggregate<TIdentity, TAggregate>
+            IEnumerable<IPendingEvent> pendingEvents,
+            CancellationToken cancellationToken = default
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var events = pendingEvents
                 .Select(EventData)
                 .ToArray();
 
-            var stream = configuration.Name.Stream(id);
+            var stream = _streamNameResolver.Stream(id, configuration);
             await _connection.AppendToStreamAsync(stream, expectedVersion, events);
         }
 
@@ -42,11 +50,12 @@ namespace EventSourcing.Demo
 
         public async Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
-            AggregateConfiguration<TIdentity, TAggregate> configuration
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
         )
             where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            var stream = configuration.Name.Stream(id);
+            var stream = _streamNameResolver.Stream(id, configuration);
 
             var createdResult = await _connection.ReadEventAsync(stream, StreamPosition.Start, false);
             if (createdResult.Event == null)
@@ -59,7 +68,9 @@ namespace EventSourcing.Demo
 
             if (!configuration.Constructors.TryGetValue(createdRecordedEvent.EventType, out var constructor))
             {
-                throw new InvalidOperationException($"Unrecognized construction event type: {createdRecordedEvent.EventType}");
+                throw new InvalidOperationException(
+                    $"Unrecognized construction event type: {createdRecordedEvent.EventType}"
+                );
             }
 
             var aggregate = constructor(id, _serializer, createdRecordedEvent.Data);
@@ -69,12 +80,12 @@ namespace EventSourcing.Demo
 
             long sliceStart = 1;
             const int sliceSize = 100;
-            
-            StreamEventsSlice slice; 
+
+            StreamEventsSlice slice;
             do
             {
                 slice = await _connection.ReadStreamEventsForwardAsync(stream, sliceStart, sliceSize, false);
-                
+
                 foreach (var resolvedEvent in slice.Events)
                 {
                     var recordedEvent = resolvedEvent.Event;
@@ -85,7 +96,8 @@ namespace EventSourcing.Demo
                     }
                     else
                     {
-                        throw new InvalidOperationException($"Unexpected recorded event type: {recordedEvent.EventType}");
+                        throw new InvalidOperationException($"Unexpected recorded event type: {recordedEvent.EventType}"
+                        );
                     }
                 }
 
@@ -95,7 +107,10 @@ namespace EventSourcing.Demo
             return aggregate;
         }
 
-        public IAsyncEnumerable<TIdentity> AggregateIdsAsync<TIdentity, TAggregate>(AggregateConfiguration<TIdentity, TAggregate> configuration) where TAggregate : Aggregate<TIdentity, TAggregate>
+        public IAsyncEnumerable<TIdentity> AggregateIdsAsync<TIdentity, TAggregate>(
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             throw new NotImplementedException();
         }

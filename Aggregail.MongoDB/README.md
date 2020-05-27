@@ -31,7 +31,8 @@ const string collection = "streams";
 var serializer = new JsonEventSerializer();
 var mongoSettings = new MongoEventStoreSettings(mongoDatabase, collection, serializer);
 
-IEventStore mongoStore = new MongoEventStore(mongoSettings);
+var mongoStore = new MongoEventStore(mongoSettings);
+await mongoStore.InitializeAsync();
 ```
 
 ## WIP
