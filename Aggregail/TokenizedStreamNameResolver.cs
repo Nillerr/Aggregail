@@ -36,7 +36,7 @@ namespace Aggregail
             if (id == null)
                 throw new ArgumentNullException(nameof(id));
 
-            return $"{id}{Separator}{configuration.Name}";
+            return $"{configuration.Name}{Separator}{id}";
         }
 
         /// <inheritdoc />
