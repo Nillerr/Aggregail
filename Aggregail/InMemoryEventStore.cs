@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Aggregail
@@ -55,7 +57,8 @@ namespace Aggregail
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
-            IEnumerable<IPendingEvent> pendingEvents
+            IEnumerable<IPendingEvent> pendingEvents,
+            CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var stream = _streamNameResolver.Stream(id, configuration);
@@ -152,7 +155,8 @@ namespace Aggregail
         /// <inheritdoc />
         public Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
-            AggregateConfiguration<TIdentity, TAggregate> configuration
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var stream = _streamNameResolver.Stream(id, configuration);
@@ -191,7 +195,8 @@ namespace Aggregail
 
         /// <inheritdoc />
         public async IAsyncEnumerable<TIdentity> AggregateIdsAsync<TIdentity, TAggregate>(
-            AggregateConfiguration<TIdentity, TAggregate> configuration
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             await Task.Yield();

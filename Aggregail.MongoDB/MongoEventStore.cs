@@ -1,7 +1,8 @@
 ﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
+ using System.Runtime.CompilerServices;
+ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
  using MongoDB.Bson;
@@ -51,10 +52,11 @@ namespace Aggregail.MongoDB
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
-            IEnumerable<IPendingEvent> pendingEvents
+            IEnumerable<IPendingEvent> pendingEvents,
+            CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            using var session = await _events.Database.Client.StartSessionAsync();
+            using var session = await _events.Database.Client.StartSessionAsync(null, cancellationToken);
             
             session.StartTransaction(_transactionOptions);
 
@@ -63,7 +65,7 @@ namespace Aggregail.MongoDB
             var latestEvent = await _events
                 .Find(session, e => e.Stream == stream)
                 .SortByDescending(e => e.EventNumber)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (expectedVersion == ExpectedVersion.NoStream && latestEvent != null)
             {
@@ -89,15 +91,15 @@ namespace Aggregail.MongoDB
 
             try
             {
-                await _events.InsertManyAsync(session, recordedEvents);
+                await _events.InsertManyAsync(session, recordedEvents, null, cancellationToken);
             }
             catch (MongoWriteException)
             {
-                await session.AbortTransactionAsync();
+                await session.AbortTransactionAsync(cancellationToken);
                 throw;
             }
 
-            await session.CommitTransactionAsync();
+            await session.CommitTransactionAsync(cancellationToken);
         }
 
         private RecordedEvent RecordedEvent(string stream, IPendingEvent pendingEvent, long eventNumber)
@@ -129,21 +131,22 @@ namespace Aggregail.MongoDB
         /// <inheritdoc />
         public async Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
-            AggregateConfiguration<TIdentity, TAggregate> configuration
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            using var session = await _events.Database.Client.StartSessionAsync();
+            using var session = await _events.Database.Client.StartSessionAsync(null, cancellationToken);
 
             var stream = _streamNameResolver.Stream(id, configuration);
     
             var cursor = await _events
                 .Find(e => e.Stream == stream)
                 .SortBy(e => e.EventNumber)
-                .ToCursorAsync();
+                .ToCursorAsync(cancellationToken);
 
             TAggregate? aggregate = null;
             
-            while (await cursor.MoveNextAsync())
+            while (await cursor.MoveNextAsync(cancellationToken))
             {
                 foreach (var recordedEvent in cursor.Current)
                 {
@@ -203,7 +206,8 @@ namespace Aggregail.MongoDB
 
         /// <inheritdoc />
         public async IAsyncEnumerable<TIdentity> AggregateIdsAsync<TIdentity, TAggregate>(
-            AggregateConfiguration<TIdentity, TAggregate> configuration
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var constructors = configuration.Constructors;
@@ -211,9 +215,9 @@ namespace Aggregail.MongoDB
             {
                 var cursor = await _events
                     .Find(e => e.EventType == eventType && e.EventNumber == 0)
-                    .ToCursorAsync();
+                    .ToCursorAsync(cancellationToken);
 
-                while (await cursor.MoveNextAsync())
+                while (await cursor.MoveNextAsync(cancellationToken))
                 {
                     foreach (var recordedEvent in cursor.Current)
                     {

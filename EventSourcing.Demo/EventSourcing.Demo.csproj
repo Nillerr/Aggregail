@@ -7,8 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aggregail" Version="1.0.0-alpha.10" />
-        <PackageReference Include="Aggregail.MongoDB" Version="1.0.0-alpha.10" />
+        <PackageReference Include="Aggregail.MongoDB" Version="1.0.0-alpha.12" />
         <PackageReference Include="Aggregail.Newtonsoft.Json" Version="1.0.0-alpha.3" />
         <PackageReference Include="EventStore.Client" Version="5.0.8" />
         <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
