@@ -4,7 +4,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace Aggregail.Testing
 {
@@ -47,8 +46,7 @@ namespace Aggregail.Testing
 
             public override string ToString()
             {
-                var pendingEvents = JsonConvert
-                    .SerializeObject(PendingEvents.Select(pendingEvent => pendingEvent.Type), Formatting.None);
+                var pendingEvents = $"[{string.Join(", ", PendingEvents.Select(e => $"\"{e.Type}\""))}]";
 
                 var expectedVersion = ExpectedVersionString(ExpectedVersion);
 
