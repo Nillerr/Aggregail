@@ -4,6 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Aggregail.MongoDB
 {
+    [BsonIgnoreExtraElements]
     internal sealed class RecordedEvent
     {
         [BsonId]
