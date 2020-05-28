@@ -132,6 +132,7 @@ namespace Aggregail.MongoDB.Admin.Controllers
                 EventNumber = (latestEvent?.EventNumber ?? -1L) + 1L,
                 Created = _clock.UtcNow.UtcDateTime,
                 Data = request.Data,
+                Metadata = request.Metadata
             };
 
             try

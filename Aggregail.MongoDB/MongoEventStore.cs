@@ -1,12 +1,12 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
- using System.Runtime.CompilerServices;
- using System.Threading;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
- using MongoDB.Bson;
- using MongoDB.Driver;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace Aggregail.MongoDB
 {
@@ -22,13 +22,13 @@ namespace Aggregail.MongoDB
     {
         private readonly IMongoDatabase _database;
         private readonly string _collection;
-        
+
         private readonly IMongoCollection<RecordedEvent> _events;
         private readonly IJsonEventSerializer _serializer;
         private readonly ILogger<MongoEventStore>? _logger;
         private readonly TransactionOptions _transactionOptions;
         private readonly IClock _clock;
-        private readonly IStreamNameResolver _streamNameResolver; 
+        private readonly IStreamNameResolver _streamNameResolver;
         private readonly IMetadataFactory _metadataFactory;
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Aggregail.MongoDB
         {
             _database = settings.Database;
             _collection = settings.Collection;
-            
+
             _events = settings.Database.GetCollection<RecordedEvent>(settings.Collection);
             _serializer = settings.EventSerializer;
             _logger = settings.Logger;
@@ -59,7 +59,7 @@ namespace Aggregail.MongoDB
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             using var session = await _events.Database.Client.StartSessionAsync(null, cancellationToken);
-            
+
             session.StartTransaction(_transactionOptions);
 
             var stream = _streamNameResolver.Stream(id, configuration);
@@ -141,14 +141,14 @@ namespace Aggregail.MongoDB
             using var session = await _events.Database.Client.StartSessionAsync(null, cancellationToken);
 
             var stream = _streamNameResolver.Stream(id, configuration);
-    
+
             var cursor = await _events
                 .Find(e => e.Stream == stream)
                 .SortBy(e => e.EventNumber)
                 .ToCursorAsync(cancellationToken);
 
             TAggregate? aggregate = null;
-            
+
             while (await cursor.MoveNextAsync(cancellationToken))
             {
                 foreach (var recordedEvent in cursor.Current)
@@ -246,14 +246,14 @@ namespace Aggregail.MongoDB
             await InitializeCollection(cancellationToken);
 
             _logger?.LogDebug("Initializing indexes...");
-            
+
             await CreateStreamEventNumberIndexAsync(cancellationToken);
             await CreateEventTypeIndexAsync(cancellationToken);
             await CreateEventNumberCreatedIndexAsync(cancellationToken);
             await CreateCreatedIndexAsync(cancellationToken);
-            
+
             _logger?.LogDebug("Indexes initialized successfully");
-            
+
             _logger?.LogDebug($"Collection `{_collection}` initialized successfully");
         }
 

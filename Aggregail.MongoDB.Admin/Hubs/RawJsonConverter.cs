@@ -14,8 +14,8 @@ namespace Aggregail.MongoDB.Admin.Hubs
             {
                 return null;
             }
-            
-            var json = document.RootElement.ToString();
+
+            var json = document.RootElement.GetRawText();
             return Encoding.UTF8.GetBytes(json);
         }
 
