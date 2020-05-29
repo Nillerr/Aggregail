@@ -35,6 +35,43 @@ var mongoStore = new MongoEventStore(mongoSettings);
 await mongoStore.InitializeAsync();
 ```
 
+## Metadata
+
+It is possible to associate metadata with events. At this time Aggregail does not provide a way of reading 
+this metadata, other than through the use of [Aggregail.MongoDB.Admin](../Aggregail.MongoDB.Admin). We are 
+evaluating workflows involving event metadata, and how to present it to developers.
+
+```c#
+class UserIdMetadataFactory : IMetadataFactory
+{
+    public UserIdMetadataFactory(string userId)
+    {
+        UserId = userId;
+    }
+
+    private string UserId { get; set; }
+
+    public byte[] MetadataFor<T>(Guid id, EventType<T> type, T data, IJsonEventSerializer serializer)
+    {
+        var metadata = new Metadata(UserId);
+        return serializer.Serialize(metadata);
+    }
+
+    private class Metadata
+    {
+        public Metadata(string userId)
+        {
+            UserId = userId;
+        }
+
+        public string UserId { get; }
+    }
+}
+
+var mongoSettings = new MongoEventStoreSettings(mongoDatabase, collection, serializer);
+mongoSettings.MetadataFactory = new UserIdMetadataFactory("nije");
+```
+
 ## WIP
 
 The following features are being worked on:
