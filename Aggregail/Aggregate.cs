@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Aggregail
@@ -56,22 +57,9 @@ namespace Aggregail
         /// Records additional information about a recorded event from the event store stream.
         /// </summary>
         /// <param name="recordableEvent">The recorded event information</param>
-        /// <exception cref="WrongExpectedVersionException">
-        /// The version of the recorded event is not the next expected event in the sequence.
-        /// </exception>
         public void Record(RecordableEvent recordableEvent)
         {
-            var expectedVersion = _versionNumber + 1;
-            var eventNumber = recordableEvent.EventNumber;
-            if (eventNumber != expectedVersion)
-            {
-                throw new WrongExpectedVersionException(
-                    $"Expected a recorded event number {expectedVersion}, but was {eventNumber}", expectedVersion,
-                    eventNumber
-                );
-            }
-
-            _versionNumber = expectedVersion;
+            _versionNumber = recordableEvent.EventNumber;
         }
 
         /// <summary>
@@ -80,6 +68,7 @@ namespace Aggregail
         /// </summary>
         /// <param name="store">The <see cref="IEventStore"/> to store events in.</param>
         /// <param name="configuration">The configuration of the aggregate.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A <see cref="Task{TResult}"/></returns>
         /// <exception cref="InvalidOperationException">
         /// If there are no pending events, previously appended with <see cref="Append{T}"/>, to commit.
@@ -97,16 +86,37 @@ namespace Aggregail
         /// }
         /// </code>
         /// </remarks>
-        protected async Task CommitAsync(IEventStore store, AggregateConfiguration<TIdentity, TAggregate> configuration)
+        protected async Task CommitAsync(
+            IEventStore store,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
+        )
         {
             if (_pendingEvents.Count == 0)
             {
                 throw new InvalidOperationException("There are no pending events to commit");
             }
 
-            await store.AppendToStreamAsync(Id, configuration, _versionNumber, _pendingEvents.ToArray());
+            var pendingEvents = _pendingEvents.ToArray();
+            await store.AppendToStreamAsync(Id, configuration, _versionNumber, pendingEvents, cancellationToken);
             _versionNumber += _pendingEvents.Count;
             _pendingEvents.Clear();
+        }
+
+        /// <summary>
+        /// Deletes the aggregate from <paramref name="store"/>.
+        /// </summary>
+        /// <param name="store">The <see cref="IEventStore"/> containing the aggregate stream.</param>
+        /// <param name="configuration">The configuration of the aggregate.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>A <see cref="Task{TResult}"/></returns>
+        protected async Task DeleteAsync(
+            IEventStore store,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
+        )
+        {
+            await store.DeleteAggregateAsync(Id, configuration, _versionNumber, cancellationToken);
         }
     }
 }

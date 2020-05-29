@@ -80,7 +80,7 @@ namespace Aggregail.MongoDB
             if (expectedVersion > ExpectedVersion.NoStream && latestEvent == null)
             {
                 throw new WrongExpectedVersionException(
-                    $"Expected stream `{stream}` to be at version {expectedVersion}, but stream did not exist yet.",
+                    $"Expected stream `{stream}` to be at version {expectedVersion}, but the stream did not exist.",
                     expectedVersion, null
                 );
             }
@@ -231,6 +231,41 @@ namespace Aggregail.MongoDB
                     }
                 }
             }
+        }
+
+        /// <inheritdoc />
+        public async Task DeleteAggregateAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            long expectedVersion,
+            CancellationToken cancellationToken = default
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            using var session = await _database.Client.StartSessionAsync(cancellationToken: cancellationToken);
+            
+            session.StartTransaction();
+            
+            var stream = _streamNameResolver.Stream(id, configuration);
+
+            if (expectedVersion != ExpectedVersion.Any && expectedVersion != ExpectedVersion.NoStream)
+            {
+                var latestEvent = await _events
+                    .Find(session, e => e.Stream == stream)
+                    .SortByDescending(e => e.EventNumber)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (latestEvent == null)
+                {
+                    throw new WrongExpectedVersionException(
+                        $"Expected stream `{stream}` to be at version {expectedVersion}, but the stream did not exist.",
+                        expectedVersion, null
+                    );
+                }
+            }
+
+            await _events.DeleteManyAsync(session, e => e.Stream == stream, null, cancellationToken);
+            
+            await session.CommitTransactionAsync(cancellationToken);
         }
 
         /// <summary>

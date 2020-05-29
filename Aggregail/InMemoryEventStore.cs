@@ -223,5 +223,27 @@ namespace Aggregail
                 }
             }
         }
+
+        /// <inheritdoc />
+        public Task DeleteAggregateAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            long expectedVersion,
+            CancellationToken cancellationToken = default
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            var stream = _streamNameResolver.Stream(id, configuration);
+            if (_streams.TryGetValue(stream, out var recordedEvents))
+            {
+                foreach (var recordedEvent in recordedEvents)
+                {
+                    _byEventType[recordedEvent.EventType].Remove(recordedEvent);
+                }
+            }
+
+            _streams.Remove(stream);
+
+            return Task.CompletedTask;
+        }
     }
 }

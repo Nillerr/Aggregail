@@ -67,5 +67,12 @@ namespace Aggregail
             [EnumeratorCancellation] CancellationToken cancellationToken = default
         )
             where TAggregate : Aggregate<TIdentity, TAggregate>;
+
+        Task DeleteAggregateAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            long expectedVersion,
+            CancellationToken cancellationToken = default
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>;
     }
 }
