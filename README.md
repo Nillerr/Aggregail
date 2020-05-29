@@ -46,25 +46,21 @@ Our goat itself is an example of the minimum amount of code required to make a s
 Aggregate Root:
 
 ```c#
-public class Goat : Aggregate<Guid, Goat>
+public class Goat : AbstractAggregate<Guid, Goat>
 {
-    private static readonly AggregateConfiguration<Guid, Goat> Configuration =
-        new AggregateConfiguration<Guid, Goat>("goat")
+    static Goat()
+    {
+        Configuration = new AggregateConfiguration<Guid, Goat>("goat")
             .Constructs(GoatCreated.EventType, (id, e) => new Goat(id, e))
             .Applies(GoatUpdated.EventType, (goat, e) => goat.Apply(e));
-
-    public string Name { get; private set; }
+    }
 
     private Goat(Guid id, GoatCreated e) : base(id)
     {
         Name = e.Name;
     }
 
-    public static Task<Goat> FromAsync(IEventStore store, Guid id) =>
-        store.AggregateAsync(id, Configuration);
-
-    public Task CommitAsync(IEventStore store) =>
-        CommitAsync(store, Configuration);
+    public string Name { get; private set; }
 
     public void Update(string name)
     {
