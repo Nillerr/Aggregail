@@ -1,22 +1,22 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Threading.Tasks;
 using Aggregail;
 using EventSourcing.Demo.Robots.CRM;
 
 namespace EventSourcing.Demo.Robots
 {
-    public sealed class Robot : Aggregate<RobotId, Robot>
+    public sealed class Robot : AbstractAggregate<RobotId, Robot>
     {
-        private static readonly AggregateConfiguration<RobotId, Robot> Configuration =
-            new AggregateConfiguration<RobotId, Robot>("Robot", RobotId.Parse)
+        static Robot()
+        {
+            Configuration = new AggregateConfiguration<RobotId, Robot>("Robot", RobotId.Parse)
                 .Constructs(RobotImported.EventType, (id, e) => new Robot(id, e))
                 .Applies(RobotImported.EventType, (robot, e) => robot.Apply(e))
                 .Applies(RobotRegistered.EventType, (robot, e) => robot.Apply(e))
                 .Applies(RobotEdited.EventType, (robot, e) => robot.Apply(e))
                 .Applies(RobotUnregistered.EventType, (robot, e) => robot.Apply(e));
+        }
 
         private Robot(RobotId id, RobotImported e)
             : base(id)
@@ -29,7 +29,7 @@ namespace EventSourcing.Demo.Robots
         }
 
         public RobotProduct Product { get; private set; }
-        
+
         public SerialNumber SerialNumber { get; private set; }
 
         public ImmutableList<RobotRegistration> Registrations { get; private set; }
@@ -42,12 +42,6 @@ namespace EventSourcing.Demo.Robots
             robot.Append(id.Value, RobotImported.EventType, e);
             return robot;
         }
-
-        public static IAsyncEnumerable<RobotId> IdsAsync(IEventStore store) => store.AggregateIdsAsync(Configuration);
-
-        public static Task<Robot?> FromAsync(IEventStore store, RobotId id) => store.AggregateAsync(id, Configuration);
-
-        public Task CommitAsync(IEventStore store) => CommitAsync(store, Configuration);
 
         public RobotRegistration.Registration? LatestRegistration => (
             from registration in Registrations

@@ -114,5 +114,16 @@ namespace EventSourcing.Demo
         {
             throw new NotImplementedException();
         }
+
+        public async Task DeleteAggregateAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            long expectedVersion,
+            CancellationToken cancellationToken = default
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            var stream = _streamNameResolver.Stream(id, configuration);
+            await _connection.DeleteStreamAsync(stream, expectedVersion);
+        }
     }
 }

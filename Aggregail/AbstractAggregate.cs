@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Aggregail
@@ -29,7 +30,7 @@ namespace Aggregail
         /// The configuration of this aggregate
         /// </summary>
         protected static AggregateConfiguration<TIdentity, TAggregate> Configuration { get; set; } = null!;
-        
+
         private static AggregateConfiguration<TIdentity, TAggregate> GetConfiguration() =>
             Configuration ?? throw new InvalidOperationException(
                 $"The static property {nameof(Configuration)} must be set by the subclass"
@@ -38,21 +39,45 @@ namespace Aggregail
         /// <summary>
         /// Locates the aggregate stored in <paramref name="store"/>, identified by <paramref name="id"/>.
         /// </summary>
-        /// <param name="id">Id of the aggregate.</param>
         /// <param name="store">Event store to query.</param>
+        /// <param name="id">Id of the aggregate.</param>
+        /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>
         /// The constructed aggregate, or <c>null</c> if the stream does not exist in <paramref name="store"/>.
         /// </returns>
-        public static Task<TAggregate?> FromAsync(TIdentity id, IEventStore store) =>
-            store.AggregateAsync(id, GetConfiguration());
+        public static Task<TAggregate?> FromAsync(
+            IEventStore store,
+            TIdentity id,
+            CancellationToken cancellationToken = default
+        ) =>
+            store.AggregateAsync(id, GetConfiguration(), cancellationToken);
 
         /// <summary>
         /// Resolves the ids of all aggregates of this type, stored in <paramref name="store"/>.
         /// </summary>
         /// <param name="store">Event store to query.</param>
+        /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>The ids of all aggregates of this type.</returns>
-        public static IAsyncEnumerable<TIdentity> IdsAsync(IEventStore store) =>
-            store.AggregateIdsAsync(GetConfiguration());
+        public static IAsyncEnumerable<TIdentity> IdsAsync(
+            IEventStore store,
+            CancellationToken cancellationToken = default
+        ) =>
+            store.AggregateIdsAsync(GetConfiguration(), cancellationToken);
+
+        /// <summary>
+        /// Deletes the aggregate identified by <paramref name="id"/> from <paramref name="store"/>, regardless of
+        /// which version the stream is currently at. 
+        /// </summary>
+        /// <param name="store">The <see cref="IEventStore"/> containing the aggregate stream.</param>
+        /// <param name="id">The id of the aggregate to delete.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>A <see cref="Task{TResult}"/></returns>
+        public static Task DeleteFromAsync(
+            IEventStore store,
+            TIdentity id,
+            CancellationToken cancellationToken = default
+        ) =>
+            store.DeleteAggregateAsync(id, Configuration, ExpectedVersion.Any, cancellationToken);
 
         protected static TAggregate Create<T>(
             EventType<T> type,
@@ -105,7 +130,7 @@ namespace Aggregail
             aggregate.Append(eventId, type, data);
             return aggregate;
         }
-        
+
         protected AbstractAggregate(TIdentity id)
             : base(id)
         {
@@ -157,10 +182,21 @@ namespace Aggregail
         /// <see cref="IEventStore"/> specified by <paramref name="store"/>, and clears the queue of pending events.
         /// </summary>
         /// <param name="store">The <see cref="IEventStore"/> to store events in.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A <see cref="Task{TResult}"/></returns>
         /// <exception cref="InvalidOperationException">
         /// If there are no pending events, previously appended with <c>Append</c>, to commit.
         /// </exception>
-        public Task CommitAsync(IEventStore store) => CommitAsync(store, GetConfiguration());
+        public Task CommitAsync(IEventStore store, CancellationToken cancellationToken = default) =>
+            CommitAsync(store, GetConfiguration(), cancellationToken);
+
+        /// <summary>
+        /// Deletes the aggregate from <paramref name="store"/>.
+        /// </summary>
+        /// <param name="store">The <see cref="IEventStore"/> containing the aggregate stream.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>A <see cref="Task{TResult}"/></returns>
+        public Task DeleteAsync(IEventStore store, CancellationToken cancellationToken = default) =>
+            DeleteAsync(store, GetConfiguration(), cancellationToken);
     }
 }
