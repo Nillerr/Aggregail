@@ -54,6 +54,9 @@ public class Goat : AbstractAggregate<Guid, Goat>
             .Constructs(GoatCreated.EventType, (id, e) => new Goat(id, e))
             .Applies(GoatUpdated.EventType, (goat, e) => goat.Apply(e));
     }
+    
+    public static Goat Create(Guid id, string name) => 
+        Create(GoatCreated.EventType, new GoatCreated { Name = name }, (id, e) => new Goat(id, e));
 
     private Goat(Guid id, GoatCreated e) : base(id)
     {
@@ -62,12 +65,8 @@ public class Goat : AbstractAggregate<Guid, Goat>
 
     public string Name { get; private set; }
 
-    public void Update(string name)
-    {
-        var e = new GoatUpdated { Name = name };
-        Apply(e);
-        Append(Guid.NewGuid(), GoatUpdated.EventType, e);
-    }
+    public void Update(string name) => 
+        Append(GoatUpdated.EventType, new GoatUpdated { Name = name }, Apply);
 
     private void Apply(GoatUpdated e)
     {
