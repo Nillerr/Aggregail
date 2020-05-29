@@ -50,7 +50,7 @@ public class Goat : AbstractAggregate<Guid, Goat>
 {
     static Goat()
     {
-        Configuration = new AggregateConfiguration<Guid, Goat>("goat")
+        Configuration = new AggregateConfiguration<Guid, Goat>("goat", Guid.Parse)
             .Constructs(GoatCreated.EventType, (id, e) => new Goat(id, e))
             .Applies(GoatUpdated.EventType, (goat, e) => goat.Apply(e));
     }
