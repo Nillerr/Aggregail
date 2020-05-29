@@ -43,9 +43,19 @@ const EventContent = (props: { event: RecordedEvent }) => (
     <tr>
       <td colSpan={4}>
         <strong>Data</strong>
-        <div className="mt-2 mb-4">
+        <div className="mt-2">
           <Json>
             {JSON.stringify(props.event.data, null, 2)}
+          </Json>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td colSpan={4}>
+        <strong>Metadata</strong>
+        <div className="mt-2">
+          <Json>
+            {JSON.stringify(props.event.metadata, null, 2)}
           </Json>
         </div>
       </td>

@@ -10,6 +10,7 @@ interface Event {
   eventId: string;
   eventType: string;
   data: string;
+  metadata: string;
 }
 
 const EventEditor = (props: { event: Event, onEventChange: (event: Event) => void }) => {
@@ -62,6 +63,21 @@ const EventEditor = (props: { event: Event, onEventChange: (event: Event) => voi
         </td>
       </tr>
       </tbody>
+      <tbody className="thead-dark">
+      <tr>
+        <th colSpan={2}>Metadata</th>
+      </tr>
+      </tbody>
+      <tbody>
+      <tr>
+        <td colSpan={2}>
+          <JsonEditor
+            value={props.event.metadata}
+            onValueChange={value => props.onEventChange({ ...props.event, metadata: value })}
+          />
+        </td>
+      </tr>
+      </tbody>
     </Table>
   );
 }
@@ -70,6 +86,7 @@ interface AppendEventRequest {
   eventId: string;
   eventType: string;
   data: any;
+  metadata: any
 }
 
 const AddEvent = (props: { stream?: string, likeEvent?: RecordedEvent, onEventAdded: (stream: string) => void }) => {
@@ -78,9 +95,16 @@ const AddEvent = (props: { stream?: string, likeEvent?: RecordedEvent, onEventAd
     const clonedEventProps = props.likeEvent
       ? ({
         eventType: props.likeEvent.eventType,
-        data: JSON.stringify(props.likeEvent.data, null, 2)
+        data: JSON.stringify(props.likeEvent.data, null, 2),
+        metadata: props.likeEvent.metadata 
+          ? JSON.stringify(props.likeEvent.metadata, null, 2)
+          : ''
       })
-      : {eventType: '', data: '{}'};
+      : ({
+        eventType: '',
+        data: '{}',
+        metadata: ''
+      });
 
     return {
       stream: props.stream ?? '',
@@ -89,16 +113,31 @@ const AddEvent = (props: { stream?: string, likeEvent?: RecordedEvent, onEventAd
     };
   });
   
-  const submitAction = useAction<AppendEventRequest>('POST', `/api/streams/${event.stream}`, () => props.onEventAdded(event.stream));
+  const submitAction = useAction<AppendEventRequest>(
+    'POST',
+    `/api/streams/${event.stream}`,
+    () => props.onEventAdded(event.stream)
+  );
   
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    submitAction({
-      eventId: event.eventId,
-      eventType: event.eventType,
-      data: JSON.parse(event.data)
-    });
+    try {
+      const data: AppendEventRequest = {
+        eventId: event.eventId,
+        eventType: event.eventType,
+        data: JSON.parse(event.data),
+        metadata: event.metadata === ''
+          ? null
+          : JSON.parse(event.metadata),
+      };
+
+      submitAction(data);
+    } catch (reason) {
+      if (reason instanceof SyntaxError) {
+        console.error(reason.message);
+      }
+    }
   };
 
   return (

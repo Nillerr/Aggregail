@@ -11,5 +11,8 @@ namespace Aggregail.MongoDB.Admin.Controllers
 
         [JsonConverter(typeof(RawJsonConverter))]
         public byte[] Data { get; set; } = null!;
+        
+        [JsonConverter(typeof(RawJsonConverter))]
+        public byte[]? Metadata { get; set; }
     }
 }

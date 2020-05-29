@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using Aggregail;
 using Aggregail.MongoDB;
@@ -32,6 +31,7 @@ namespace EventSourcing.Demo
             
             var jsonSerializer = JsonSerializer.CreateDefault(jsonSerializerSettings);
             var serializer = new JsonEventSerializer(jsonSerializer);
+            // var serializer = new Aggregail.System.Text.Json.JsonEventSerializer(new JsonSerializerOptions());
 
             // using var connection = EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113");
             // await connection.ConnectAsync();
@@ -40,7 +40,10 @@ namespace EventSourcing.Demo
             var mongoClient = new MongoClient("mongodb://root:example@mongodb-primary:27017,mongodb-secondary:27018,mongodb-arbiter:27019/aggregail_demo?authSource=admin&replicaSet=rs0");
             // var mongoClient = new MongoClient("mongodb://root:example@mongodb:27017/aggregail_demo?authSource=admin&replicaSet=rs0");
             var mongoDatabase = mongoClient.GetDatabase("aggregail_demo");
+            
             var mongoSettings = new MongoEventStoreSettings(mongoDatabase, "streams", serializer);
+            mongoSettings.MetadataFactory = new MetadataFactory("nije");
+            
             var mongoStore = new MongoEventStore(mongoSettings);
 
             await mongoStore.InitializeAsync();

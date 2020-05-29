@@ -11,20 +11,24 @@ namespace EventSourcing.Demo.Robots
     {
         public static async Task RunAsync(IEventStore store)
         {
-            var text = await File.ReadAllTextAsync("robots.json");
-            var response = JsonConvert.DeserializeObject<EntityListResponse<RobotImported.RobotEntity>>(text);
+            var robot = await Robot.FromAsync(store, RobotId.Parse("5be7b898-5c2f-e911-a96f-000d3a391cda"));
+            var registeredRobot = new RegisteredRobot(robot!, robot!.LatestRegistration!);
+            Console.WriteLine(JsonConvert.SerializeObject(registeredRobot, Formatting.Indented));
+            // Console.WriteLine(JsonConvert.SerializeObject(robot, Formatting.Indented));
+            // var text = await File.ReadAllTextAsync("robots.json");
+            // var response = JsonConvert.DeserializeObject<EntityListResponse<RobotImported.RobotEntity>>(text);
 
-            var olympus = Guid.Parse("1ab17979-ff43-e911-a970-000d3a391cda");
-            foreach (var entity in response.Value.Where(e => e.C2RurEnduserValue == olympus))
-            {
-                await ImportRobotAsync(store, entity);
-            }
+            // var olympus = Guid.Parse("1ab17979-ff43-e911-a970-000d3a391cda");
+            // foreach (var entity in response.Value.Where(e => e.C2RurEnduserValue == olympus).Take(1))
+            // {
+            // await ImportRobotAsync(store, entity);
+            // }
 
-            Console.WriteLine("[Robots]");
-            await foreach (var robotId in Robot.IdsAsync(store))
-            {
-                Console.WriteLine(robotId);
-            }
+            // Console.WriteLine("[Robots]");
+            // await foreach (var robotId in Robot.IdsAsync(store))
+            // {
+            // Console.WriteLine(robotId);
+            // }
         }
 
         private static async Task ImportRobotAsync(IEventStore store, RobotImported.RobotEntity entity)
@@ -33,15 +37,18 @@ namespace EventSourcing.Demo.Robots
 
             var robot = Robot.Import(entity);
             await robot.CommitAsync(store);
-            
-            robot.Unregister(olympusControlCorpGulf);
-            await robot.CommitAsync(store);
 
-            robot.Register(olympusControlCorpGulf, null, RobotApplication.Dispensing);
-            await robot.CommitAsync(store);
-
-            robot.Edit(olympusControlCorpGulf, "Machinist", RobotApplication.MachineTending);
-            await robot.CommitAsync(store);
+            for (var i = 0; i < 100; i++)
+            {
+                for (var j = 0; j < 3_333; j++)
+                {
+                    robot.Unregister(olympusControlCorpGulf);
+                    robot.Register(olympusControlCorpGulf, null, RobotApplication.Dispensing);
+                    robot.Edit(olympusControlCorpGulf, "Machinist", RobotApplication.MachineTending);
+                }
+                
+                await robot.CommitAsync(store);
+            }
 
             // var json = JsonConvert.SerializeObject(robot, Formatting.Indented, new StringEnumConverter());
             // Console.WriteLine(json);

@@ -4,20 +4,29 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <Nullable>enable</Nullable>
+        <Configurations>Debug;Release;Debug (Development)</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aggregail.MongoDB" Version="1.0.0-alpha.12" />
-        <PackageReference Include="Aggregail.Newtonsoft.Json" Version="1.0.0-alpha.3" />
+        <PackageReference Include="Aggregail.MongoDB" Version="1.0.0-alpha.14" />
         <PackageReference Include="EventStore.Client" Version="5.0.8" />
         <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.4" />
     </ItemGroup>
     
-<!--    <ItemGroup>-->
-<!--        <ProjectReference Include="../Aggregail.MongoDB/Aggregail.MongoDB.csproj" />-->
-<!--        <ProjectReference Include="../Aggregail.Newtonsoft.Json/Aggregail.Newtonsoft.Json.csproj" />-->
-<!--    </ItemGroup>-->
+    <ItemGroup>
+    </ItemGroup>
+
+    <ItemGroup Condition=" '$(Configuration)' != 'Debug (Development)' ">
+        <PackageReference Include="Aggregail.Newtonsoft.Json" Version="1.0.0-alpha.3" />
+    </ItemGroup>
+
+    <ItemGroup Condition=" '$(Configuration)' == 'Debug (Development)' ">
+        <ProjectReference Include="../Aggregail.MongoDB/Aggregail.MongoDB.csproj" />
+        <ProjectReference Include="../Aggregail.Newtonsoft.Json/Aggregail.Newtonsoft.Json.csproj" />
+        <ProjectReference Include="../Aggregail.System.Text.Json/Aggregail.System.Text.Json.csproj" />
+    </ItemGroup>
     
     <ItemGroup>
       <None Update="robots.json">
