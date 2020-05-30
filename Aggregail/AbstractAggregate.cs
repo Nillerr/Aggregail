@@ -30,7 +30,7 @@ namespace Aggregail
         {
             AbstractAggregateInitializer.Initialize();
         }
-        
+
         /// <summary>
         /// The configuration of this aggregate
         /// </summary>
@@ -84,7 +84,21 @@ namespace Aggregail
             TIdentity id,
             CancellationToken cancellationToken = default
         ) =>
-            store.DeleteAggregateAsync(id, Configuration, ExpectedVersion.Any, cancellationToken);
+            store.DeleteAggregateAsync(id, GetConfiguration(), ExpectedVersion.Any, cancellationToken);
+
+        /// <summary>
+        /// Determines if the aggregate specified by <paramref name="id"/> exists in <paramref name="store"/>.
+        /// </summary>
+        /// <param name="store">The <see cref="IEventStore"/></param>
+        /// <param name="id">The id of the aggregate.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns><c>true</c> if the aggregate exists; <c>false</c> if it does not exist.</returns>
+        public static Task<bool> ExistsAsync(
+            IEventStore store,
+            TIdentity id,
+            CancellationToken cancellationToken = default
+        ) =>
+            store.AggregateExistsAsync(id, GetConfiguration(), cancellationToken);
 
         protected static TAggregate Create<T>(
             EventType<T> type,
@@ -198,7 +212,7 @@ namespace Aggregail
             CommitAsync(store, GetConfiguration(), cancellationToken);
 
         /// <summary>
-        /// Deletes the aggregate from <paramref name="store"/>.
+        /// Deletes the aggregate from <paramref name="store"/>, while adhering to optimistic concurrency checks.
         /// </summary>
         /// <param name="store">The <see cref="IEventStore"/> containing the aggregate stream.</param>
         /// <param name="cancellationToken">Cancellation token.</param>

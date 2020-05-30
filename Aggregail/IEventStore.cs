@@ -70,11 +70,42 @@ namespace Aggregail
         )
             where TAggregate : Aggregate<TIdentity, TAggregate>;
 
+        /// <summary>
+        /// Deletes the aggregate specified by <paramref name="id"/>.
+        /// </summary>
+        /// <param name="id">The id of the aggregate to delete.</param>
+        /// <param name="configuration">Aggregate configuration.</param>
+        /// <param name="expectedVersion">
+        /// The expected version of the aggregate stream, or <see cref="ExpectedVersion.Any"/> to disable optimistic
+        /// concurrency checks, and delete the aggregate stream regardless of the current version.
+        /// </param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <typeparam name="TIdentity">Type of id</typeparam>
+        /// <typeparam name="TAggregate">Type of aggregate</typeparam>
+        /// <returns>A <see cref="Task"/></returns>
         Task DeleteAggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
             CancellationToken cancellationToken = default
-        ) where TAggregate : Aggregate<TIdentity, TAggregate>;
+        )
+            where TAggregate : Aggregate<TIdentity, TAggregate>;
+
+        /// <summary>
+        /// Determines if a stream for the aggregate specified by <paramref name="id"/> already exists, and is not
+        /// currently deleted.
+        /// </summary>
+        /// <param name="id">The id of the aggregate.</param>
+        /// <param name="configuration">Aggregate configuration.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <typeparam name="TIdentity">Type of id</typeparam>
+        /// <typeparam name="TAggregate">Type of aggregate</typeparam>
+        /// <returns><c>true</c> if the aggregate exists; <c>false</c> if it does not exist.</returns>
+        Task<bool> AggregateExistsAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
+        )
+            where TAggregate : Aggregate<TIdentity, TAggregate>;
     }
 }

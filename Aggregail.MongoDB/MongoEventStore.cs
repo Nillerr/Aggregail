@@ -277,6 +277,23 @@ namespace Aggregail.MongoDB
             await session.CommitTransactionAsync(cancellationToken);
         }
 
+        public async Task<bool> AggregateExistsAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            using var session = await _database.Client.StartSessionAsync(cancellationToken: cancellationToken);
+
+            var stream = _streamNameResolver.Stream(id, configuration);
+            
+            var exists = await _events
+                .Find(e => e.Stream == stream)
+                .AnyAsync(cancellationToken);
+            
+            return exists;
+        }
+
         /// <summary>
         /// Initializes the event store, creating the collection in case it's missing, and sets up indexes on the
         /// collection.

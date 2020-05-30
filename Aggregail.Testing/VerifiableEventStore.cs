@@ -18,7 +18,7 @@ namespace Aggregail.Testing
     public sealed class VerifiableEventStore : IEventStore
     {
         private readonly IJsonEventSerializer _serializer;
-        private readonly IEventStore _store;
+        private readonly InMemoryEventStore _store;
 
         private readonly List<Append> _appends = new List<Append>();
 
@@ -100,7 +100,7 @@ namespace Aggregail.Testing
         /// <inheritdoc />
         public IAsyncEnumerable<TIdentity> AggregateIdsAsync<TIdentity, TAggregate>(
             AggregateConfiguration<TIdentity, TAggregate> configuration,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default
+            CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             return _store.AggregateIdsAsync(configuration, cancellationToken);
@@ -115,6 +115,16 @@ namespace Aggregail.Testing
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             return _store.DeleteAggregateAsync(id, configuration, expectedVersion, cancellationToken);
+        }
+
+        /// <inheritdoc />
+        public Task<bool> AggregateExistsAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            return _store.AggregateExistsAsync(id, configuration, cancellationToken);
         }
 
         /// <summary>

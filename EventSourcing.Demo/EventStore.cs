@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Aggregail;
 using EventStore.ClientAPI;
+using ExpectedVersion = EventStore.ClientAPI.ExpectedVersion;
 
 namespace EventSourcing.Demo
 {
@@ -131,6 +132,17 @@ namespace EventSourcing.Demo
         {
             var stream = _streamNameResolver.Stream(id, configuration);
             await _connection.DeleteStreamAsync(stream, expectedVersion);
+        }
+
+        public async Task<bool> AggregateExistsAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            var stream = _streamNameResolver.Stream(id, configuration);
+            var meta = await _connection.GetStreamMetadataAsync(stream);
+            return meta.MetastreamVersion >= 0 && !meta.IsStreamDeleted;
         }
     }
 }

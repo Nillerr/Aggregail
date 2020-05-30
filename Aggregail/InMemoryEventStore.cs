@@ -77,37 +77,16 @@ namespace Aggregail
                 _streams[stream] = storedEvents;
             }
 
-            var pendingEventsList = pendingEvents.ToList();
             if (startingVersion < storedEvents.Count)
             {
                 // Validation phase
-                for (var pendingIndex = 0; pendingIndex < pendingEventsList.Count; pendingIndex++)
-                {
-                    var storedIndex = (int) startingVersion + pendingIndex;
-                    if (storedIndex >= storedEvents.Count)
-                    {
-                        throw new WrongExpectedVersionException(
-                            $"Could not write to stream `{stream}`. Some of the events were not previously committed.",
-                            expectedVersion, currentVersion
-                        );
-                    }
+                ValidateExistingEvents(stream, expectedVersion, pendingEvents, startingVersion, storedEvents, currentVersion);
 
-                    var pendingEvent = pendingEventsList[pendingIndex];
-                    var storedEvent = storedEvents[storedIndex];
-                    if (pendingEvent.Id != storedEvent.EventId)
-                    {
-                        throw new WrongExpectedVersionException(
-                            $"Could not write to stream `{stream}`. Some of the events were not previously committed.",
-                            expectedVersion, currentVersion
-                        );
-                    }
-                }
-                
                 // Everything is already committed
             }
             else
             {
-                var recordableEvents = ToStoredEvents(stream, pendingEventsList, startingVersion);
+                var recordableEvents = ToStoredEvents(stream, pendingEvents, startingVersion);
                 foreach (var recordableEvent in recordableEvents)
                 {
                     storedEvents.Add(recordableEvent);
@@ -116,6 +95,39 @@ namespace Aggregail
             }
 
             return Task.CompletedTask;
+        }
+
+        private static void ValidateExistingEvents(
+            string stream,
+            long expectedVersion,
+            IEnumerable<IPendingEvent> pendingEvents,
+            long startingVersion,
+            List<StoredEvent> storedEvents,
+            long? currentVersion
+        )
+        {
+            var pendingEventsList = pendingEvents.ToList();
+            for (var pendingIndex = 0; pendingIndex < pendingEventsList.Count; pendingIndex++)
+            {
+                var storedIndex = (int) startingVersion + pendingIndex;
+                if (storedIndex >= storedEvents.Count)
+                {
+                    throw new WrongExpectedVersionException(
+                        $"Could not write to stream `{stream}`. Some of the events were not previously committed.",
+                        expectedVersion, currentVersion
+                    );
+                }
+
+                var pendingEvent = pendingEventsList[pendingIndex];
+                var storedEvent = storedEvents[storedIndex];
+                if (pendingEvent.Id != storedEvent.EventId)
+                {
+                    throw new WrongExpectedVersionException(
+                        $"Could not write to stream `{stream}`. Some of the events were not previously committed.",
+                        expectedVersion, currentVersion
+                    );
+                }
+            }
         }
 
         private IEnumerable<StoredEvent> ToStoredEvents(
@@ -227,11 +239,11 @@ namespace Aggregail
             [EnumeratorCancellation] CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            await Task.Yield();
-            
             var constructors = configuration.Constructors;
             foreach (var (eventType, _) in constructors)
             {
+                await Task.Yield();
+                
                 if (!_byEventType.TryGetValue(eventType, out var eventStream))
                 {
                     continue;
@@ -272,6 +284,18 @@ namespace Aggregail
             _streams.Remove(stream);
 
             return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task<bool> AggregateExistsAsync<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            var stream = _streamNameResolver.Stream(id, configuration);
+            var exists = _streams.ContainsKey(stream);
+            return Task.FromResult(exists);
         }
     }
 }
