@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aggregail.MongoDB" Version="1.0.0-alpha.15" />
+        <PackageReference Include="Aggregail.MongoDB" Version="1.0.0-alpha.16" />
         <PackageReference Include="EventStore.Client" Version="5.0.8" />
         <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.4" />

@@ -21,25 +21,12 @@ namespace Aggregail.Testing
         private readonly IEventStore _store;
 
         private readonly List<Append> _appends = new List<Append>();
-        private readonly List<Delete> _deletes = new List<Delete>();
 
         private static string ExpectedVersionString(long expectedVersion)
         {
             return expectedVersion == ExpectedVersion.NoStream
                 ? nameof(ExpectedVersion) + "." + nameof(ExpectedVersion.NoStream)
                 : expectedVersion.ToString("D");
-        }
-
-        private sealed class Delete
-        {
-            public Delete(object id, Type aggregateType)
-            {
-                Id = id;
-                AggregateType = aggregateType;
-            }
-
-            public object Id { get; }
-            public Type AggregateType { get; }
         }
 
         private sealed class Append
@@ -103,10 +90,11 @@ namespace Aggregail.Testing
         public Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
+            long? version = null,
             CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            return _store.AggregateAsync(id, configuration, cancellationToken);
+            return _store.AggregateAsync(id, configuration, version, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -119,15 +107,14 @@ namespace Aggregail.Testing
         }
 
         /// <inheritdoc />
-        public async Task DeleteAggregateAsync<TIdentity, TAggregate>(
+        public Task DeleteAggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
             long expectedVersion,
             CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            _deletes.Add(new Delete(id!, configuration.AggregateType));
-            await _store.DeleteAggregateAsync(id, configuration, expectedVersion, cancellationToken);
+            return _store.DeleteAggregateAsync(id, configuration, expectedVersion, cancellationToken);
         }
 
         /// <summary>
@@ -220,33 +207,6 @@ namespace Aggregail.Testing
             }
 
             return true;
-        }
-        public void VerifyDeleteAggregate<TIdentity, TAggregate>(
-            Aggregate<TIdentity, TAggregate> aggregate,
-            long expectedVersion,
-            Func<EventAssertionsBuilder, EventAssertionsBuilder> verification
-        ) where TAggregate : Aggregate<TIdentity, TAggregate>
-        {
-            var evb = new EventAssertionsBuilder();
-            verification(evb);
-
-            var append = _appends
-                .FirstOrDefault(app => Matches(typeof(TAggregate), aggregate.Id!, expectedVersion, app, evb));
-
-            if (append == null)
-            {
-                var ev = ExpectedVersionString(expectedVersion);
-                
-                throw new InvalidOperationException(
-                    $"No append matching the assertions specified was found.{Environment.NewLine}" +
-                    $"{Environment.NewLine}" +
-                    $"Expected an append matching:{Environment.NewLine}" +
-                    $"\tAppendToStreamAsync({aggregate.Id}, <configuration>, {ev}, {evb}){Environment.NewLine}" +
-                    $"{Environment.NewLine}" +
-                    $"Recorded appends:{Environment.NewLine}" +
-                    $"{string.Join(Environment.NewLine, _appends.Select(app => $"\t{app}"))}{Environment.NewLine}"
-                );
-            }
         }
     }
 }

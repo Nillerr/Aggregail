@@ -42,6 +42,7 @@ namespace Aggregail
         /// </summary>
         /// <param name="id">Aggregate id</param>
         /// <param name="configuration">Aggregate configuration</param>
+        /// <param name="version">Version of the aggregate, or <c>null</c> for the latest version.</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <typeparam name="TIdentity">Type of <paramref name="id"/></typeparam>
         /// <typeparam name="TAggregate">Type of aggregate</typeparam>
@@ -49,6 +50,7 @@ namespace Aggregail
         Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
+            long? version = null,
             CancellationToken cancellationToken = default
         )
             where TAggregate : Aggregate<TIdentity, TAggregate>;

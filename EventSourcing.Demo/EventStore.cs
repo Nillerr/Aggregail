@@ -51,6 +51,7 @@ namespace EventSourcing.Demo
         public async Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
+            long? version = null,
             CancellationToken cancellationToken = default
         )
             where TAggregate : Aggregate<TIdentity, TAggregate>
@@ -89,6 +90,11 @@ namespace EventSourcing.Demo
                 foreach (var resolvedEvent in slice.Events)
                 {
                     var recordedEvent = resolvedEvent.Event;
+                    if (recordedEvent.EventNumber > version)
+                    {
+                        return aggregate;
+                    }
+                    
                     if (applicators.TryGetValue(recordedEvent.EventType, out var applicator))
                     {
                         applicator(aggregate, _serializer, recordedEvent.Data);
@@ -96,7 +102,8 @@ namespace EventSourcing.Demo
                     }
                     else
                     {
-                        throw new InvalidOperationException($"Unexpected recorded event type: {recordedEvent.EventType}"
+                        throw new InvalidOperationException(
+                            $"Unexpected recorded event type: {recordedEvent.EventType}"
                         );
                     }
                 }

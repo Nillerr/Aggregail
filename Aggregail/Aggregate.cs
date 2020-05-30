@@ -40,6 +40,12 @@ namespace Aggregail
         public TIdentity Id { get; }
 
         /// <summary>
+        /// Returns the version number of this aggregate instance.
+        /// </summary>
+        /// <returns>The version number of this aggregate instance.</returns>
+        public long GetVersionNumber() => _versionNumber;
+
+        /// <summary>
         /// Appends an event to the aggregate, so it can be committed in a later call to <see cref="CommitAsync"/>.
         /// </summary>
         /// <param name="id">Id of the event</param>

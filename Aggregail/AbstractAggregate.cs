@@ -41,6 +41,7 @@ namespace Aggregail
         /// </summary>
         /// <param name="store">Event store to query.</param>
         /// <param name="id">Id of the aggregate.</param>
+        /// <param name="version">Version of the aggregate, or <c>null</c> for the latest version.</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>
         /// The constructed aggregate, or <c>null</c> if the stream does not exist in <paramref name="store"/>.
@@ -48,9 +49,10 @@ namespace Aggregail
         public static Task<TAggregate?> FromAsync(
             IEventStore store,
             TIdentity id,
+            long? version = null,
             CancellationToken cancellationToken = default
         ) =>
-            store.AggregateAsync(id, GetConfiguration(), cancellationToken);
+            store.AggregateAsync(id, GetConfiguration(), version, cancellationToken);
 
         /// <summary>
         /// Resolves the ids of all aggregates of this type, stored in <paramref name="store"/>.

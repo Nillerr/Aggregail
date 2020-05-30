@@ -18,6 +18,6 @@ namespace Aggregail
         /// <summary>
         /// The stream should exist. If it or a metadata stream does not exist treat that as a concurrency problem.
         /// </summary>
-        public const int StreamExists = -4;
+        public const long StreamExists = -4;
     }
 }

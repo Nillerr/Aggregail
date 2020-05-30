@@ -61,57 +61,61 @@ namespace Aggregail
             CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
+            ExpectedVersionValidation.ValidateExpectedVersion(expectedVersion);
+            
             var stream = _streamNameResolver.Stream(id, configuration);
 
-            switch (expectedVersion)
+            var storedEvents = _streams.GetValueOrDefault(stream);
+            var currentVersion = storedEvents?.Last().EventNumber;
+
+            var startingVersion = ExpectedVersionValidation
+                .StartingVersion(expectedVersion, currentVersion, stream);
+
+            if (storedEvents == null)
             {
-                case ExpectedVersion.NoStream:
-                    CreateStream(stream, pendingEvents);
-                    break;
-                default:
-                    AppendToStream(stream, pendingEvents);
-                    break;
+                storedEvents = new List<StoredEvent>();
+                _streams[stream] = storedEvents;
+            }
+
+            var pendingEventsList = pendingEvents.ToList();
+            if (startingVersion < storedEvents.Count)
+            {
+                // Validation phase
+                for (var pendingIndex = 0; pendingIndex < pendingEventsList.Count; pendingIndex++)
+                {
+                    var storedIndex = (int) startingVersion + pendingIndex;
+                    if (storedIndex >= storedEvents.Count)
+                    {
+                        throw new WrongExpectedVersionException(
+                            $"Could not write to stream `{stream}`. Some of the events were not previously committed.",
+                            expectedVersion, currentVersion
+                        );
+                    }
+
+                    var pendingEvent = pendingEventsList[pendingIndex];
+                    var storedEvent = storedEvents[storedIndex];
+                    if (pendingEvent.Id != storedEvent.EventId)
+                    {
+                        throw new WrongExpectedVersionException(
+                            $"Could not write to stream `{stream}`. Some of the events were not previously committed.",
+                            expectedVersion, currentVersion
+                        );
+                    }
+                }
+                
+                // Everything is already committed
+            }
+            else
+            {
+                var recordableEvents = ToStoredEvents(stream, pendingEventsList, startingVersion);
+                foreach (var recordableEvent in recordableEvents)
+                {
+                    storedEvents.Add(recordableEvent);
+                    AddByEventType(recordableEvent);
+                }
             }
 
             return Task.CompletedTask;
-        }
-
-        private void CreateStream(string stream, IEnumerable<IPendingEvent> pendingEvents)
-        {
-            if (_streams.TryGetValue(stream, out var eventStream) && eventStream.Count > 0)
-            {
-                var actualVersion = eventStream.Last().EventNumber;
-                throw new WrongExpectedVersionException(
-                    $"Expected stream `{stream}` to not exist, but did exist at version {actualVersion}.",
-                    ExpectedVersion.NoStream, actualVersion
-                );
-            }
-
-            eventStream = new List<StoredEvent>();
-
-            var storedEvents = ToStoredEvents(stream, pendingEvents, ExpectedVersion.NoStream);
-            foreach (var storedEvent in storedEvents)
-            {
-                eventStream.Add(storedEvent);
-                AddByEventType(storedEvent);
-            }
-
-            _streams[stream] = eventStream;
-        }
-
-        private void AppendToStream(string stream, IEnumerable<IPendingEvent> pendingEvents)
-        {
-            if (_streams.TryGetValue(stream, out var eventStream) && eventStream.Count > 0)
-            {
-                var currentVersion = eventStream.Last().EventNumber;
-
-                var storedEvents = ToStoredEvents(stream, pendingEvents, currentVersion);
-                foreach (var storedEvent in storedEvents)
-                {
-                    eventStream.Add(storedEvent);
-                    AddByEventType(storedEvent);
-                }
-            }
         }
 
         private IEnumerable<StoredEvent> ToStoredEvents(
@@ -156,6 +160,7 @@ namespace Aggregail
         public Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
+            long? version = null,
             CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
@@ -163,34 +168,57 @@ namespace Aggregail
 
             if (_streams.TryGetValue(stream, out var eventStream) && eventStream.Count > 0)
             {
-                var createStoredEvent = eventStream.First();
-                if (!configuration.Constructors.TryGetValue(createStoredEvent.EventType, out var constructor))
-                {
-                    throw new InvalidOperationException(
-                        $"Unrecognized construction event type: {createStoredEvent.EventType}"
-                    );
-                }
-
-                var aggregate = constructor(id, _serializer, createStoredEvent.Data);
-                aggregate.Record(new RecordableEvent(createStoredEvent.EventNumber));
-
+                var aggregate = ConstructAggregate(id, configuration, eventStream.First());
+                
                 foreach (var storedEvent in eventStream.Skip(1))
                 {
-                    if (configuration.Applicators.TryGetValue(storedEvent.EventType, out var applicator))
+                    if (storedEvent.EventNumber > version)
                     {
-                        applicator(aggregate, _serializer, storedEvent.Data);
-                        aggregate.Record(new RecordableEvent(storedEvent.EventNumber));
+                        break;
                     }
-                    else
-                    {
-                        throw new InvalidOperationException($"Unexpected recorded event type: {storedEvent.EventType}");
-                    }
+
+                    ApplyEvent(aggregate, configuration, storedEvent);
                 }
 
                 return Task.FromResult<TAggregate?>(aggregate);
             }
 
             return Task.FromResult<TAggregate?>(null);
+        }
+
+        private TAggregate ConstructAggregate<TIdentity, TAggregate>(
+            TIdentity id,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            StoredEvent storedEvent
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            if (!configuration.Constructors.TryGetValue(storedEvent.EventType, out var constructor))
+            {
+                throw new InvalidOperationException(
+                    $"Unrecognized construction event type: {storedEvent.EventType}"
+                );
+            }
+
+            var aggregate = constructor(id, _serializer, storedEvent.Data);
+            aggregate.Record(new RecordableEvent(storedEvent.EventNumber));
+            return aggregate;
+        }
+
+        private void ApplyEvent<TIdentity, TAggregate>(
+            TAggregate aggregate,
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            StoredEvent storedEvent
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            if (configuration.Applicators.TryGetValue(storedEvent.EventType, out var applicator))
+            {
+                applicator(aggregate, _serializer, storedEvent.Data);
+                aggregate.Record(new RecordableEvent(storedEvent.EventNumber));
+            }
+            else
+            {
+                throw new InvalidOperationException($"Unexpected recorded event type: {storedEvent.EventType}");
+            }
         }
 
         /// <inheritdoc />

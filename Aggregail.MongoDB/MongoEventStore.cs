@@ -58,50 +58,53 @@ namespace Aggregail.MongoDB
             CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
+            ExpectedVersionValidation.ValidateExpectedVersion(expectedVersion);
+
+            var stream = _streamNameResolver.Stream(id, configuration);
+
             using var session = await _events.Database.Client.StartSessionAsync(null, cancellationToken);
 
             session.StartTransaction(_transactionOptions);
 
-            var stream = _streamNameResolver.Stream(id, configuration);
-
-            var latestEvent = await _events
-                .Find(session, e => e.Stream == stream)
-                .SortByDescending(e => e.EventNumber)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (expectedVersion == ExpectedVersion.NoStream && latestEvent != null)
-            {
-                throw new WrongExpectedVersionException(
-                    $"Expected stream `{stream}` to not exist, but did exist at version {latestEvent.EventNumber}.",
-                    expectedVersion, latestEvent.EventNumber
-                );
-            }
-
-            if (expectedVersion > ExpectedVersion.NoStream && latestEvent == null)
-            {
-                throw new WrongExpectedVersionException(
-                    $"Expected stream `{stream}` to be at version {expectedVersion}, but the stream did not exist.",
-                    expectedVersion, null
-                );
-            }
-
-            var currentVersion = latestEvent?.EventNumber ?? -1L;
-
-            var recordedEvents = pendingEvents
-                .Select((pendingEvent, index) => RecordedEvent(stream, pendingEvent, currentVersion + index + 1))
-                .ToArray();
-
             try
             {
-                await _events.InsertManyAsync(session, recordedEvents, null, cancellationToken);
+                var latestEvent = await _events
+                    .Find(session, e => e.Stream == stream)
+                    .SortByDescending(e => e.EventNumber)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                var currentVersion = latestEvent?.EventNumber;
+                var startingVersion = ExpectedVersionValidation
+                    .StartingVersion(expectedVersion, currentVersion, stream);
+
+                var recordedEvents = pendingEvents
+                    .Select((pendingEvent, index) => RecordedEvent(stream, pendingEvent, startingVersion + index))
+                    .ToArray();
+
+                try
+                {
+                    await _events.InsertManyAsync(session, recordedEvents, null, cancellationToken);
+                    await session.CommitTransactionAsync(cancellationToken);
+                }
+                catch (MongoWriteException ex)
+                {
+                    if (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+                    {
+                        throw new WrongExpectedVersionException(
+                            "Either none or only a subset of the events were previously committed.",
+                            expectedVersion, currentVersion
+                        );
+                    }
+
+                    throw;
+                }
             }
-            catch (MongoWriteException)
+            catch (Exception)
             {
-                await session.AbortTransactionAsync(cancellationToken);
+                // ReSharper disable once MethodSupportsCancellation
+                await session.AbortTransactionAsync();
                 throw;
             }
-
-            await session.CommitTransactionAsync(cancellationToken);
         }
 
         private RecordedEvent RecordedEvent(string stream, IPendingEvent pendingEvent, long eventNumber)
@@ -135,6 +138,7 @@ namespace Aggregail.MongoDB
         public async Task<TAggregate?> AggregateAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
+            long? version = null,
             CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
@@ -143,7 +147,7 @@ namespace Aggregail.MongoDB
             var stream = _streamNameResolver.Stream(id, configuration);
 
             var cursor = await _events
-                .Find(e => e.Stream == stream)
+                .Find(e => e.Stream == stream && e.EventNumber <= version)
                 .SortBy(e => e.EventNumber)
                 .ToCursorAsync(cancellationToken);
 
@@ -242,9 +246,9 @@ namespace Aggregail.MongoDB
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             using var session = await _database.Client.StartSessionAsync(cancellationToken: cancellationToken);
-            
+
             session.StartTransaction();
-            
+
             var stream = _streamNameResolver.Stream(id, configuration);
 
             if (expectedVersion != ExpectedVersion.Any && expectedVersion != ExpectedVersion.NoStream)
@@ -264,7 +268,7 @@ namespace Aggregail.MongoDB
             }
 
             await _events.DeleteManyAsync(session, e => e.Stream == stream, null, cancellationToken);
-            
+
             await session.CommitTransactionAsync(cancellationToken);
         }
 
