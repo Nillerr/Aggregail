@@ -90,7 +90,7 @@ namespace EventSourcing.Demo
                 foreach (var resolvedEvent in slice.Events)
                 {
                     var recordedEvent = resolvedEvent.Event;
-                    if (recordedEvent.EventNumber > version)
+                    if (version.HasValue && recordedEvent.EventNumber > version.Value)
                     {
                         return aggregate;
                     }

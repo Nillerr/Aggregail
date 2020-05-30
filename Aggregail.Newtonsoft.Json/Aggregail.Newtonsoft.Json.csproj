@@ -4,7 +4,7 @@
         <TargetFramework>netstandard2.1</TargetFramework>
         <Nullable>enable</Nullable>
         <PackageId>Aggregail.Newtonsoft.Json</PackageId>
-        <Version>1.0.0-alpha.3</Version>
+        <Version>1.0.0-alpha.4</Version>
         <Authors>Nicklas Jensen</Authors>
         <Description>A microframework for working with Aggregate Roots in an Event Sourced system, backed by an Event Store.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -19,15 +19,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Aggregail" Version="1.0.0-alpha.16" />
         <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     </ItemGroup>
 
-    <ItemGroup Condition=" '$(Configuration)' != 'Debug (Development)' ">
-        <PackageReference Include="Aggregail" Version="1.0.0-alpha.4" />
-    </ItemGroup>
-
     <ItemGroup Condition=" '$(Configuration)' == 'Debug (Development)' ">
-        <ProjectReference Include="../Aggregail/Aggregail.csproj"/>
+        <ProjectReference Include="../Aggregail/Aggregail.csproj" />
     </ItemGroup>
 
 </Project>

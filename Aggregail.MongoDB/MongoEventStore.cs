@@ -146,8 +146,13 @@ namespace Aggregail.MongoDB
 
             var stream = _streamNameResolver.Stream(id, configuration);
 
+            var fb = Builders<RecordedEvent>.Filter;
+            var filter = version == null
+                ? fb.Where(e => e.Stream == stream)
+                : fb.Where(e => e.Stream == stream && e.EventNumber <= version.Value);
+            
             var cursor = await _events
-                .Find(e => e.Stream == stream && e.EventNumber <= version)
+                .Find(filter)
                 .SortBy(e => e.EventNumber)
                 .ToCursorAsync(cancellationToken);
 

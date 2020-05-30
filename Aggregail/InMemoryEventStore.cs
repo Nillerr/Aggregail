@@ -172,7 +172,7 @@ namespace Aggregail
                 
                 foreach (var storedEvent in eventStream.Skip(1))
                 {
-                    if (storedEvent.EventNumber > version)
+                    if (version.HasValue && storedEvent.EventNumber > version.Value)
                     {
                         break;
                     }

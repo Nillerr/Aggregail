@@ -4,7 +4,7 @@
         <TargetFramework>netcoreapp3.0</TargetFramework>
         <Nullable>enable</Nullable>
         <PackageId>Aggregail.System.Text.Json</PackageId>
-        <Version>1.0.0-alpha.1</Version>
+        <Version>1.0.0-alpha.2</Version>
         <Authors>Nicklas Jensen</Authors>
         <Description>A microframework for working with Aggregate Roots in an Event Sourced system, backed by an Event Store.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -18,13 +18,13 @@
         <Configurations>Debug;Release;Debug (Development)</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
-    
-    <ItemGroup Condition=" '$(Configuration)' != 'Debug (Development)' ">
-        <PackageReference Include="Aggregail" Version="1.0.0-alpha.4"/>
-    </ItemGroup>
 
     <ItemGroup Condition=" '$(Configuration)' == 'Debug (Development)' ">
-        <ProjectReference Include="../Aggregail/Aggregail.csproj"/>
+        <ProjectReference Include="../Aggregail/Aggregail.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Aggregail" Version="1.0.0-alpha.16" />
     </ItemGroup>
   
 </Project>

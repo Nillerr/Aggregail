@@ -26,6 +26,11 @@ namespace Aggregail
     public abstract class AbstractAggregate<TIdentity, TAggregate> : Aggregate<TIdentity, TAggregate>
         where TAggregate : AbstractAggregate<TIdentity, TAggregate>
     {
+        static AbstractAggregate()
+        {
+            AbstractAggregateInitializer.Initialize();
+        }
+        
         /// <summary>
         /// The configuration of this aggregate
         /// </summary>
