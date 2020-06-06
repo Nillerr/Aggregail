@@ -133,11 +133,11 @@ namespace Aggregail
         private IEnumerable<StoredEvent> ToStoredEvents(
             string stream,
             IEnumerable<IPendingEvent> pendingEvents,
-            long currentVersion
+            long startingVersion
         )
         {
             return pendingEvents
-                .Select((pendingEvent, index) => ToStoredEvent(stream, pendingEvent, currentVersion + 1 + index));
+                .Select((pendingEvent, index) => ToStoredEvent(stream, pendingEvent, startingVersion + index));
         }
 
         private StoredEvent ToStoredEvent(string stream, IPendingEvent pendingEvent, long eventVersion)
@@ -255,10 +255,8 @@ namespace Aggregail
                     {
                         continue;
                     }
-                    
-                    var eventStreamParts = storedEvent.EventStreamId.Split("-", 2);
-                    var lastEventStreamPart = eventStreamParts[1];
-                    var id = configuration.IdentityParser(lastEventStreamPart);
+
+                    var id = _streamNameResolver.ParseId(storedEvent.EventStreamId, configuration);
                     yield return id;
                 }
             }

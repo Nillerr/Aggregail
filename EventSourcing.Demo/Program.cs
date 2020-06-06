@@ -54,6 +54,8 @@ namespace EventSourcing.Demo
             var sw = new Stopwatch();
             sw.Start();
             Console.WriteLine("Running Test Case...");
+            
+            var inMemoryStore = new InMemoryEventStore(new InMemoryEventStoreSettings(serializer));
 
             await RobotProgram.RunAsync(mongoStore);
             

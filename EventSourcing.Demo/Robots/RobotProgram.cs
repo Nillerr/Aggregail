@@ -17,11 +17,11 @@ namespace EventSourcing.Demo.Robots
 
             var olympus = Guid.Parse("1ab17979-ff43-e911-a970-000d3a391cda");
             
-            // var tasks = response.Value
-            //     .Where(e => e.C2RurEnduserValue == olympus)
-            //     .Select(entity => ImportRobotAsync(store, entity));
-            //
-            // await Task.WhenAll(tasks);
+            var tasks = response.Value
+                .Where(e => e.C2RurEnduserValue == olympus)
+                .Select(entity => ImportRobotAsync(store, entity));
+            
+            await Task.WhenAll(tasks);
 
             Console.WriteLine("[Robots]");
             await foreach (var robotId in Robot.IdsAsync(store))
