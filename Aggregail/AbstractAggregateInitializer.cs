@@ -16,13 +16,14 @@ namespace Aggregail
             {
                 return;
             }
-
-            var entryAssembly = Assembly.GetEntryAssembly();
             
             var loadedAssemblies = new HashSet<string>();
             
             var assemblyNames = new Stack<AssemblyName>();
-            assemblyNames.Push(entryAssembly.GetName());
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                assemblyNames.Push(assembly.GetName());
+            }
             
             while (assemblyNames.TryPop(out var assemblyName))
             {
