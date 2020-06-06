@@ -20,7 +20,7 @@ namespace EventSourcing.Demo.Robots
             var tasks = response.Value
                 .Where(e => e.C2RurEnduserValue == olympus)
                 .Select(entity => ImportRobotAsync(store, entity));
-
+            
             await Task.WhenAll(tasks);
 
             Console.WriteLine("[Robots]");
