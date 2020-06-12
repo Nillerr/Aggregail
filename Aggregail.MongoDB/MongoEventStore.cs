@@ -436,7 +436,7 @@ namespace Aggregail.MongoDB
                 .Select(e => e["name"].AsString)
                 .ToHashSet();
             
-            if (!indexNames.Contains("category_1_created_1"))
+            if (!indexNames.Contains("category_1_created_1_id_1"))
             {
                 await PopulateCategory(cancellationToken);
             }
