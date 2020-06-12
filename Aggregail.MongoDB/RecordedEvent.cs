@@ -1,34 +1,31 @@
 using System;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace Aggregail.MongoDB
 {
-    [BsonIgnoreExtraElements]
-    internal sealed class RecordedEvent
+    internal sealed class RecordedEvent<TIdentity, TAggregate> : IRecordedEvent<TIdentity, TAggregate>
+        where TAggregate : Aggregate<TIdentity, TAggregate>
     {
-        [BsonId]
-        public ObjectId Id { get; set; }
+        private readonly RecordedEventDocument _document;
+        private readonly IJsonEventSerializer _serializer;
 
-        [BsonElement("stream")]
-        public string Stream { get; set; } = null!;
+        public RecordedEvent(RecordedEventDocument document, IJsonEventSerializer serializer, TIdentity id)
+        {
+            Id = id;
+            _document = document;
+            _serializer = serializer;
+        }
+
+        public string Stream => _document.Stream;
+        public Guid EventId => _document.EventId;
+        public long EventNumber => _document.EventNumber;
+        public string EventType => _document.EventType;
+        public DateTime Created => _document.Created;
+        public T Data<T>() where T : class => _serializer.Deserialize<T>(_document.Data);
+
+        public T Metadata<T>() where T : class => _document.Metadata == null
+            ? null!
+            : _serializer.Deserialize<T>(_document.Metadata);
         
-        [BsonElement("event_id")]
-        public Guid EventId { get; set; }
-        
-        [BsonElement("event_type")]
-        public string EventType { get; set; } = null!;
-        
-        [BsonElement("event_number")]
-        public long EventNumber { get; set; }
-        
-        [BsonElement("created")]
-        public DateTime Created { get; set; }
-        
-        [BsonElement("data")]
-        public byte[]? Data { get; set; }
-        
-        [BsonElement("metadata")]
-        public byte[]? Metadata { get; set; }
+        public TIdentity Id { get; }
     }
 }

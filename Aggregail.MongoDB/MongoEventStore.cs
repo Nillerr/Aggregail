@@ -23,7 +23,7 @@ namespace Aggregail.MongoDB
         private readonly IMongoDatabase _database;
         private readonly string _collection;
 
-        private readonly IMongoCollection<RecordedEvent> _events;
+        private readonly IMongoCollection<RecordedEventDocument> _events;
         private readonly IJsonEventSerializer _serializer;
         private readonly ILogger<MongoEventStore>? _logger;
         private readonly TransactionOptions _transactionOptions;
@@ -40,7 +40,7 @@ namespace Aggregail.MongoDB
             _database = settings.Database;
             _collection = settings.Collection;
 
-            _events = settings.Database.GetCollection<RecordedEvent>(settings.Collection);
+            _events = settings.Database.GetCollection<RecordedEventDocument>(settings.Collection);
             _serializer = settings.EventSerializer;
             _logger = settings.Logger;
             _clock = settings.Clock;
@@ -60,6 +60,7 @@ namespace Aggregail.MongoDB
         {
             ExpectedVersionValidation.ValidateExpectedVersion(expectedVersion);
 
+            var category = configuration.Name;
             var stream = _streamNameResolver.Stream(id, configuration);
 
             using var session = await _events.Database.Client.StartSessionAsync(null, cancellationToken);
@@ -78,7 +79,9 @@ namespace Aggregail.MongoDB
                     .StartingVersion(expectedVersion, currentVersion, stream);
 
                 var recordedEvents = pendingEvents
-                    .Select((pendingEvent, index) => RecordedEvent(stream, pendingEvent, startingVersion + index))
+                    .Select((pendingEvent, index) =>
+                        RecordedEvent(category, stream, pendingEvent, startingVersion + index)
+                    )
                     .ToArray();
 
                 try
@@ -107,9 +110,14 @@ namespace Aggregail.MongoDB
             }
         }
 
-        private RecordedEvent RecordedEvent(string stream, IPendingEvent pendingEvent, long eventNumber)
+        private RecordedEventDocument RecordedEvent(
+            string category,
+            string stream,
+            IPendingEvent pendingEvent,
+            long eventNumber
+        )
         {
-            var e = new RecordedEvent();
+            var e = new RecordedEventDocument();
             e.Stream = stream;
             e.EventId = pendingEvent.Id;
             e.EventType = pendingEvent.Type;
@@ -117,6 +125,7 @@ namespace Aggregail.MongoDB
             e.Created = UtcNow;
             e.Data = pendingEvent.Data(_serializer);
             e.Metadata = pendingEvent.Metadata(_metadataFactory, _serializer);
+            e.Category = category;
             return e;
         }
 
@@ -146,11 +155,11 @@ namespace Aggregail.MongoDB
 
             var stream = _streamNameResolver.Stream(id, configuration);
 
-            var fb = Builders<RecordedEvent>.Filter;
+            var fb = Builders<RecordedEventDocument>.Filter;
             var filter = version == null
                 ? fb.Where(e => e.Stream == stream)
                 : fb.Where(e => e.Stream == stream && e.EventNumber <= version.Value);
-            
+
             var cursor = await _events
                 .Find(filter)
                 .SortBy(e => e.EventNumber)
@@ -179,19 +188,19 @@ namespace Aggregail.MongoDB
         private TAggregate ConstructAggregate<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
-            RecordedEvent recordedEvent
+            RecordedEventDocument document
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var constructors = configuration.Constructors;
 
-            if (!constructors.TryGetValue(recordedEvent.EventType, out var constructor))
+            if (!constructors.TryGetValue(document.EventType, out var constructor))
             {
-                throw new InvalidOperationException($"Unrecognized construction event type: {recordedEvent.EventType}");
+                throw new InvalidOperationException($"Unrecognized construction event type: {document.EventType}");
             }
 
-            var aggregate = constructor(id, _serializer, recordedEvent.Data ?? Array.Empty<byte>());
+            var aggregate = constructor(id, _serializer, document.Data ?? Array.Empty<byte>());
 
-            var recordableEvent = new RecordableEvent(recordedEvent.EventNumber);
+            var recordableEvent = new RecordableEvent(document.EventNumber);
             aggregate.Record(recordableEvent);
 
             return aggregate;
@@ -200,19 +209,19 @@ namespace Aggregail.MongoDB
         private void ApplyEvent<TIdentity, TAggregate>(
             TAggregate aggregate,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
-            RecordedEvent recordedEvent
+            RecordedEventDocument document
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var applicators = configuration.Applicators;
 
-            if (!applicators.TryGetValue(recordedEvent.EventType, out var applicator))
+            if (!applicators.TryGetValue(document.EventType, out var applicator))
             {
-                throw new InvalidOperationException($"Unexpected recorded event type: {recordedEvent.EventType}");
+                throw new InvalidOperationException($"Unexpected recorded event type: {document.EventType}");
             }
 
-            applicator(aggregate, _serializer, recordedEvent.Data ?? Array.Empty<byte>());
+            applicator(aggregate, _serializer, document.Data ?? Array.Empty<byte>());
 
-            var recordableEvent = new RecordableEvent(recordedEvent.EventNumber);
+            var recordableEvent = new RecordableEvent(document.EventNumber);
             aggregate.Record(recordableEvent);
         }
 
@@ -277,6 +286,7 @@ namespace Aggregail.MongoDB
             await session.CommitTransactionAsync(cancellationToken);
         }
 
+        /// <inheritdoc />
         public async Task<bool> AggregateExistsAsync<TIdentity, TAggregate>(
             TIdentity id,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
@@ -286,12 +296,34 @@ namespace Aggregail.MongoDB
             using var session = await _database.Client.StartSessionAsync(cancellationToken: cancellationToken);
 
             var stream = _streamNameResolver.Stream(id, configuration);
-            
+
             var exists = await _events
                 .Find(e => e.Stream == stream)
                 .AnyAsync(cancellationToken);
-            
+
             return exists;
+        }
+
+        /// <inheritdoc />
+        public async IAsyncEnumerable<IRecordedEvent<TIdentity, TAggregate>>
+            ReadStreamEventsAsync<TIdentity, TAggregate>(
+                AggregateConfiguration<TIdentity, TAggregate> configuration,
+                [EnumeratorCancellation] CancellationToken cancellationToken = default
+            ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            var cursor = await _events
+                .Find(e => e.Category == configuration.Name)
+                .ToCursorAsync(cancellationToken);
+
+            while (await cursor.MoveNextAsync(cancellationToken))
+            {
+                foreach (var document in cursor.Current)
+                {
+                    var id = _streamNameResolver.ParseId(document.Stream, configuration);
+                    var recordedEvent = new RecordedEvent<TIdentity, TAggregate>(document, _serializer, id);
+                    yield return recordedEvent;
+                }
+            }
         }
 
         /// <summary>
@@ -312,6 +344,7 @@ namespace Aggregail.MongoDB
             await CreateEventTypeIndexAsync(cancellationToken);
             await CreateEventNumberCreatedIndexAsync(cancellationToken);
             await CreateCreatedIndexAsync(cancellationToken);
+            await CreateCategoryIndexAsync(cancellationToken);
 
             _logger?.LogDebug("Indexes initialized successfully");
 
@@ -341,7 +374,9 @@ namespace Aggregail.MongoDB
 
         private async Task CreateStreamEventNumberIndexAsync(CancellationToken cancellationToken)
         {
-            var keyBuilder = Builders<RecordedEvent>.IndexKeys;
+            _logger?.LogDebug("Initializing Index (Stream, EventNumber)...");
+            
+            var keyBuilder = Builders<RecordedEventDocument>.IndexKeys;
 
             var keys = keyBuilder
                 .Combine(
@@ -350,15 +385,18 @@ namespace Aggregail.MongoDB
                 );
 
             var options = new CreateIndexOptions();
+            options.Background = false;
             options.Unique = true;
 
-            var model = new CreateIndexModel<RecordedEvent>(keys, options);
+            var model = new CreateIndexModel<RecordedEventDocument>(keys, options);
             await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
         }
 
         private async Task CreateEventTypeIndexAsync(CancellationToken cancellationToken)
         {
-            var keyBuilder = Builders<RecordedEvent>.IndexKeys;
+            _logger?.LogDebug("Initializing Index (EventType, EventNumber)...");
+            
+            var keyBuilder = Builders<RecordedEventDocument>.IndexKeys;
 
             var keys = keyBuilder
                 .Combine(
@@ -367,15 +405,78 @@ namespace Aggregail.MongoDB
                 );
 
             var options = new CreateIndexOptions();
+            options.Background = false;
             options.Unique = false;
 
-            var model = new CreateIndexModel<RecordedEvent>(keys, options);
+            var model = new CreateIndexModel<RecordedEventDocument>(keys, options);
             await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
+        }
+
+        private async Task CreateCategoryIndexAsync(CancellationToken cancellationToken)
+        {
+            _logger?.LogDebug("Initializing Index (Category)...");
+            
+            var keyBuilder = Builders<RecordedEventDocument>.IndexKeys;
+
+            var keys = keyBuilder.Ascending(e => e.Category);
+
+            var options = new CreateIndexOptions();
+            options.Background = false;
+            options.Unique = false;
+
+            var indexNames = (await (await _events.Indexes.ListAsync(cancellationToken)).ToListAsync(cancellationToken))
+                .Select(e => e["name"].AsString)
+                .ToHashSet();
+            
+            if (!indexNames.Contains("category_1"))
+            {
+                await PopulateCategory(cancellationToken);
+            }
+
+            var model = new CreateIndexModel<RecordedEventDocument>(keys, options);
+            await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
+        }
+
+        private async Task PopulateCategory(CancellationToken cancellationToken)
+        {
+            _logger?.LogDebug("Populating Category in existing events...");
+            
+            var fb = Builders<RecordedEventDocument>.Filter;
+
+            var cursor = await _events
+                .Find(fb.Not(fb.Exists(e => e.Category)))
+                .ToCursorAsync(cancellationToken);
+
+            var batch = new List<WriteModel<RecordedEventDocument>>();
+
+            while (await cursor.MoveNextAsync(cancellationToken))
+            {
+                batch.Clear();
+
+                foreach (var document in cursor.Current)
+                {
+                    var category = _streamNameResolver.AggregateName(document.Stream);
+
+                    var definition = new UpdateOneModel<RecordedEventDocument>(
+                        Builders<RecordedEventDocument>.Filter.Where(e => e.Id == document.Id),
+                        Builders<RecordedEventDocument>.Update.Set(e => e.Category, category)
+                    );
+
+                    batch.Add(definition);
+                }
+
+                if (batch.Count > 0)
+                {
+                    await _events.BulkWriteAsync(batch, null, cancellationToken);
+                }
+            }
         }
 
         private async Task CreateEventNumberCreatedIndexAsync(CancellationToken cancellationToken)
         {
-            var keyBuilder = Builders<RecordedEvent>.IndexKeys;
+            _logger?.LogDebug("Initializing Index (EventNumber, Created)...");
+            
+            var keyBuilder = Builders<RecordedEventDocument>.IndexKeys;
 
             var keys = keyBuilder.Combine(
                 keyBuilder.Ascending(e => e.EventNumber),
@@ -384,21 +485,25 @@ namespace Aggregail.MongoDB
 
             var options = new CreateIndexOptions();
             options.Background = true;
+            options.Unique = false;
 
-            var model = new CreateIndexModel<RecordedEvent>(keys, options);
+            var model = new CreateIndexModel<RecordedEventDocument>(keys, options);
             await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
         }
 
         private async Task CreateCreatedIndexAsync(CancellationToken cancellationToken)
         {
-            var keyBuilder = Builders<RecordedEvent>.IndexKeys;
+            _logger?.LogDebug("Initializing Index (Created)...");
+            
+            var keyBuilder = Builders<RecordedEventDocument>.IndexKeys;
 
             var keys = keyBuilder.Ascending(e => e.Created);
 
             var options = new CreateIndexOptions();
             options.Background = true;
+            options.Unique = false;
 
-            var model = new CreateIndexModel<RecordedEvent>(keys, options);
+            var model = new CreateIndexModel<RecordedEventDocument>(keys, options);
             await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
         }
     }

@@ -18,10 +18,26 @@ namespace Aggregail
         /// The serializer to use when serializing events.
         /// </summary>
         public IJsonEventSerializer EventSerializer { get; set; }
+
+        /// <summary>
+        /// The clock for recording the current time when appending events.
+        /// </summary>
+        /// <remarks>
+        /// Defaults to <see cref="SystemClock"/>
+        /// </remarks>
+        public IClock Clock { get; set; } = SystemClock.Instance;
         
         /// <summary>
         /// Resolves names of streams for aggregates.
         /// </summary>
         public IStreamNameResolver StreamNameResolver { get; set; } = TokenizedStreamNameResolver.Default;
+
+        /// <summary>
+        /// The service responsible for creating metadata for a given event.
+        /// </summary>
+        /// <remarks>
+        /// Defaults to <see cref="NoMetadataFactory"/>.
+        /// </remarks>
+        public IMetadataFactory MetadataFactory { get; set; } = NoMetadataFactory.Instance;
     }
 }

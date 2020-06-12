@@ -107,5 +107,20 @@ namespace Aggregail
             CancellationToken cancellationToken = default
         )
             where TAggregate : Aggregate<TIdentity, TAggregate>;
+
+        /// <summary>
+        /// Returns every event for every aggregate of the type specified by <typeparamref name="TAggregate"/>, using
+        /// information declared in <paramref name="configuration"/>.
+        /// </summary>
+        /// <param name="configuration">Aggregate configuration</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <typeparam name="TIdentity">Type of id</typeparam>
+        /// <typeparam name="TAggregate">Type of aggregate</typeparam>
+        /// <returns>The events of every aggregate of type <typeparamref name="TAggregate"/>.</returns>
+        IAsyncEnumerable<IRecordedEvent<TIdentity, TAggregate>> ReadStreamEventsAsync<TIdentity, TAggregate>(
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default
+        )
+            where TAggregate : Aggregate<TIdentity, TAggregate>;
     }
 }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -125,6 +124,15 @@ namespace Aggregail.Testing
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             return _store.AggregateExistsAsync(id, configuration, cancellationToken);
+        }
+
+        /// <inheritdoc />
+        public IAsyncEnumerable<IRecordedEvent<TIdentity, TAggregate>> ReadStreamEventsAsync<TIdentity, TAggregate>(
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            return _store.ReadStreamEventsAsync(configuration, cancellationToken);
         }
 
         /// <summary>

@@ -9,6 +9,8 @@ using Aggregail.MongoDB;
 using Aggregail.Newtonsoft.Json;
 using EventSourcing.Demo.Cases;
 using EventSourcing.Demo.Robots;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -20,6 +22,14 @@ namespace EventSourcing.Demo
     {
         public static async Task Main(string[] args)
         {
+            var services = new ServiceCollection()
+                .AddLogging(lb => lb
+                    .SetMinimumLevel(LogLevel.Trace)
+                    .AddConsole()
+                );
+
+            await using var serviceProvider = services.BuildServiceProvider();
+            
             var jsonSerializerSettings = new JsonSerializerSettings
             {
                 ContractResolver = new DefaultContractResolver
@@ -46,6 +56,7 @@ namespace EventSourcing.Demo
             
             var mongoSettings = new MongoEventStoreSettings(mongoDatabase, "streams", serializer);
             mongoSettings.MetadataFactory = new MetadataFactory("nije");
+            mongoSettings.Logger = serviceProvider.GetRequiredService<ILogger<MongoEventStore>>();
             
             var mongoStore = new MongoEventStore(mongoSettings);
 

@@ -1,6 +1,6 @@
 using System;
 
-namespace Aggregail.MongoDB
+namespace Aggregail
 {
     /// <summary>
     /// A clock which returns the current time as a <see cref="DateTime"/> in UTC.

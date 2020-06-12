@@ -25,6 +25,8 @@ namespace Aggregail.Newtonsoft.Json
         /// <inheritdoc/>
         public T Deserialize<T>(byte[] source) where T : class
         {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            
             using var stream = new MemoryStream(source);
             using var textReader = new StreamReader(stream, Encoding.UTF8);
             using var jsonReader = new JsonTextReader(textReader);
@@ -44,6 +46,8 @@ namespace Aggregail.Newtonsoft.Json
         /// <inheritdoc/>
         public byte[] Serialize<T>(T source) where T : class
         {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            
             var stream = new MemoryStream();
             
             using (var textWriter = new StreamWriter(stream))

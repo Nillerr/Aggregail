@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Aggregail.InMemory;
 
 namespace Aggregail
 {
@@ -15,32 +16,19 @@ namespace Aggregail
     /// </remarks>
     public sealed class InMemoryEventStore : IEventStore
     {
-        private sealed class StoredEvent
-        {
-            public StoredEvent(Guid eventId, string eventStreamId, string eventType, long eventNumber, byte[] data)
-            {
-                EventId = eventId;
-                EventStreamId = eventStreamId;
-                EventType = eventType;
-                EventNumber = eventNumber;
-                Data = data;
-            }
-
-            public Guid EventId { get; }
-            public string EventStreamId { get; }
-            public string EventType { get; }
-            public long EventNumber { get; }
-            public byte[] Data { get; }
-        }
-
-        private readonly Dictionary<string, List<StoredEvent>> _streams = 
+        private readonly Dictionary<string, List<StoredEvent>> _streams =
             new Dictionary<string, List<StoredEvent>>();
 
         private readonly Dictionary<string, List<StoredEvent>> _byEventType =
             new Dictionary<string, List<StoredEvent>>();
 
+        private readonly Dictionary<string, List<StoredEvent>> _byCategory =
+            new Dictionary<string, List<StoredEvent>>();
+
         private readonly IJsonEventSerializer _serializer;
         private readonly IStreamNameResolver _streamNameResolver;
+        private readonly IClock _clock;
+        private readonly IMetadataFactory _metadataFactory;
 
         /// <summary>
         /// Creates an instance of the <see cref="InMemoryEventStore"/> class.
@@ -50,6 +38,8 @@ namespace Aggregail
         {
             _serializer = settings.EventSerializer;
             _streamNameResolver = settings.StreamNameResolver;
+            _clock = settings.Clock;
+            _metadataFactory = settings.MetadataFactory;
         }
 
         /// <inheritdoc />
@@ -62,7 +52,7 @@ namespace Aggregail
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             ExpectedVersionValidation.ValidateExpectedVersion(expectedVersion);
-            
+
             var stream = _streamNameResolver.Stream(id, configuration);
 
             var storedEvents = _streams.GetValueOrDefault(stream);
@@ -80,7 +70,9 @@ namespace Aggregail
             if (startingVersion < storedEvents.Count)
             {
                 // Validation phase
-                ValidateExistingEvents(stream, expectedVersion, pendingEvents, startingVersion, storedEvents, currentVersion);
+                ValidateExistingEvents(stream, expectedVersion, pendingEvents, startingVersion, storedEvents,
+                    currentVersion
+                );
 
                 // Everything is already committed
             }
@@ -91,6 +83,7 @@ namespace Aggregail
                 {
                     storedEvents.Add(recordableEvent);
                     AddByEventType(recordableEvent);
+                    AddByCategory(recordableEvent, configuration);
                 }
             }
 
@@ -143,13 +136,17 @@ namespace Aggregail
         private StoredEvent ToStoredEvent(string stream, IPendingEvent pendingEvent, long eventVersion)
         {
             var data = pendingEvent.Data(_serializer);
-            
+            var metadata = _metadataFactory.MetadataFor(pendingEvent.Id, pendingEvent.Type, data, _serializer);
+            var created = _clock.UtcNow;
+
             return new StoredEvent(
                 pendingEvent.Id,
                 stream,
                 pendingEvent.Type,
                 eventVersion,
-                data
+                data,
+                metadata,
+                created
             );
         }
 
@@ -163,8 +160,24 @@ namespace Aggregail
             {
                 byEventType = new List<StoredEvent>();
                 byEventType.Add(storedEvent);
-                
+
                 _byEventType[storedEvent.EventType] = byEventType;
+            }
+        }
+
+        private void AddByCategory(StoredEvent storedEvent, IAggregateConfiguration configuration)
+        {
+            var category = configuration.Name;
+            if (_byCategory.TryGetValue(category, out var byCategory))
+            {
+                byCategory.Add(storedEvent);
+            }
+            else
+            {
+                byCategory = new List<StoredEvent>();
+                byCategory.Add(storedEvent);
+
+                _byCategory[category] = byCategory;
             }
         }
 
@@ -181,7 +194,7 @@ namespace Aggregail
             if (_streams.TryGetValue(stream, out var eventStream) && eventStream.Count > 0)
             {
                 var aggregate = ConstructAggregate(id, configuration, eventStream.First());
-                
+
                 foreach (var storedEvent in eventStream.Skip(1))
                 {
                     if (version.HasValue && storedEvent.EventNumber > version.Value)
@@ -243,19 +256,14 @@ namespace Aggregail
             foreach (var (eventType, _) in constructors)
             {
                 await Task.Yield();
-                
+
                 if (!_byEventType.TryGetValue(eventType, out var eventStream))
                 {
                     continue;
                 }
-                
-                foreach (var storedEvent in eventStream)
-                {
-                    if (storedEvent.EventNumber != 0)
-                    {
-                        continue;
-                    }
 
+                foreach (var storedEvent in eventStream.Where(e => e.EventNumber == 0))
+                {
                     var id = _streamNameResolver.ParseId(storedEvent.EventStreamId, configuration);
                     yield return id;
                 }
@@ -294,6 +302,26 @@ namespace Aggregail
             var stream = _streamNameResolver.Stream(id, configuration);
             var exists = _streams.ContainsKey(stream);
             return Task.FromResult(exists);
+        }
+
+        /// <inheritdoc />
+        public async IAsyncEnumerable<IRecordedEvent<TIdentity, TAggregate>>
+            ReadStreamEventsAsync<TIdentity, TAggregate>(
+                AggregateConfiguration<TIdentity, TAggregate> configuration,
+                [EnumeratorCancellation] CancellationToken cancellationToken = default
+            ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            if (_byCategory.TryGetValue(configuration.Name, out var storedEvents))
+            {
+                foreach (var storedEvent in storedEvents)
+                {
+                    await Task.Yield();
+
+                    var id = _streamNameResolver.ParseId(storedEvent.EventStreamId, configuration);
+                    var recordedEvent = new RecordedEvent<TIdentity, TAggregate>(storedEvent, _serializer, id);
+                    yield return recordedEvent;
+                }
+            }
         }
     }
 }

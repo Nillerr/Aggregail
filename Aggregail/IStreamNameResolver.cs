@@ -33,5 +33,7 @@ namespace Aggregail
             AggregateConfiguration<TIdentity, TAggregate> configuration
         )
             where TAggregate : Aggregate<TIdentity, TAggregate>;
+
+        string AggregateName(string stream);
     }
 }

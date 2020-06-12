@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Aggregail;
 using EventStore.ClientAPI;
-using ExpectedVersion = EventStore.ClientAPI.ExpectedVersion;
 
 namespace EventSourcing.Demo
 {
@@ -143,6 +142,14 @@ namespace EventSourcing.Demo
             var stream = _streamNameResolver.Stream(id, configuration);
             var meta = await _connection.GetStreamMetadataAsync(stream);
             return meta.MetastreamVersion >= 0 && !meta.IsStreamDeleted;
+        }
+
+        public IAsyncEnumerable<IRecordedEvent<TIdentity, TAggregate>> ReadStreamEventsAsync<TIdentity, TAggregate>(
+            AggregateConfiguration<TIdentity, TAggregate> configuration,
+            CancellationToken cancellationToken = default
+        ) where TAggregate : Aggregate<TIdentity, TAggregate>
+        {
+            throw new NotImplementedException();
         }
     }
 }

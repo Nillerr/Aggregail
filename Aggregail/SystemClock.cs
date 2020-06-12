@@ -1,6 +1,6 @@
 using System;
 
-namespace Aggregail.MongoDB
+namespace Aggregail
 {
     /// <summary>
     /// Singleton implementation of <see cref="IClock"/> which returns the current system time.

@@ -48,5 +48,12 @@ namespace Aggregail
             var id = stream.Split(Separator, 2)[1];
             return configuration.IdentityParser(id);
         }
+
+        /// <inheritdoc />
+        public string AggregateName(string stream)
+        {
+            var name = stream.Split(Separator, 2)[0];
+            return name;
+        }
     }
 }
