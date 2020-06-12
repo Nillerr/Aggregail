@@ -119,6 +119,7 @@ namespace Aggregail
         /// <returns>The events of every aggregate of type <typeparamref name="TAggregate"/>.</returns>
         IAsyncEnumerable<IRecordedEvent<TIdentity, TAggregate>> ReadStreamEventsAsync<TIdentity, TAggregate>(
             AggregateConfiguration<TIdentity, TAggregate> configuration,
+            long start,
             [EnumeratorCancellation] CancellationToken cancellationToken = default
         )
             where TAggregate : Aggregate<TIdentity, TAggregate>;

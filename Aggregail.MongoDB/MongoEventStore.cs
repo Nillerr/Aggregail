@@ -308,11 +308,15 @@ namespace Aggregail.MongoDB
         public async IAsyncEnumerable<IRecordedEvent<TIdentity, TAggregate>>
             ReadStreamEventsAsync<TIdentity, TAggregate>(
                 AggregateConfiguration<TIdentity, TAggregate> configuration,
+                long start,
                 [EnumeratorCancellation] CancellationToken cancellationToken = default
             ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var cursor = await _events
                 .Find(e => e.Category == configuration.Name)
+                .SortBy(e => e.Created)
+                .ThenBy(e => e.Id)
+                .Skip((int) start)
                 .ToCursorAsync(cancellationToken);
 
             while (await cursor.MoveNextAsync(cancellationToken))
@@ -344,7 +348,7 @@ namespace Aggregail.MongoDB
             await CreateEventTypeIndexAsync(cancellationToken);
             await CreateEventNumberCreatedIndexAsync(cancellationToken);
             await CreateCreatedIndexAsync(cancellationToken);
-            await CreateCategoryIndexAsync(cancellationToken);
+            await CreateCategoryCreatedIndexAsync(cancellationToken);
 
             _logger?.LogDebug("Indexes initialized successfully");
 
@@ -412,13 +416,17 @@ namespace Aggregail.MongoDB
             await _events.Indexes.CreateOneAsync(model, cancellationToken: cancellationToken);
         }
 
-        private async Task CreateCategoryIndexAsync(CancellationToken cancellationToken)
+        private async Task CreateCategoryCreatedIndexAsync(CancellationToken cancellationToken)
         {
-            _logger?.LogDebug("Initializing Index (Category)...");
+            _logger?.LogDebug("Initializing Index (Category, Created, Id)...");
             
             var keyBuilder = Builders<RecordedEventDocument>.IndexKeys;
 
-            var keys = keyBuilder.Ascending(e => e.Category);
+            var keys = keyBuilder.Combine(
+                keyBuilder.Ascending(e => e.Category),
+                keyBuilder.Ascending(e => e.Created),
+                keyBuilder.Ascending(e => e.Id)
+            );
 
             var options = new CreateIndexOptions();
             options.Background = false;
@@ -428,7 +436,7 @@ namespace Aggregail.MongoDB
                 .Select(e => e["name"].AsString)
                 .ToHashSet();
             
-            if (!indexNames.Contains("category_1"))
+            if (!indexNames.Contains("category_1_created_1"))
             {
                 await PopulateCategory(cancellationToken);
             }

@@ -146,6 +146,7 @@ namespace EventSourcing.Demo
 
         public IAsyncEnumerable<IRecordedEvent<TIdentity, TAggregate>> ReadStreamEventsAsync<TIdentity, TAggregate>(
             AggregateConfiguration<TIdentity, TAggregate> configuration,
+            long start,
             CancellationToken cancellationToken = default
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {

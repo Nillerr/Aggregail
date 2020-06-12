@@ -101,6 +101,18 @@ namespace Aggregail
         ) =>
             store.AggregateExistsAsync(id, GetConfiguration(), cancellationToken);
 
+        /// <summary>
+        /// Returns every event for every aggregate of the this type.
+        /// </summary>
+        /// <param name="store">The store to return events from.</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>A stream of events</returns>
+        public static IAsyncEnumerable<IRecordedEvent<TIdentity, TAggregate>> RecordedEventsAsync(
+            IEventStore store,
+            long start,
+            CancellationToken cancellationToken = default
+        ) => store.ReadStreamEventsAsync(Configuration, start, cancellationToken);
+
         protected static TAggregate Create<T>(
             EventType<T> type,
             T data,

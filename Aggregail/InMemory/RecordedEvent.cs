@@ -8,16 +8,17 @@ namespace Aggregail.InMemory
         private readonly StoredEvent _event;
         private readonly IJsonEventSerializer _serializer;
 
-        public RecordedEvent(StoredEvent @event, IJsonEventSerializer serializer, TIdentity id)
+        public RecordedEvent(StoredEvent @event, IJsonEventSerializer serializer, TIdentity id, long eventNumber)
         {
             _event = @event;
             _serializer = serializer;
+            EventNumber = eventNumber;
             Id = id;
         }
 
         public string Stream => _event.EventStreamId;
         public Guid EventId => _event.EventId;
-        public long EventNumber => _event.EventNumber;
+        public long EventNumber { get; }
         public string EventType => _event.EventType;
         public DateTime Created => _event.Created;
 

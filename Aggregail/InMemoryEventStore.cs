@@ -308,17 +308,18 @@ namespace Aggregail
         public async IAsyncEnumerable<IRecordedEvent<TIdentity, TAggregate>>
             ReadStreamEventsAsync<TIdentity, TAggregate>(
                 AggregateConfiguration<TIdentity, TAggregate> configuration,
+                long start,
                 [EnumeratorCancellation] CancellationToken cancellationToken = default
             ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             if (_byCategory.TryGetValue(configuration.Name, out var storedEvents))
             {
-                foreach (var storedEvent in storedEvents)
+                foreach (var (index, storedEvent) in storedEvents.Skip((int) start).Select((e, i) => (i, e)))
                 {
                     await Task.Yield();
 
                     var id = _streamNameResolver.ParseId(storedEvent.EventStreamId, configuration);
-                    var recordedEvent = new RecordedEvent<TIdentity, TAggregate>(storedEvent, _serializer, id);
+                    var recordedEvent = new RecordedEvent<TIdentity, TAggregate>(storedEvent, _serializer, id, start + index);
                     yield return recordedEvent;
                 }
             }
