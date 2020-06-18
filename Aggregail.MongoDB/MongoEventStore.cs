@@ -29,7 +29,6 @@ namespace Aggregail.MongoDB
         private readonly TransactionOptions _transactionOptions;
         private readonly IClock _clock;
         private readonly IStreamNameResolver _streamNameResolver;
-        private readonly IMetadataFactory _metadataFactory;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MongoEventStore"/> class.
@@ -46,7 +45,6 @@ namespace Aggregail.MongoDB
             _clock = settings.Clock;
             _transactionOptions = settings.TransactionOptions;
             _streamNameResolver = settings.StreamNameResolver;
-            _metadataFactory = settings.MetadataFactory;
         }
 
         /// <inheritdoc />
@@ -124,7 +122,7 @@ namespace Aggregail.MongoDB
             e.EventNumber = eventNumber;
             e.Created = UtcNow;
             e.Data = pendingEvent.Data(_serializer);
-            e.Metadata = pendingEvent.Metadata(_metadataFactory, _serializer);
+            e.Metadata = pendingEvent.Metadata(_serializer);
             e.Category = category;
             return e;
         }
@@ -160,7 +158,7 @@ namespace Aggregail.MongoDB
                 ? fb.Where(e => e.Stream == stream)
                 : fb.Where(e => e.Stream == stream && e.EventNumber <= version.Value);
 
-            var cursor = await _events
+            using var cursor = await _events
                 .Find(filter)
                 .SortBy(e => e.EventNumber)
                 .ToCursorAsync(cancellationToken);
@@ -260,30 +258,44 @@ namespace Aggregail.MongoDB
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             using var session = await _database.Client.StartSessionAsync(cancellationToken: cancellationToken);
+            
+            var stream = _streamNameResolver.Stream(id, configuration);
 
             session.StartTransaction();
 
-            var stream = _streamNameResolver.Stream(id, configuration);
-
-            if (expectedVersion != ExpectedVersion.Any && expectedVersion != ExpectedVersion.NoStream)
+            try
             {
-                var latestEvent = await _events
-                    .Find(session, e => e.Stream == stream)
-                    .SortByDescending(e => e.EventNumber)
-                    .FirstOrDefaultAsync(cancellationToken);
-
-                if (latestEvent == null)
+                if (expectedVersion != ExpectedVersion.Any)
                 {
-                    throw new WrongExpectedVersionException(
-                        $"Expected stream `{stream}` to be at version {expectedVersion}, but the stream did not exist.",
-                        expectedVersion, null
-                    );
+                    var latestEvent = await _events
+                        .Find(session, e => e.Stream == stream)
+                        .SortByDescending(e => e.EventNumber)
+                        .FirstOrDefaultAsync(cancellationToken);
+
+                    if (latestEvent == null)
+                    {
+                        if (expectedVersion != ExpectedVersion.NoStream)
+                        {
+                            throw ExpectedVersionValidation.ExpectedStreamToExist(stream, expectedVersion);
+                        }
+                    }
+                    else if (expectedVersion != latestEvent.EventNumber)
+                    {
+                        throw ExpectedVersionValidation
+                            .UnexpectedVersion(stream, expectedVersion, latestEvent.EventNumber);
+                    }
                 }
+
+                await _events.DeleteManyAsync(session, e => e.Stream == stream, null, cancellationToken);
+                
+                await session.CommitTransactionAsync(cancellationToken);
             }
-
-            await _events.DeleteManyAsync(session, e => e.Stream == stream, null, cancellationToken);
-
-            await session.CommitTransactionAsync(cancellationToken);
+            catch (Exception)
+            {
+                // ReSharper disable once MethodSupportsCancellation
+                await session.AbortTransactionAsync();
+                throw;
+            }
         }
 
         /// <inheritdoc />
@@ -312,13 +324,13 @@ namespace Aggregail.MongoDB
                 [EnumeratorCancellation] CancellationToken cancellationToken = default
             ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
-            var cursor = await _events
+            using var cursor = await _events
                 .Find(e => e.Category == configuration.Name)
                 .SortBy(e => e.Created)
                 .ThenBy(e => e.Id)
                 .Skip((int) start)
                 .ToCursorAsync(cancellationToken);
-
+            
             while (await cursor.MoveNextAsync(cancellationToken))
             {
                 foreach (var document in cursor.Current)

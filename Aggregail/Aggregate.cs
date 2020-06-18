@@ -40,12 +40,6 @@ namespace Aggregail
         public TIdentity Id { get; }
 
         /// <summary>
-        /// Returns the version number of this aggregate instance.
-        /// </summary>
-        /// <returns>The version number of this aggregate instance.</returns>
-        public long GetVersionNumber() => _versionNumber;
-
-        /// <summary>
         /// Appends an event to the aggregate, so it can be committed in a later call to <see cref="CommitAsync"/>.
         /// </summary>
         /// <param name="id">Id of the event</param>
@@ -56,6 +50,23 @@ namespace Aggregail
             where T : class
         {
             var pendingEvent = new PendingEvent<T>(id, type, data);
+            _pendingEvents.Add(pendingEvent);
+        }
+
+        /// <summary>
+        /// Appends an event to the aggregate, so it can be committed in a later call to <see cref="CommitAsync"/>.
+        /// </summary>
+        /// <param name="id">Id of the event</param>
+        /// <param name="type">Type of the event</param>
+        /// <param name="data">Data of the event</param>
+        /// <param name="metadata">Metadata of the event</param>
+        /// <typeparam name="TData">Type of the event</typeparam>
+        /// <typeparam name="TMetadata">Type of metadata</typeparam>
+        protected void Append<TData, TMetadata>(Guid id, EventType<TData> type, TData data, TMetadata metadata)
+            where TData : class
+            where TMetadata : class
+        {
+            var pendingEvent = new PendingMetadataEvent<TData, TMetadata>(id, type, data, metadata);
             _pendingEvents.Add(pendingEvent);
         }
 
@@ -92,7 +103,7 @@ namespace Aggregail
         /// }
         /// </code>
         /// </remarks>
-        protected async Task CommitAsync(
+        protected internal async Task CommitAsync(
             IEventStore store,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
             CancellationToken cancellationToken = default
@@ -116,7 +127,7 @@ namespace Aggregail
         /// <param name="configuration">The configuration of the aggregate.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A <see cref="Task{TResult}"/></returns>
-        protected async Task DeleteAsync(
+        protected internal async Task DeleteAsync(
             IEventStore store,
             AggregateConfiguration<TIdentity, TAggregate> configuration,
             CancellationToken cancellationToken = default

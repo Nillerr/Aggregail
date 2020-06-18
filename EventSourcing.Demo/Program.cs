@@ -55,7 +55,6 @@ namespace EventSourcing.Demo
             var mongoDatabase = mongoClient.GetDatabase("aggregail_demo");
             
             var mongoSettings = new MongoEventStoreSettings(mongoDatabase, "streams", serializer);
-            mongoSettings.MetadataFactory = new MetadataFactory("nije");
             mongoSettings.Logger = serviceProvider.GetRequiredService<ILogger<MongoEventStore>>();
             
             var mongoStore = new MongoEventStore(mongoSettings);
@@ -68,7 +67,8 @@ namespace EventSourcing.Demo
             
             var inMemoryStore = new InMemoryEventStore(new InMemoryEventStoreSettings(serializer));
 
-            await RobotProgram.RunAsync(mongoStore);
+            var robotStore = new Robot.Store(mongoStore);
+            await RobotProgram.RunAsync(robotStore);
             
             // var tasks = Enumerable.Range(0, 500)
             //     .Select(_ => TestCase(mongoStore))

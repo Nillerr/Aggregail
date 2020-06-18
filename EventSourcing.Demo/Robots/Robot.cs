@@ -3,21 +3,28 @@ using System.Collections.Immutable;
 using System.Linq;
 using Aggregail;
 using EventSourcing.Demo.Robots.CRM;
+using JetBrains.Annotations;
 
 namespace EventSourcing.Demo.Robots
 {
-    public sealed class Robot : AbstractAggregate<RobotId, Robot>
+    public sealed class Robot : Aggregate<RobotId, Robot>
     {
-        static Robot()
+        public sealed class Store : AggregateStore<RobotId, Robot>, IRobotStore
         {
-            Configuration = new AggregateConfiguration<RobotId, Robot>("Robot", RobotId.Parse)
-                .Constructs(RobotImported.EventType, (id, e) => new Robot(id, e))
-                .Applies(RobotImported.EventType, (robot, e) => robot.Apply(e))
-                .Applies(RobotRegistered.EventType, (robot, e) => robot.Apply(e))
-                .Applies(RobotEdited.EventType, (robot, e) => robot.Apply(e))
-                .Applies(RobotUnregistered.EventType, (robot, e) => robot.Apply(e));
-        }
+            public Store(IEventStore store)
+                : base(store)
+            {
+            }
 
+            protected override AggregateConfiguration<RobotId, Robot> Configuration { get; } = 
+                new AggregateConfiguration<RobotId, Robot>("Robot", RobotId.Parse)
+                    .Constructs(RobotImported.EventType, (id, e) => new Robot(id, e))
+                    .Applies(RobotImported.EventType, (robot, e) => robot.Apply(e))
+                    .Applies(RobotRegistered.EventType, (robot, e) => robot.Apply(e))
+                    .Applies(RobotEdited.EventType, (robot, e) => robot.Apply(e))
+                    .Applies(RobotUnregistered.EventType, (robot, e) => robot.Apply(e));
+        }
+        
         private Robot(RobotId id, RobotImported e)
             : base(id)
         {
@@ -34,12 +41,12 @@ namespace EventSourcing.Demo.Robots
 
         public ImmutableList<RobotRegistration> Registrations { get; private set; }
 
-        public static Robot Import(RobotImported.RobotEntity entity)
+        public static Robot Import(RobotImported.RobotEntity entity, string username)
         {
             var id = new RobotId(entity.C2RurRobotsid);
             var e = RobotImported.Create(entity);
             var robot = new Robot(id, e);
-            robot.Append(id.Value, RobotImported.EventType, e);
+            robot.Append(id.Value, RobotImported.EventType, e, new { Username = username });
             return robot;
         }
 

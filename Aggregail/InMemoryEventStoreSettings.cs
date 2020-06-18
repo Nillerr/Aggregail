@@ -31,13 +31,5 @@ namespace Aggregail
         /// Resolves names of streams for aggregates.
         /// </summary>
         public IStreamNameResolver StreamNameResolver { get; set; } = TokenizedStreamNameResolver.Default;
-
-        /// <summary>
-        /// The service responsible for creating metadata for a given event.
-        /// </summary>
-        /// <remarks>
-        /// Defaults to <see cref="NoMetadataFactory"/>.
-        /// </remarks>
-        public IMetadataFactory MetadataFactory { get; set; } = NoMetadataFactory.Instance;
     }
 }

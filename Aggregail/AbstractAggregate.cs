@@ -105,6 +105,7 @@ namespace Aggregail
         /// Returns every event for every aggregate of the this type.
         /// </summary>
         /// <param name="store">The store to return events from.</param>
+        /// <param name="start">The offset to read events from</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>A stream of events</returns>
         public static IAsyncEnumerable<IRecordedEvent<TIdentity, TAggregate>> RecordedEventsAsync(
@@ -185,6 +186,21 @@ namespace Aggregail
         /// <summary>
         /// Appends an event to the aggregate, so it can be committed in a later call to <see cref="CommitAsync"/>.
         /// </summary>
+        /// <param name="type">Type of the event</param>
+        /// <param name="data">Data of the event</param>
+        /// <param name="metadata">Metadata</param>
+        /// <typeparam name="T">Type of the event</typeparam>
+        /// <typeparam name="TMetadata">Type of metadata</typeparam>
+        protected void Append<T, TMetadata>(EventType<T> type, T data, TMetadata metadata)
+            where T : class
+            where TMetadata : class
+        {
+            Append(Guid.NewGuid(), type, data, metadata);
+        }
+
+        /// <summary>
+        /// Appends an event to the aggregate, so it can be committed in a later call to <see cref="CommitAsync"/>.
+        /// </summary>
         /// <param name="id">Id of the event</param>
         /// <param name="type">Type of the event</param>
         /// <param name="data">Data of the event</param>
@@ -202,12 +218,46 @@ namespace Aggregail
         /// </summary>
         /// <param name="type">Type of the event</param>
         /// <param name="data">Data of the event</param>
+        /// <param name="metadata">Metadata</param>
+        /// <param name="applicator">Applicator of the event</param>
+        /// <typeparam name="TData">Type of the event</typeparam>
+        /// <typeparam name="TMetadata">Type of metadata</typeparam>
+        protected void Append<TData, TMetadata>(Guid id, EventType<TData> type, TData data, TMetadata metadata, Action<TData> applicator)
+            where TData : class
+            where TMetadata : class
+        {
+            Append(id, type, data, metadata);
+            applicator(data);
+        }
+
+        /// <summary>
+        /// Appends an event to the aggregate, so it can be committed in a later call to <see cref="CommitAsync"/>.
+        /// </summary>
+        /// <param name="type">Type of the event</param>
+        /// <param name="data">Data of the event</param>
         /// <param name="applicator">Applicator of the event</param>
         /// <typeparam name="T">Type of the event</typeparam>
         protected void Append<T>(EventType<T> type, T data, Action<T> applicator)
             where T : class
         {
             Append(type, data);
+            applicator(data);
+        }
+
+        /// <summary>
+        /// Appends an event to the aggregate, so it can be committed in a later call to <see cref="CommitAsync"/>.
+        /// </summary>
+        /// <param name="type">Type of the event</param>
+        /// <param name="data">Data of the event</param>
+        /// <param name="metadata">Metadata</param>
+        /// <param name="applicator">Applicator of the event</param>
+        /// <typeparam name="TData">Type of the event</typeparam>
+        /// <typeparam name="TMetadata">Type of metadata</typeparam>
+        protected void Append<TData, TMetadata>(EventType<TData> type, TData data, TMetadata metadata, Action<TData> applicator)
+            where TData : class
+            where TMetadata : class
+        {
+            Append(type, data, metadata);
             applicator(data);
         }
 

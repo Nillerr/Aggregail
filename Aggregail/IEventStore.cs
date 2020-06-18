@@ -113,6 +113,7 @@ namespace Aggregail
         /// information declared in <paramref name="configuration"/>.
         /// </summary>
         /// <param name="configuration">Aggregate configuration</param>
+        /// <param name="start">The offset to start reading events from</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <typeparam name="TIdentity">Type of id</typeparam>
         /// <typeparam name="TAggregate">Type of aggregate</typeparam>

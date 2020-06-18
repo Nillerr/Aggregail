@@ -28,7 +28,6 @@ namespace Aggregail
         private readonly IJsonEventSerializer _serializer;
         private readonly IStreamNameResolver _streamNameResolver;
         private readonly IClock _clock;
-        private readonly IMetadataFactory _metadataFactory;
 
         /// <summary>
         /// Creates an instance of the <see cref="InMemoryEventStore"/> class.
@@ -39,7 +38,6 @@ namespace Aggregail
             _serializer = settings.EventSerializer;
             _streamNameResolver = settings.StreamNameResolver;
             _clock = settings.Clock;
-            _metadataFactory = settings.MetadataFactory;
         }
 
         /// <inheritdoc />
@@ -70,8 +68,8 @@ namespace Aggregail
             if (startingVersion < storedEvents.Count)
             {
                 // Validation phase
-                ValidateExistingEvents(stream, expectedVersion, pendingEvents, startingVersion, storedEvents,
-                    currentVersion
+                ValidateExistingEvents(
+                    stream, expectedVersion, pendingEvents, startingVersion, storedEvents, currentVersion
                 );
 
                 // Everything is already committed
@@ -133,17 +131,17 @@ namespace Aggregail
                 .Select((pendingEvent, index) => ToStoredEvent(stream, pendingEvent, startingVersion + index));
         }
 
-        private StoredEvent ToStoredEvent(string stream, IPendingEvent pendingEvent, long eventVersion)
+        private StoredEvent ToStoredEvent(string stream, IPendingEvent pendingEvent, long eventNumber)
         {
             var data = pendingEvent.Data(_serializer);
-            var metadata = _metadataFactory.MetadataFor(pendingEvent.Id, pendingEvent.Type, data, _serializer);
+            var metadata = pendingEvent.Metadata(_serializer);
             var created = _clock.UtcNow;
 
             return new StoredEvent(
                 pendingEvent.Id,
                 stream,
                 pendingEvent.Type,
-                eventVersion,
+                eventNumber,
                 data,
                 metadata,
                 created
@@ -209,25 +207,25 @@ namespace Aggregail
             }
 
             return Task.FromResult<TAggregate?>(null);
-        }
-
-        private TAggregate ConstructAggregate<TIdentity, TAggregate>(
-            TIdentity id,
-            AggregateConfiguration<TIdentity, TAggregate> configuration,
-            StoredEvent storedEvent
-        ) where TAggregate : Aggregate<TIdentity, TAggregate>
-        {
-            if (!configuration.Constructors.TryGetValue(storedEvent.EventType, out var constructor))
-            {
-                throw new InvalidOperationException(
-                    $"Unrecognized construction event type: {storedEvent.EventType}"
-                );
             }
 
-            var aggregate = constructor(id, _serializer, storedEvent.Data);
-            aggregate.Record(new RecordableEvent(storedEvent.EventNumber));
-            return aggregate;
-        }
+            private TAggregate ConstructAggregate<TIdentity, TAggregate>(
+                TIdentity id,
+                AggregateConfiguration<TIdentity, TAggregate> configuration,
+                StoredEvent storedEvent
+            ) where TAggregate : Aggregate<TIdentity, TAggregate>
+            {
+                if (!configuration.Constructors.TryGetValue(storedEvent.EventType, out var constructor))
+                {
+                    throw new InvalidOperationException(
+                        $"Unrecognized construction event type: {storedEvent.EventType}"
+                    );
+                }
+
+                var aggregate = constructor(id, _serializer, storedEvent.Data);
+                aggregate.Record(new RecordableEvent(storedEvent.EventNumber));
+                return aggregate;
+            }
 
         private void ApplyEvent<TIdentity, TAggregate>(
             TAggregate aggregate,
@@ -279,12 +277,32 @@ namespace Aggregail
         ) where TAggregate : Aggregate<TIdentity, TAggregate>
         {
             var stream = _streamNameResolver.Stream(id, configuration);
-            if (_streams.TryGetValue(stream, out var recordedEvents))
+            if (_streams.TryGetValue(stream, out var storedEvents))
             {
-                foreach (var recordedEvent in recordedEvents)
+                var lastEvent = storedEvents.Last();
+                if (expectedVersion != lastEvent.EventNumber)
                 {
-                    _byEventType[recordedEvent.EventType].Remove(recordedEvent);
+                    throw ExpectedVersionValidation
+                        .UnexpectedVersion(stream, expectedVersion, lastEvent.EventNumber);
                 }
+                
+                var category = configuration.Name;
+                var byCategory = _byCategory[category];
+                
+                foreach (var storedEvent in storedEvents)
+                {
+                    _byEventType[storedEvent.EventType].Remove(storedEvent);
+                    byCategory.Remove(storedEvent);
+                }
+            }
+            else if (expectedVersion != ExpectedVersion.Any && expectedVersion != ExpectedVersion.NoStream)
+            {
+                if (expectedVersion == ExpectedVersion.StreamExists)
+                {
+                    throw ExpectedVersionValidation.ExpectedStreamToExist(stream);
+                }
+
+                throw ExpectedVersionValidation.ExpectedStreamToExist(stream, expectedVersion);
             }
 
             _streams.Remove(stream);
