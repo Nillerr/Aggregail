@@ -64,6 +64,7 @@ namespace Aggregail.Testing
             
             var inMemorySettings = new InMemoryEventStoreSettings(settings.EventSerializer);
             inMemorySettings.StreamNameResolver = settings.StreamNameResolver;
+            inMemorySettings.MetadataFactory = settings.MetadataFactory;
             
             _store = new InMemoryEventStore(inMemorySettings);
         }
