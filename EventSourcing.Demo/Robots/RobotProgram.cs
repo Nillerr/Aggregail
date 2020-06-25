@@ -33,7 +33,7 @@ namespace EventSourcing.Demo.Robots
         {
             var olympusControlCorpGulf = new EndUserId(Guid.Parse("1ab17979-ff43-e911-a970-000d3a391cda"));
 
-            var robot = Robot.Import(entity, "nije");
+            var robot = Robot.Import(entity);
 
             if (await store.ExistsAsync(robot.Id))
             {

@@ -3,7 +3,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using Aggregail;
 using EventSourcing.Demo.Robots.CRM;
-using JetBrains.Annotations;
 
 namespace EventSourcing.Demo.Robots
 {
@@ -41,12 +40,12 @@ namespace EventSourcing.Demo.Robots
 
         public ImmutableList<RobotRegistration> Registrations { get; private set; }
 
-        public static Robot Import(RobotImported.RobotEntity entity, string username)
+        public static Robot Import(RobotImported.RobotEntity entity)
         {
             var id = new RobotId(entity.C2RurRobotsid);
             var e = RobotImported.Create(entity);
             var robot = new Robot(id, e);
-            robot.Append(id.Value, RobotImported.EventType, e, new { Username = username });
+            robot.Append(id.Value, RobotImported.EventType, e);
             return robot;
         }
 
