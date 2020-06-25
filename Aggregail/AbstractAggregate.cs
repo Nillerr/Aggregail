@@ -114,12 +114,12 @@ namespace Aggregail
             CancellationToken cancellationToken = default
         ) => store.ReadStreamEventsAsync(Configuration, start, cancellationToken);
 
-        protected static TAggregate Create<T>(
-            EventType<T> type,
-            T data,
-            Func<Guid, T, TAggregate> constructor
+        protected static TAggregate Create<TData>(
+            EventType<TData> type,
+            TData data,
+            Func<Guid, TData, TAggregate> constructor
         )
-            where T : class
+            where TData : class
         {
             var eventId = Guid.NewGuid();
             var aggregate = constructor(eventId, data);
@@ -127,42 +127,46 @@ namespace Aggregail
             return aggregate;
         }
 
-        protected static TAggregate Create<T>(
-            EventType<T> type,
-            T data,
-            Func<T, TAggregate> constructor
+        protected static TAggregate Create<TData, TMetadata>(
+            EventType<TData> type,
+            TData data,
+            TMetadata metadata,
+            Func<Guid, TData, TAggregate> constructor
         )
-            where T : class
+            where TData : class 
+            where TMetadata : class
         {
             var eventId = Guid.NewGuid();
-            var aggregate = constructor(data);
-            aggregate.Append(eventId, type, data);
+            var aggregate = constructor(eventId, data);
+            aggregate.Append(eventId, type, data, metadata);
             return aggregate;
         }
 
-        protected static TAggregate Create<T>(
+        protected static TAggregate Create<TData>(
             Guid eventId,
-            EventType<T> type,
-            T data,
-            Func<T, TAggregate> constructor
+            EventType<TData> type,
+            TData data,
+            Func<Guid, TData, TAggregate> constructor
         )
-            where T : class
-        {
-            var aggregate = constructor(data);
-            aggregate.Append(eventId, type, data);
-            return aggregate;
-        }
-
-        protected static TAggregate Create<T>(
-            Guid eventId,
-            EventType<T> type,
-            T data,
-            Func<Guid, T, TAggregate> constructor
-        )
-            where T : class
+            where TData : class
         {
             var aggregate = constructor(eventId, data);
             aggregate.Append(eventId, type, data);
+            return aggregate;
+        }
+
+        protected static TAggregate Create<TData, TMetadata>(
+            Guid eventId,
+            EventType<TData> type,
+            TData data,
+            TMetadata metadata,
+            Func<Guid, TData, TAggregate> constructor
+        )
+            where TData : class
+            where TMetadata : class
+        {
+            var aggregate = constructor(eventId, data);
+            aggregate.Append(eventId, type, data, metadata);
             return aggregate;
         }
 

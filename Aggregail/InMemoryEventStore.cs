@@ -28,6 +28,7 @@ namespace Aggregail
         private readonly IJsonEventSerializer _serializer;
         private readonly IStreamNameResolver _streamNameResolver;
         private readonly IClock _clock;
+        private readonly IMetadataFactory _metadataFactory;
 
         /// <summary>
         /// Creates an instance of the <see cref="InMemoryEventStore"/> class.
@@ -38,6 +39,7 @@ namespace Aggregail
             _serializer = settings.EventSerializer;
             _streamNameResolver = settings.StreamNameResolver;
             _clock = settings.Clock;
+            _metadataFactory = settings.MetadataFactory;
         }
 
         /// <inheritdoc />
@@ -134,7 +136,7 @@ namespace Aggregail
         private StoredEvent ToStoredEvent(string stream, IPendingEvent pendingEvent, long eventNumber)
         {
             var data = pendingEvent.Data(_serializer);
-            var metadata = pendingEvent.Metadata(_serializer);
+            var metadata = _metadataFactory.MetadataFor(pendingEvent.Id, pendingEvent.Type, data, _serializer);
             var created = _clock.UtcNow;
 
             return new StoredEvent(

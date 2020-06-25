@@ -29,6 +29,7 @@ namespace Aggregail.MongoDB
         private readonly TransactionOptions _transactionOptions;
         private readonly IClock _clock;
         private readonly IStreamNameResolver _streamNameResolver;
+        private readonly IMetadataFactory _metadataFactory;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MongoEventStore"/> class.
@@ -45,6 +46,7 @@ namespace Aggregail.MongoDB
             _clock = settings.Clock;
             _transactionOptions = settings.TransactionOptions;
             _streamNameResolver = settings.StreamNameResolver;
+            _metadataFactory = settings.MetadataFactory;
         }
 
         /// <inheritdoc />
@@ -122,7 +124,7 @@ namespace Aggregail.MongoDB
             e.EventNumber = eventNumber;
             e.Created = UtcNow;
             e.Data = pendingEvent.Data(_serializer);
-            e.Metadata = pendingEvent.Metadata(_serializer);
+            e.Metadata = pendingEvent.Metadata(_metadataFactory, _serializer);
             e.Category = category;
             return e;
         }

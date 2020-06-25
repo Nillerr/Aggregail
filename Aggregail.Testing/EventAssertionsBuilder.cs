@@ -42,7 +42,7 @@ namespace Aggregail.Testing
         /// The order of events is verified as well, so the order of the event assertion must match that of a call to
         /// <see cref="IEventStore.AppendToStreamAsync{TIdentity,TAggregate}"/>.
         /// </remarks>
-        public EventAssertionsBuilder Event<TEvent>(EventType<TEvent> type, Assertion<TEvent> assertion = null)
+        public EventAssertionsBuilder Event<TEvent>(EventType<TEvent> type, Assertion<TEvent>? assertion = null)
             where TEvent : class
         {
             Assertions.Add(new EventAssertion(type.Value, (pendingEvent, serializer) =>

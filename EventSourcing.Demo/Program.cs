@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using Aggregail;
 using Aggregail.MongoDB;
@@ -56,6 +53,7 @@ namespace EventSourcing.Demo
             
             var mongoSettings = new MongoEventStoreSettings(mongoDatabase, "streams", serializer);
             mongoSettings.Logger = serviceProvider.GetRequiredService<ILogger<MongoEventStore>>();
+            mongoSettings.MetadataFactory = new UserMetadataFactory("nije");
             
             var mongoStore = new MongoEventStore(mongoSettings);
 

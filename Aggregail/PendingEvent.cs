@@ -34,6 +34,7 @@ namespace Aggregail
             serializer.Serialize(_data);
 
         /// <inheritdoc />
-        public byte[]? Metadata(IJsonEventSerializer serializer) => null;
+        public byte[]? Metadata(IMetadataFactory factory, IJsonEventSerializer serializer) =>
+            factory.MetadataFor(Id, _type, _data, serializer);
     }
 }

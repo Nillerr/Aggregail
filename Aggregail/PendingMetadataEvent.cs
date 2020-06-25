@@ -38,9 +38,9 @@ namespace Aggregail
         /// <inheritdoc />
         public byte[] Data(IJsonEventSerializer serializer) => 
             serializer.Serialize(_data);
-        
+
         /// <inheritdoc />
-        public byte[]? Metadata(IJsonEventSerializer serializer) => 
+        public byte[]? Metadata(IMetadataFactory factory, IJsonEventSerializer serializer) => 
             _metadata == null ? null : serializer.Serialize(_metadata);
     }
 }
